@@ -804,14 +804,6 @@ function submitAll(){
       </div>
       <div class="ladder-narrative">
         <strong style="color:var(--gold)">${fname}&apos;s current position:</strong> ${rspA.label}
-        ${rspA.blendNarrative?\`<div class="blend-panel"><div class="blend-label">Blend insight</div>${rspA.blendNarrative}</div>\`:\`\`}
-      </div>
-    </div>`;
-          }).join('')}
-        </div>
-      </div>
-      <div class="ladder-narrative">
-        <strong style="color:var(--gold)">${fname}&apos;s current position:</strong> ${rspA.label}
         ${rspA.blendNarrative?`<div class="blend-panel"><div class="blend-label">Blend insight</div>${rspA.blendNarrative}</div>`:''}
       </div>
     </div>`;
