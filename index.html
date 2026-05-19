@@ -794,11 +794,11 @@ function submitAll(){
           ${RSP_STAGES.map(d=>{
             const isCurrent=d.key===rspA.stage.key;
             const dotClass=isCurrent?"current":"";
-            return \`<div class="ladder-step">
-              <div class="ls-dot ${dotClass}">\${isCurrent?"&#9733;":"&#9679;"}</div>
-              <div class="ls-name ${isCurrent?"current":""}" \${isCurrent?"style=\"color:"+d.color+"\"":""}>\${d.label}</div>
-              <div class="ls-tag">(\${d.range})</div>
-            </div>\`;
+            return `<div class="ladder-step">
+              <div class="ls-dot ${dotClass}">${isCurrent?"&#9733;":"&#9679;"}</div>
+              <div class="ls-name ${isCurrent?"current":""}" ${isCurrent?'style="color:'+d.color+'"':''}>${d.label}</div>
+              <div class="ls-tag">(${d.range})</div>
+            </div>`;
           }).join("")}
         </div>
       </div>
