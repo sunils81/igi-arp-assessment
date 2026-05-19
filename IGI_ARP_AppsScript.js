@@ -14,7 +14,7 @@ const HEADERS = [
   'RSP Product Pusher','RSP Relationship Builder','RSP Experience Creator','RSP Trusted Advisor',
   '4Cs Score','4Cs Percentage','4Cs Grade','4Cs Tag Scores (JSON)',
   'Readiness Total','Readiness Band','Knowledge Points','Behavioural Points',
-  'Combined Profile','Insight Title'
+  'Combined Profile','Insight Title','PDF Link'
 ];
 
 function ensureHeaders(sheet){
@@ -47,6 +47,18 @@ function doPost(e){
     try{ c2s = JSON.parse(d.c2sScores||'{}'); }catch(x){}
     try{ rsp = JSON.parse(d.rspScores||'{}'); }catch(x){}
     try{ tagScores = JSON.parse(d.fcsTagScores||'{}'); }catch(x){}
+
+    let pdfUrl = '';
+    if(d.pdfBase64){
+      try {
+        const blob = Utilities.newBlob(Utilities.base64Decode(d.pdfBase64), MimeType.PDF, (d.name || 'Associate') + '_ARP_Profile.pdf');
+        const file = DriveApp.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        pdfUrl = file.getUrl();
+      } catch(e) {
+        pdfUrl = 'Error generating PDF';
+      }
+    }
 
     const row = [
       d.timestamp||new Date().toISOString(),
@@ -82,7 +94,8 @@ function doPost(e){
       d.knowledgePts||0,
       d.behaviouralPts||0,
       d.comboProfile||'',
-      d.insightTitle||''
+      d.insightTitle||'',
+      pdfUrl
     ];
 
     sheet.appendRow(row);

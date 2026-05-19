@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IGI Sales Associate Readiness Profile</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FDFCF9;--off:#F4F1EB;--muted:#8A8070;--border:rgba(201,168,76,0.2);--teal:#1D9E75;--coral:#C9613A;--purple:#534AB7;--blue:#378ADD;--radius:12px;--shadow:0 4px 24px rgba(13,27,46,0.10)}
@@ -514,17 +515,15 @@ function getFCSGrade(pct){
 function getReadiness(c2sAnalysis,rspAnalysis,fcsCorrect){
   const knowledgePts=Math.round((fcsCorrect/25)*70);
   const c2sVals=c2sAnalysis.sorted.map(x=>x[1]);
-  const rspVals=rspAnalysis.sorted.map(x=>x[1]);
   const c2sClarity=Math.min(15,Math.round((Math.max(0,c2sVals[0]-c2sVals[1])/24)*30));
-  const rspClarity=Math.min(15,Math.round((Math.max(0,rspVals[0]-rspVals[1])/16)*30));
+  const rspClarity=Math.min(15,Math.round(((rspAnalysis.avg - 1.0)/2.0)*15));
   const behaviouralPts=Math.min(30,c2sClarity+rspClarity);
   const total=Math.min(100,knowledgePts+behaviouralPts);
   const c2sClarityPct=(c2sVals[0]/24)*100;
-  const rspClarityPct=(rspVals[0]/16)*100;
   return{
     total,knowledgePts,behaviouralPts,
     c2sClarityLabel:c2sClarityPct>=50?'Strong':c2sClarityPct>=35?'Moderate':'Blended',
-    rspClarityLabel:rspClarityPct>=50?'Strong':rspClarityPct>=35?'Moderate':'Blended'
+    rspClarityLabel:rspAnalysis.label
   };
 }
 
@@ -695,7 +694,7 @@ function renderBehavQ(idx){
       <div class="options">${q.opts.map((o,j)=>`
         <div class="opt${answered===j?' selected':''}" onclick="selectBehav(${j})">
           <div class="opt-letter">${String.fromCharCode(65+j)}</div>
-          <div class="opt-text">${typeof o==='string'?o:o}</div>
+          <div class="opt-text">${typeof o==='string'?o:o.t}</div>
         </div>`).join('')}</div>
       <div class="nav-row">
         <button class="btn" onclick="goBackBehav()" ${idx===0?'disabled':''}>&larr; Back</button>
@@ -786,23 +785,28 @@ function submitAll(){
   const rspSVG='';
 
   // RSP ladder
-  const ladderOrder=['H','F','C','A'];
   const ladderHTML=`
     <div class="ladder-card">
       <div class="ladder-title">&#8594; Sales Persona Progression Ladder</div>
       <div style="position:relative">
         <div class="ladder-line"></div>
         <div class="ladder-steps">
-          ${ladderOrder.map(k=>{
-            const d=RSP_DISPLAY[k];
-            const isCurrent=k===rspA.primary;
-            const isSecondary=k===rspA.secondary&&rspA.classification!=='Defined';
-            const dotClass=isCurrent?'current':isSecondary?'secondary':'';
-            return `<div class="ladder-step">
-              <div class="ls-dot ${dotClass}">${isCurrent?'&#9733;':isSecondary?'&#9672;':'&#9679;'}</div>
-              <div class="ls-name ${isCurrent?'current':''}">${d.name}</div>
-              <div class="ls-tag">(${d.sub})</div>
-            </div>`;
+          ${RSP_STAGES.map(d=>{
+            const isCurrent=d.key===rspA.stage.key;
+            const dotClass=isCurrent?"current":"";
+            return \`<div class="ladder-step">
+              <div class="ls-dot ${dotClass}">\${isCurrent?"&#9733;":"&#9679;"}</div>
+              <div class="ls-name ${isCurrent?"current":""}" \${isCurrent?"style=\"color:"+d.color+"\"":""}>\${d.label}</div>
+              <div class="ls-tag">(\${d.range})</div>
+            </div>\`;
+          }).join("")}
+        </div>
+      </div>
+      <div class="ladder-narrative">
+        <strong style="color:var(--gold)">${fname}&apos;s current position:</strong> ${rspA.label}
+        ${rspA.blendNarrative?\`<div class="blend-panel"><div class="blend-label">Blend insight</div>${rspA.blendNarrative}</div>\`:\`\`}
+      </div>
+    </div>`;
           }).join('')}
         </div>
       </div>
@@ -879,7 +883,7 @@ function submitAll(){
           <div class="ri-panel-label" style="color:var(--muted)">Behavioural Profile</div>
           <div style="margin-top:8px">
             <div class="clarity-row"><span style="color:var(--muted)">Communication</span><span class="clarity-pill" style="color:${C2S_COLORS[c2sA.primary]}">${readiness.c2sClarityLabel}</span></div>
-            <div class="clarity-row"><span style="color:var(--muted)">Sales Persona</span><span class="clarity-pill" style="color:${RSP_DISPLAY[rspA.primary].color}">${readiness.rspClarityLabel}</span></div>
+            <div class="clarity-row"><span style="color:var(--muted)">Sales Persona</span><span class="clarity-pill" style="color:${rspA.stage.color}">${readiness.rspClarityLabel}</span></div>
           </div>
         </div>
       </div>
@@ -895,7 +899,7 @@ function submitAll(){
       <div class="radar-card">
         <div class="sp-label" style="color:var(--coral)">Sales Persona</div>
         ${rspSVG}
-        <div class="profile-classification" style="background:${RSP_DISPLAY[rspA.primary].color}22;color:${RSP_DISPLAY[rspA.primary].color}">${rspA.label}</div>
+        <div class="profile-classification" style="background:${rspA.stage.color}22;color:${rspA.stage.color}">${rspA.label}</div>
       </div>
     </div>
 
@@ -994,7 +998,27 @@ function submitAll(){
     knowledgePts:readiness.knowledgePts,behaviouralPts:readiness.behaviouralPts,
     comboProfile:comboKey,insightTitle:profile.title
   };
-  if(SHEET_URL) fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+  if(SHEET_URL) {
+    if(typeof html2pdf !== 'undefined') {
+      setTimeout(() => {
+        const opt = {
+          margin: 10,
+          filename: fname + '_ARP_Profile.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().from(s3).set(opt).outputPdf('datauristring').then(function(pdfDataUri) {
+          payload.pdfBase64 = pdfDataUri.substring(pdfDataUri.indexOf(',') + 1);
+          fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+        }).catch(() => {
+          fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+        });
+      }, 500); // allow UI to render first
+    } else {
+      fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+    }
+  }
 }
 </script>
 </body>
