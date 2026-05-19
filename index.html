@@ -74,24 +74,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .result-hero .assoc-name{font-size:26px;font-weight:700;font-family:"Playfair Display",serif;color:var(--gold-light);margin-bottom:3px}
 .result-hero .assoc-meta{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px}
 .combo-badge{display:inline-block;padding:5px 18px;border-radius:20px;background:rgba(201,168,76,0.15);border:1px solid var(--gold);color:var(--gold-light);font-size:12px;font-weight:600;letter-spacing:0.04em}
-/* READINESS INDEX */
-.readiness-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:16px;box-shadow:var(--shadow);text-align:center}
-.ri-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.ri-score{font-size:56px;font-weight:700;font-family:"Playfair Display",serif;color:var(--navy);line-height:1;margin-bottom:4px}
-.ri-max{font-size:18px;color:var(--muted)}
-.ri-band{font-size:14px;font-weight:600;margin-top:8px;margin-bottom:14px}
-.ri-track{height:8px;background:var(--off);border-radius:4px;overflow:hidden;margin-bottom:16px}
-.ri-fill{height:100%;border-radius:4px;transition:width 1.2s ease}
-.ri-panels{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-top:4px}
-.ri-divider{background:var(--border)}
-.ri-panel{padding:0 16px}
-.ri-panel-label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px}
-.ri-pct{font-size:28px;font-weight:700;font-family:"Playfair Display",serif;line-height:1}
-.ri-raw{font-size:11px;color:var(--muted);margin-top:2px;margin-bottom:8px}
-.ri-grade{font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;display:inline-block}
-.flag-box{margin-top:8px;padding:6px 12px;background:#FEF2F2;border:1px solid #C94A4A;border-radius:6px;font-size:10px;font-weight:600;color:#C94A4A;letter-spacing:0.04em}
-.clarity-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:7px}
-.clarity-pill{font-weight:600;font-size:11px;padding:2px 8px;background:var(--off);border-radius:10px}
+/* READINESS INDEX REIMAGINED */
+.readiness-card{background:var(--white);border-radius:var(--radius);padding:40px 30px;margin-bottom:24px;box-shadow:var(--shadow);text-align:center}
+.ri-header{font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.ri-score-lockup{display:flex;align-items:baseline;justify-content:center;gap:4px;color:var(--navy);font-family:"Playfair Display",serif;margin-bottom:8px}
+.ri-score-lockup .score{font-size:84px;font-weight:700;line-height:0.9}
+.ri-score-lockup .max{font-size:24px;color:var(--muted);font-weight:500;font-family:"DM Sans",sans-serif}
+.ri-band-text{font-size:18px;font-weight:700;margin-bottom:24px}
+.ri-track-thick{height:12px;background:var(--off);border-radius:6px;overflow:hidden;margin-bottom:30px}
+.ri-fill-thick{height:100%;border-radius:6px;transition:width 1.2s ease}
+.ri-panels{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-top:20px}
+.ri-divider{background:var(--off);width:2px;margin:0 auto}
+.ri-panel{padding:0 30px;display:flex;flex-direction:column;align-items:center}
+.ri-panel-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px}
+.ri-pct-lockup{font-family:"Playfair Display",serif;color:var(--purple);font-size:42px;font-weight:700;line-height:1;margin-bottom:8px}
+.ri-pct-lockup small{font-size:22px;font-family:"DM Sans",sans-serif;font-weight:600}
+.ri-raw{font-size:13px;color:var(--muted);margin-bottom:16px}
+.ri-grade{font-size:12px;font-weight:700;padding:6px 16px;border-radius:12px;display:inline-block}
+.flag-box{margin-top:8px;padding:8px 14px;background:#FEF2F2;border:1px solid #C94A4A;border-radius:8px;font-size:11px;font-weight:700;color:#C94A4A;letter-spacing:0.04em}
+.clarity-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;width:100%;margin-bottom:16px}
+.clarity-pill{font-weight:700;font-size:12px;padding:6px 14px;background:var(--off);border-radius:12px}
 /* RADAR CHART */
 .radar-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
 .radar-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
@@ -172,7 +174,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .error-msg{font-size:12px;color:#C94A4A;padding:8px 12px;background:#FEF2F2;border-radius:6px;margin-top:8px;display:none}
 .hidden{display:none!important}
 @media(max-width:500px){.grid2,.radar-wrap,.focus-grid,.tn-grid,.ri-panels{grid-template-columns:1fr}.ri-divider{display:none}.card{padding:18px}.q-text{font-size:15px}}
-@media print{.timer-bar,.nav-row,.btn,.btn-print,.overlay{display:none!important}body{background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,.result-hero,.insight-panel,.trainer-note,.fcs-card,.readiness-card,.ladder-card{box-shadow:none}.result-hero,.insight-panel,.trainer-note,.ladder-card{background:#0D1B2E!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bar-fill,.ri-fill,.fcs-cat-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{*{ -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.timer-bar,.nav-row,.btn,.btn-print,.overlay{display:none!important}body{background:var(--off)!important}.card,.result-hero,.insight-panel,.trainer-note,.fcs-card,.readiness-card,.ladder-card{box-shadow:none}}
 </style>
 </head>
 <body>
@@ -731,23 +733,24 @@ function goBackBehav(){
 
 // ═══ SVG RADAR ════════════════════════════════════════════
 function radarSVG(values,colors,labels,maxVal,size){
-  const n=values.length,cx=size/2,cy=size/2,r=size*0.38;
+  const n=values.length,cx=size/2,cy=size/2,r=size*0.34;
   const angle=(i)=>((i/n)*2*Math.PI)-Math.PI/2;
   const pt=(i,v)=>{const a=angle(i),d=(v/maxVal)*r;return[cx+d*Math.cos(a),cy+d*Math.sin(a)];};
   const gridPts=(pct)=>Array.from({length:n},(_,i)=>pt(i,maxVal*pct)).map(p=>p.join(',')).join(' ');
   const dataPath=values.map((v,i)=>pt(i,v)).map(p=>p.join(',')).join(' ');
   const spokes=Array.from({length:n},(_,i)=>{const[x,y]=pt(i,maxVal);return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>`;}). join('');
   const labelEls=labels.map((l,i)=>{
-    const a=angle(i),d=r+18,x=cx+d*Math.cos(a),y=cy+d*Math.sin(a);
-    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-family="DM Sans,sans-serif" fill="#8A8070" font-weight="500">${l}</text>`;
+    const a=angle(i),d=r+(size*0.11),x=cx+d*Math.cos(a),y=cy+d*Math.sin(a);
+    const fsize=Math.max(9,size*0.045);
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="${fsize}" font-family="DM Sans,sans-serif" fill="#8A8070" font-weight="600">${l}</text>`;
   }).join('');
-  const dots=values.map((v,i)=>{const[x,y]=pt(i,v);return `<circle cx="${x}" cy="${y}" r="3" fill="${colors[i]}"/>`;}). join('');
-  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px">
+  const dots=values.map((v,i)=>{const[x,y]=pt(i,v);const dotR=Math.max(3,size*0.015);return `<circle cx="${x}" cy="${y}" r="${dotR}" fill="${colors[i]}"/>`;}). join('');
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px;margin:0 auto;display:block">
     <polygon points="${gridPts(1)}" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
     <polygon points="${gridPts(0.67)}" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
     <polygon points="${gridPts(0.33)}" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
     ${spokes}
-    <polygon points="${dataPath}" fill="rgba(201,168,76,0.15)" stroke="#C9A84C" stroke-width="1.5"/>
+    <polygon points="${dataPath}" fill="rgba(201,168,76,0.15)" stroke="#C9A84C" stroke-width="2"/>
     ${dots}
     ${labelEls}
   </svg>`;
@@ -779,7 +782,7 @@ function submitAll(){
   const c2sVals=[c2sRaw[1],c2sRaw[2],c2sRaw[3],c2sRaw[4]];
   const c2sColors=[C2S_COLORS[1],C2S_COLORS[2],C2S_COLORS[3],C2S_COLORS[4]];
   const c2sLabels=['Analytical','Amiable','Expressive','Driver'];
-  const c2sSVG=radarSVG(c2sVals,c2sColors,c2sLabels,24,160);
+  const c2sSVG=radarSVG(c2sVals,c2sColors,c2sLabels,24,360);
 
   // RSP now uses maturity score display — no radar needed
   const rspSVG='';
@@ -856,14 +859,14 @@ function submitAll(){
     </div>
 
     <div class="readiness-card">
-      <div class="ri-label">IGI Retail Sales Excellence Index</div>
-      <div><span class="ri-score">${readiness.total}</span><span class="ri-max">/100</span></div>
-      <div class="ri-band" style="color:${readinessBand.color}">${readinessBand.label}</div>
-      <div class="ri-track"><div class="ri-fill" style="width:${readiness.total}%;background:${readinessBand.color}"></div></div>
+      <div class="ri-header">IGI Retail Sales Excellence Index</div>
+      <div class="ri-score-lockup"><span class="score">${readiness.total}</span><span class="max">/100</span></div>
+      <div class="ri-band-text" style="color:${readinessBand.color}">${readinessBand.label}</div>
+      <div class="ri-track-thick"><div class="ri-fill-thick" style="width:${readiness.total}%;background:${readinessBand.color}"></div></div>
       <div class="ri-panels">
         <div class="ri-panel">
           <div class="ri-panel-label" style="color:var(--purple)">Diamond Knowledge</div>
-          <div class="ri-pct" style="color:var(--purple)">${fcsPct}%</div>
+          <div class="ri-pct-lockup">${fcsPct}<small>%</small></div>
           <div class="ri-raw">${fcsResult.correct} / 25 correct</div>
           ${fcsGrade.flag
             ?'<div class="flag-box">&#9888; Technical Training Recommended</div>'
@@ -871,11 +874,11 @@ function submitAll(){
           }
         </div>
         <div class="ri-divider"></div>
-        <div class="ri-panel">
-          <div class="ri-panel-label" style="color:var(--muted)">Behavioural Profile</div>
-          <div style="margin-top:8px">
-            <div class="clarity-row"><span style="color:var(--muted)">Communication</span><span class="clarity-pill" style="color:${C2S_COLORS[c2sA.primary]}">${readiness.c2sClarityLabel}</span></div>
-            <div class="clarity-row"><span style="color:var(--muted)">Sales Persona</span><span class="clarity-pill" style="color:${rspA.stage.color}">${readiness.rspClarityLabel}</span></div>
+        <div class="ri-panel" style="align-items:stretch">
+          <div class="ri-panel-label" style="color:var(--muted);text-align:center">Behavioural Profile</div>
+          <div style="margin-top:16px">
+            <div class="clarity-row"><span style="color:var(--muted);font-weight:500">Communication</span><span class="clarity-pill" style="color:${C2S_COLORS[c2sA.primary]}">${readiness.c2sClarityLabel}</span></div>
+            <div class="clarity-row"><span style="color:var(--muted);font-weight:500">Sales Persona</span><span class="clarity-pill" style="color:${rspA.stage.color}">${readiness.rspClarityLabel}</span></div>
           </div>
         </div>
       </div>
