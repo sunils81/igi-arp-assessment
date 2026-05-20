@@ -778,11 +778,24 @@ function submitAll(){
   const timeTaken='4Cs: '+Math.floor(fcsUsed/60)+'m '+fcsUsed%60+'s | Behav: '+Math.floor(behavUsed/60)+'m '+behavUsed%60+'s';
   const dtLabel={natural:'Natural Diamonds',lgd:'Lab Grown Diamonds',both:'Both'}[diamondType]||diamondType;
 
-  // C2S radar
+  // C2S bar chart
   const c2sVals=[c2sRaw[1],c2sRaw[2],c2sRaw[3],c2sRaw[4]];
   const c2sColors=[C2S_COLORS[1],C2S_COLORS[2],C2S_COLORS[3],C2S_COLORS[4]];
   const c2sLabels=['Analytical','Amiable','Expressive','Driver'];
-  const c2sSVG=radarSVG(c2sVals,c2sColors,c2sLabels,24,360);
+  const c2sChartHTML = `<div style="margin: 20px 0; display: flex; flex-direction: column; gap: 14px;">` + 
+    c2sLabels.map((lbl, i) => {
+      const val = c2sVals[i];
+      const pct = Math.round((val / 24) * 100);
+      return `<div style="text-align: left;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-weight: 600; color: var(--navy)">
+            <span>${lbl}</span>
+            <span style="font-weight: 700">${val}</span>
+          </div>
+          <div style="height: 10px; background: var(--off); border-radius: 5px; overflow: hidden;">
+            <div class="bar-fill" style="height: 100%; width: ${pct}%; background: ${c2sColors[i]}; border-radius: 5px; transition: width 1s ease;"></div>
+          </div>
+        </div>`;
+    }).join('') + `</div>`;
 
   // RSP now uses maturity score display — no radar needed
   const rspSVG='';
@@ -887,7 +900,7 @@ function submitAll(){
     <div class="radar-wrap">
       <div class="radar-card">
         <div class="sp-label" style="color:var(--teal)">Communication Style</div>
-        ${c2sSVG}
+        ${c2sChartHTML}
         <div class="profile-classification" style="background:${C2S_COLORS[c2sA.primary]}22;color:${C2S_COLORS[c2sA.primary]}">${c2sA.label}</div>
         ${c2sA.blendNarrative?'<div class="blend-panel" style="background:var(--off);color:var(--navy);margin-top:10px"><div class="blend-label" style="color:var(--purple)">Blend insight</div>'+c2sA.blendNarrative+'</div>':''}
       </div>
