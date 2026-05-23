@@ -42,7 +42,7 @@ function getSetting(key) {
   const sh = getSettingsSheet();
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === key) return data[i][1];
+    if (data[i][0] === key) return String(data[i][1]).toLowerCase().trim();
   }
   return null;
 }
