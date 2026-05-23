@@ -290,6 +290,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 </div>
 
+<!-- SESSION PASSWORD GATE -->
+<div class="overlay hidden" id="sessionGate">
+  <div class="overlay-box" style="max-width:400px">
+    <div style="font-size:38px;margin-bottom:10px">🔐</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Session Access</div>
+    <h2 style="margin-bottom:8px">Enter Access Code</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.55">Your trainer will share a session code before the assessment begins.</p>
+    <div class="field" style="text-align:left">
+      <label style="font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:6px;letter-spacing:0.02em">Session Code</label>
+      <input type="text" id="gateCodeInput" placeholder="e.g. ARP-2601" autocomplete="off" autocapitalize="characters" spellcheck="false"
+        style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:15px;letter-spacing:0.06em;text-transform:uppercase;outline:none;text-align:center"
+        onkeydown="if(event.key==='Enter') verifySessionCode()">
+    </div>
+    <div id="gateError" class="error-msg" style="margin-bottom:12px">Incorrect code. Please check with your trainer.</div>
+    <button class="btn btn-primary btn-full" onclick="verifySessionCode()" id="gateBtn">Unlock Assessment →</button>
+    <p id="gateVerifying" style="font-size:12px;color:var(--muted);margin-top:10px;display:none">Verifying…</p>
+  </div>
+</div>
+
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════
 const SHEET_URL='https://script.google.com/macros/s/AKfycbzgOEE1ANt7dVynnOkeyMIuzwRgggFPrrngPMAOqXLkSBOM2udGN1rbtelWEDYFxGMI/exec';
@@ -306,6 +325,67 @@ const ALLOW_RESET=PARAMS.get('reset')==='true';
 if(BATCH) document.getElementById('fbatch').value=BATCH;
 if(CENTRE) document.getElementById('fcentre').value=CENTRE;
 document.getElementById('fdiamondtype').value=DIAMOND_TYPE;
+
+// ═══ SESSION CODE GATE ════════════════════════════════════
+(function(){
+  // If a ?code= param is in the URL, pre-fill the gate input
+  const urlCode = PARAMS.get('code')||'';
+  if(urlCode) {
+    const inp = document.getElementById('gateCodeInput');
+    if(inp) inp.value = urlCode.toUpperCase();
+  }
+  // Ask GAS: is a session code required?
+  fetch(SHEET_URL+'?action=settingsPublic')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.codeRequired){
+        // Code required — show gate
+        const gate = document.getElementById('sessionGate');
+        gate.classList.remove('hidden');
+        // If URL already has a ?code= param, auto-verify it
+        if(urlCode){
+          verifySessionCode();
+        }
+      }
+      // No code required — gate stays hidden, app proceeds normally
+    })
+    .catch(()=>{
+      // If GAS unreachable, silently allow (don't block users)
+    });
+})();
+
+function verifySessionCode(){
+  const code = (document.getElementById('gateCodeInput').value||'').trim().toUpperCase();
+  const errEl = document.getElementById('gateError');
+  const btnEl = document.getElementById('gateBtn');
+  const verEl = document.getElementById('gateVerifying');
+  errEl.style.display='none';
+  if(!code){ errEl.textContent='Please enter the session code.'; errEl.style.display='block'; return; }
+  btnEl.style.display='none';
+  verEl.style.display='block';
+  fetch(SHEET_URL+'?action=verifyCode&code='+encodeURIComponent(code))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.valid){
+        document.getElementById('sessionGate').classList.add('hidden');
+      } else {
+        verEl.style.display='none';
+        btnEl.style.display='flex';
+        const reason = d && d.reason;
+        if(reason==='no_code_set'){
+          errEl.textContent='No session code has been set yet. Ask your trainer to set one.';
+        } else {
+          errEl.textContent='Incorrect code. Please check with your trainer.';
+        }
+        errEl.style.display='block';
+        document.getElementById('gateCodeInput').select();
+      }
+    })
+    .catch(()=>{
+      // Network error — let user through (fail open so participants aren't blocked)
+      document.getElementById('sessionGate').classList.add('hidden');
+    });
+}
 
 // Trainer badge
 (function(){

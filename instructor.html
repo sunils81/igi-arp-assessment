@@ -80,6 +80,38 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 
   <div class="card">
+    <div class="section-tag">Session Control</div>
+    <h2 style="margin-bottom:4px">Session Access Code</h2>
+    <p class="sub">Set a code for your session. Associates must enter it before starting the assessment. Turn it off when not needed.</p>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;background:var(--off);border-radius:8px;border:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:2px">Code protection</div>
+        <div id="scStatusLabel" style="font-size:13px;font-weight:600;color:var(--navy)">Checking…</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <span style="font-size:12px;color:var(--muted)" id="scToggleLabel">Off</span>
+        <div id="scToggle" onclick="toggleSessionCode()" style="width:44px;height:24px;border-radius:12px;background:#ccc;position:relative;cursor:pointer;transition:background 0.2s">
+          <div id="scThumb" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
+        </div>
+      </label>
+    </div>
+    <div class="field">
+      <label>Session Code <span style="font-size:10px;color:var(--gold)">(letters & numbers, e.g. ARP-2601)</span></label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="scCodeInput" placeholder="e.g. ARP-2601" autocomplete="off" autocapitalize="characters"
+          style="flex:1;font-family:'DM Mono',monospace;letter-spacing:0.06em;text-transform:uppercase">
+        <button class="btn btn-primary" onclick="saveSessionCode()" style="white-space:nowrap;padding:10px 18px">Save Code</button>
+      </div>
+    </div>
+    <div id="scSaveMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:4px"></div>
+    <div id="scCurrentCode" style="display:none;margin-top:12px;padding:10px 14px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:8px;font-size:13px;color:var(--navy)">
+      <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:4px">Active Code</span>
+      <span id="scActiveCodeDisplay" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;letter-spacing:0.08em"></span>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6">💡 When code protection is <strong>On</strong>, associates are prompted for this code before they can start. When it's <strong>Off</strong>, the assessment opens freely. You can also include the code in the link by appending <code style="font-size:11px">&amp;code=YOURCODE</code> — it will auto-fill for associates.</p>
+  </div>
+
+  <div class="card">
     <div class="section-tag">Generate assessment link</div>
     <h2>Create a trainer link</h2>
     <p class="sub">Fill in the batch details. Batch code auto-generates from Centre + Client + Month. Diamond type is locked for the associate.</p>
@@ -162,10 +194,96 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 </div>
 <script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgOEE1ANt7dVynnOkeyMIuzwRgggFPrrngPMAOqXLkSBOM2udGN1rbtelWEDYFxGMI/exec';
 const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const CENTRE_LABELS = {MUM:'Mumbai',DEL:'Delhi',KOL:'Kolkata',SRT:'Surat',CHE:'Chennai',HYD:'Hyderabad',BLR:'Bangalore',JAI:'Jaipur',AMD:'Ahmedabad',PUN:'Pune',DXB:'Dubai',OTH:'Other'};
 let savedLinks = JSON.parse(localStorage.getItem('igi_instructor_links')||'[]');
 let batchManuallyEdited = false;
+let scEnabled = false;
+
+// ═══ SESSION CODE PANEL ══════════════════════════════════════════════════════
+(function loadSessionSettings(){
+  fetch(GAS_URL+'?action=getSettings')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.status==='ok'){
+        scEnabled = d.sessionCodeEnabled;
+        document.getElementById('scCodeInput').value = d.sessionCode || '';
+        updateScUI();
+        if(d.sessionCode) showActiveCode(d.sessionCode);
+      }
+    })
+    .catch(()=>{ document.getElementById('scStatusLabel').textContent='Could not reach server'; });
+})();
+
+function updateScUI(){
+  const toggle = document.getElementById('scToggle');
+  const thumb = document.getElementById('scThumb');
+  const lbl = document.getElementById('scToggleLabel');
+  const statusLbl = document.getElementById('scStatusLabel');
+  if(scEnabled){
+    toggle.style.background='var(--teal)';
+    thumb.style.left='22px';
+    lbl.textContent='On';
+    statusLbl.textContent='🔐 Code protection is ON';
+    statusLbl.style.color='var(--teal)';
+  } else {
+    toggle.style.background='#ccc';
+    thumb.style.left='2px';
+    lbl.textContent='Off';
+    statusLbl.textContent='🔓 Code protection is OFF';
+    statusLbl.style.color='var(--muted)';
+  }
+}
+
+function showActiveCode(code){
+  const el = document.getElementById('scCurrentCode');
+  const disp = document.getElementById('scActiveCodeDisplay');
+  if(code){ el.style.display='block'; disp.textContent=code; }
+  else { el.style.display='none'; }
+}
+
+function toggleSessionCode(){
+  scEnabled = !scEnabled;
+  updateScUI();
+  const code = (document.getElementById('scCodeInput').value||'').trim().toUpperCase();
+  persistSettings(code, scEnabled);
+}
+
+function saveSessionCode(){
+  const code = (document.getElementById('scCodeInput').value||'').trim().toUpperCase();
+  if(!code){ showScMsg('Please enter a session code first.', false); return; }
+  document.getElementById('scCodeInput').value = code;
+  persistSettings(code, scEnabled);
+}
+
+function persistSettings(code, enabled){
+  const msgEl = document.getElementById('scSaveMsg');
+  msgEl.style.display='none';
+  fetch(GAS_URL+'?action=saveSettings&code='+encodeURIComponent(code)+'&enabled='+enabled)
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.status==='ok'){
+        showActiveCode(d.sessionCode);
+        scEnabled = d.sessionCodeEnabled;
+        updateScUI();
+        showScMsg('✓ Saved! Code: ' + (d.sessionCode||'(cleared)'), true);
+      } else {
+        showScMsg('Error saving. Try again.', false);
+      }
+    })
+    .catch(()=>showScMsg('Network error. Try again.', false));
+}
+
+function showScMsg(msg, ok){
+  const el = document.getElementById('scSaveMsg');
+  el.textContent = msg;
+  el.style.display='block';
+  el.style.background = ok ? '#E1F5EE' : '#FEF2F2';
+  el.style.color = ok ? '#085041' : '#C94A4A';
+  el.style.border = '1px solid ' + (ok ? '#1D9E75' : '#C94A4A');
+  setTimeout(()=>{ el.style.display='none'; }, 3500);
+}
 
 // Populate month dropdown — current month first
 (function(){

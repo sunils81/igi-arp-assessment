@@ -1,8 +1,11 @@
-// IGI ASSOCIATE READINESS PROFILE — Google Apps Script v6
+// IGI ASSOCIATE READINESS PROFILE — Google Apps Script v7
 // Paste ALL → Save → Deploy → New Version (same URL stays)
 // Run fixHeaders() manually once to sync existing sheet headers
+// Run setupSettings() manually once to create the Settings sheet
 
 const SHEET_NAME = 'ARP_Responses';
+const SETTINGS_SHEET = 'ARP_Settings';
+
 const HEADERS = [
   'Timestamp','Ref ID',
   'Trainer Name','Batch Code','IGI Centre','Client',
@@ -16,6 +19,46 @@ const HEADERS = [
   'Readiness Total','Readiness Band','Knowledge Points','Behavioural Points',
   'Combined Profile','Insight Title','PDF Link'
 ];
+
+// ═══ SETTINGS HELPERS ════════════════════════════════════════════════════════
+
+function getSettingsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SETTINGS_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(SETTINGS_SHEET);
+    sh.getRange('A1:B1').setValues([['Key','Value']]);
+    sh.getRange('A1:B1').setBackground('#0D1B2E').setFontColor('#C9A84C').setFontWeight('bold');
+    sh.getRange('A2:B2').setValues([['sessionCodeEnabled','false']]);
+    sh.getRange('A3:B3').setValues([['sessionCode','']]);
+    sh.setColumnWidth(1, 200);
+    sh.setColumnWidth(2, 200);
+  }
+  return sh;
+}
+
+function getSetting(key) {
+  const sh = getSettingsSheet();
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === key) return data[i][1];
+  }
+  return null;
+}
+
+function setSetting(key, value) {
+  const sh = getSettingsSheet();
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === key) {
+      sh.getRange(i + 1, 2).setValue(value);
+      return;
+    }
+  }
+  sh.appendRow([key, value]);
+}
+
+// ═══ HEADERS ═════════════════════════════════════════════════════════════════
 
 function ensureHeaders(sheet){
   const lastCol = Math.max(sheet.getLastColumn(), 1);
@@ -34,6 +77,8 @@ function ensureHeaders(sheet){
     HEADERS.forEach((_,i) => sheet.setColumnWidth(i+1, i<2?130:i<6?140:i<14?130:160));
   }
 }
+
+// ═══ POST (submit assessment) ════════════════════════════════════════════════
 
 function doPost(e){
   try{
@@ -117,24 +162,76 @@ function doPost(e){
   }
 }
 
+// ═══ GET (settings + code verify + instructor actions) ═══════════════════════
+
 function doGet(e){
-  try{
+  const p = e && e.parameter ? e.parameter : {};
+  const action = p.action || '';
+
+  try {
+    // ── Public: is a session code required right now? ────────────────────────
+    if (action === 'settingsPublic') {
+      const enabled = getSetting('sessionCodeEnabled') === 'true';
+      return json({ codeRequired: enabled });
+    }
+
+    // ── Public: validate a session code ─────────────────────────────────────
+    if (action === 'verifyCode') {
+      const enabled = getSetting('sessionCodeEnabled') === 'true';
+      if (!enabled) return json({ valid: true, reason: 'code_not_required' });
+      const stored = (getSetting('sessionCode') || '').toString().trim().toUpperCase();
+      const submitted = (p.code || '').trim().toUpperCase();
+      if (!stored) return json({ valid: false, reason: 'no_code_set' });
+      if (submitted === stored) return json({ valid: true });
+      return json({ valid: false, reason: 'wrong_code' });
+    }
+
+    // ── Instructor: get current settings (for the panel) ────────────────────
+    if (action === 'getSettings') {
+      return json({
+        status: 'ok',
+        sessionCodeEnabled: getSetting('sessionCodeEnabled') === 'true',
+        sessionCode: getSetting('sessionCode') || ''
+      });
+    }
+
+    // ── Instructor: save settings ────────────────────────────────────────────
+    if (action === 'saveSettings') {
+      const code = (p.code || '').trim().toUpperCase();
+      const enabled = p.enabled === 'true';
+      setSetting('sessionCode', code);
+      setSetting('sessionCodeEnabled', enabled ? 'true' : 'false');
+      return json({ status: 'ok', sessionCode: code, sessionCodeEnabled: enabled });
+    }
+
+    // ── Default: response count ──────────────────────────────────────────────
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    return ContentService
-      .createTextOutput(JSON.stringify({status:'ok', responses: sheet?sheet.getLastRow()-1:0}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }catch(err){
-    return ContentService
-      .createTextOutput(JSON.stringify({status:'error'}))
-      .setMimeType(ContentService.MimeType.JSON);
+    return json({ status: 'ok', responses: sheet ? sheet.getLastRow() - 1 : 0 });
+
+  } catch(err) {
+    return json({ status: 'error', message: err.toString() });
   }
 }
 
-// Run once manually to fix existing sheet
+function json(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ═══ ONE-TIME SETUP ══════════════════════════════════════════════════════════
+
+// Run fixHeaders() manually once to fix existing response sheet
 function fixHeaders(){
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEET_NAME);
   if(!sheet) sheet = ss.insertSheet(SHEET_NAME);
   ensureHeaders(sheet);
   SpreadsheetApp.getUi().alert('Headers fixed! ' + HEADERS.length + ' columns set.');
+}
+
+// Run setupSettings() manually once to create the Settings sheet
+function setupSettings(){
+  getSettingsSheet(); // creates it if it doesn't exist
+  SpreadsheetApp.getUi().alert('ARP_Settings sheet ready. sessionCodeEnabled=false, code is blank.');
 }
