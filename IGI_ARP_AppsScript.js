@@ -194,7 +194,14 @@ function doGet(e){
         setSetting('sessionCodeEnabled', 'false');
         return respond({ codeRequired: false, reason: 'expired' });
       }
-      return respond({ codeRequired: enabled });
+      return respond({
+        codeRequired: enabled,
+        batch:    getSetting('activeBatch')    || '',
+        centre:   getSetting('activeCentre')   || '',
+        client:   getSetting('activeClient')   || '',
+        trainer:  getSetting('activeTrainer')  || '',
+        diamonds: getSetting('activeDiamonds') || 'natural'
+      });
     }
 
     // ── Public: validate a session code ─────────────────────────────────────
@@ -226,13 +233,22 @@ function doGet(e){
 
     // ── Instructor: save settings ────────────────────────────────────────────
     if (action === 'saveSettings') {
-      const code = (p.code || '').trim().toUpperCase();
-      const enabled = p.enabled === 'true';
+      const code     = (p.code     || '').trim().toUpperCase();
+      const enabled  = p.enabled === 'true';
       const expiryTs = parseInt(p.expiryTs || '0');
-      setSetting('sessionCode', code);
+      setSetting('sessionCode',        code);
       setSetting('sessionCodeEnabled', enabled ? 'true' : 'false');
-      setSetting('sessionCodeExpiry', expiryTs > 0 ? String(expiryTs) : '0');
-      return respond({ status: 'ok', sessionCode: code, sessionCodeEnabled: enabled, expiryTs: expiryTs });
+      setSetting('sessionCodeExpiry',  expiryTs > 0 ? String(expiryTs) : '0');
+      // Active session config
+      if (p.batch)    setSetting('activeBatch',    p.batch);
+      if (p.centre)   setSetting('activeCentre',   p.centre);
+      if (p.client)   setSetting('activeClient',   p.client);
+      if (p.trainer)  setSetting('activeTrainer',  p.trainer);
+      if (p.diamonds) setSetting('activeDiamonds', p.diamonds);
+      return respond({
+        status: 'ok', sessionCode: code,
+        sessionCodeEnabled: enabled, expiryTs: expiryTs
+      });
     }
 
     // ── Default: response count ──────────────────────────────────────────────

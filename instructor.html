@@ -293,7 +293,18 @@ function persistSettings(code, enabled, expiryMins){
   const msgEl = document.getElementById('scSaveMsg');
   msgEl.style.display='none';
   const expiryTs = expiryMins > 0 ? (Date.now() + expiryMins * 60000) : 0;
-  fetch(GAS_URL+'?action=saveSettings&code='+encodeURIComponent(code)+'&enabled='+enabled+'&expiryTs='+expiryTs)
+  // Also bundle the current batch config so associate app gets it from base URL
+  const centreCode  = document.getElementById('gCentre').value;
+  const centreLabel = CENTRE_LABELS[centreCode] || centreCode;
+  const client      = document.getElementById('gClient').value.trim();
+  const trainer     = document.getElementById('gTrainer').value.trim();
+  const batch       = document.getElementById('gBatch').value.trim();
+  const diamonds    = getSelectedDiamond();
+  const params = new URLSearchParams({
+    action:'saveSettings', code, enabled, expiryTs,
+    batch, centre: centreLabel, client, trainer, diamonds
+  });
+  fetch(GAS_URL + '?' + params.toString())
     .then(r=>r.json())
     .then(d=>{
       if(d && d.status==='ok'){

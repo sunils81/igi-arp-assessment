@@ -388,13 +388,28 @@ function gasGet(params, callback) {
   gasGet({action:'settingsPublic'}, function(err, d){
     document.getElementById('sessionCheckingCard').classList.add('hidden');
     document.getElementById('screen0').classList.remove('hidden');
+
+    // Apply session config from GAS (only if URL params not already set)
+    if(!err && d){
+      if(d.batch    && !BATCH)        { document.getElementById('fbatch').value   = d.batch; }
+      if(d.centre   && !CENTRE)       { document.getElementById('fcentre').value  = d.centre; }
+      if(d.diamonds && !PARAMS.get('diamonds')){
+        document.getElementById('fdiamondtype').value = d.diamonds;
+        // Re-render diamond indicator with new type
+        const dtLabels={natural:'Natural Diamonds',lgd:'Lab Grown Diamonds',both:'Natural & Lab Grown Diamonds'};
+        const dtColors={natural:'#1D9E75',lgd:'#534AB7',both:'#C9A84C'};
+        const lbl=dtLabels[d.diamonds]||'Natural Diamonds';
+        const col=dtColors[d.diamonds]||'#1D9E75';
+        const ind=document.getElementById('diamondIndicator');
+        if(ind) ind.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0"></div><div style="font-size:13px;color:#0D1B2E"><span style="font-weight:500">Diamond Knowledge section:</span> <span style="color:'+col+';font-weight:600">'+lbl+'</span></div>';
+      }
+    }
+
     if(!err && d && d.codeRequired){
-      // Show inline code entry, hide the form
       document.getElementById('sessionCodeCard').classList.remove('hidden');
       document.getElementById('detailsFormCard').classList.add('hidden');
       if(urlCode) verifySessionCode();
     } else {
-      // No code needed — show form directly
       document.getElementById('sessionCodeCard').classList.add('hidden');
       document.getElementById('detailsFormCard').classList.remove('hidden');
     }
