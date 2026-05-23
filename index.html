@@ -290,6 +290,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 </div>
 
+<!-- SCREENSHOT WARNING OVERLAY -->
+<div class="overlay hidden" id="screenshotWarn">
+  <div class="overlay-box" style="max-width:360px">
+    <div style="font-size:42px;margin-bottom:10px">📵</div>
+    <h2 style="margin-bottom:8px;color:var(--coral)">Screenshots Not Permitted</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.55">Screenshots are not allowed during this assessment. Please continue without capturing screen content.</p>
+  </div>
+</div>
+
+<!-- TAB SWITCH WARNING OVERLAY -->
+<div class="overlay hidden" id="tabWarnOverlay">
+  <div class="overlay-box" style="max-width:380px">
+    <div style="font-size:42px;margin-bottom:10px">⚠️</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--coral);margin-bottom:8px">Attention</div>
+    <h2 style="margin-bottom:8px">You've Left the Assessment</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.55">The timer has been paused. Please return to the assessment immediately.</p>
+    <p id="tabWarnCountMsg" style="font-size:12px;font-weight:600;color:var(--coral);margin-bottom:20px"></p>
+    <button class="btn btn-primary btn-full" onclick="dismissTabWarn()">Return to Assessment →</button>
+  </div>
+</div>
+
 <!-- SESSION PASSWORD GATE -->
 <div class="overlay hidden" id="sessionGate">
   <div class="overlay-box" style="max-width:400px">
@@ -374,6 +395,8 @@ function verifySessionCode(){
         const reason = d && d.reason;
         if(reason==='no_code_set'){
           errEl.textContent='No session code has been set yet. Ask your trainer to set one.';
+        } else if(reason==='expired'){
+          errEl.textContent='This session code has expired. Ask your trainer for a new one.';
         } else {
           errEl.textContent='Incorrect code. Please check with your trainer.';
         }
@@ -385,6 +408,131 @@ function verifySessionCode(){
       // Network error — let user through (fail open so participants aren't blocked)
       document.getElementById('sessionGate').classList.add('hidden');
     });
+}
+
+// ═══ SCREENSHOT DETERRENT ═════════════════════════════════
+(function(){
+  let ssWarnTimer = null;
+  function showScreenshotWarn(){
+    const el = document.getElementById('screenshotWarn');
+    el.classList.remove('hidden');
+    clearTimeout(ssWarnTimer);
+    ssWarnTimer = setTimeout(()=>{ el.classList.add('hidden'); }, 3000);
+  }
+  // PrintScreen key (Windows/Linux)
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'PrintScreen' || e.keyCode === 44){
+      e.preventDefault();
+      showScreenshotWarn();
+    }
+    // Mac: Cmd+Shift+3, Cmd+Shift+4, Cmd+Shift+5, Cmd+Shift+6
+    if(e.metaKey && e.shiftKey && ['3','4','5','6'].includes(e.key)){
+      e.preventDefault();
+      showScreenshotWarn();
+    }
+    // Windows Snipping: Win+Shift+S (cannot fully block, but notify)
+    if(e.metaKey && e.shiftKey && e.key === 'S'){
+      showScreenshotWarn();
+    }
+  });
+  // Detect clipboard write (used by some screenshot tools)
+  document.addEventListener('copy', function(e){
+    const sel = window.getSelection ? window.getSelection().toString() : '';
+    if(!sel) showScreenshotWarn(); // Clipboard write without text selection = likely screenshot tool
+  });
+})();
+
+// ═══ SMART TAB SWITCH / FOCUS LOSS ════════════════════════
+const TAB_GRACE_MS = 3000;   // Ignore focus loss shorter than 3 seconds
+const TAB_MAX_STRIKES = 2;   // Auto-submit on third violation
+let tabStrikes = 0;
+let tabBlurTime = 0;
+let tabGraceTimer = null;
+let tabTimerPaused = false;
+let quizIsActive = false;    // only enforce once quiz has started
+
+function setQuizActive(val){ quizIsActive = val; }
+
+document.addEventListener('visibilitychange', function(){
+  if(!quizIsActive) return;
+  if(document.hidden){
+    // Left the page
+    tabBlurTime = Date.now();
+    tabGraceTimer = setTimeout(function(){
+      // Still away after grace period — treat as violation
+      handleTabViolation();
+    }, TAB_GRACE_MS);
+  } else {
+    // Returned
+    const away = Date.now() - tabBlurTime;
+    clearTimeout(tabGraceTimer);
+    if(away < TAB_GRACE_MS){
+      // Brief absence (phone call notification etc.) — ignore completely
+      return;
+    }
+    // If tabWarnOverlay is showing, don't double-count — dismissTabWarn handles it
+  }
+});
+
+window.addEventListener('blur', function(){
+  if(!quizIsActive) return;
+  tabBlurTime = Date.now();
+  clearTimeout(tabGraceTimer);
+  tabGraceTimer = setTimeout(function(){
+    if(!document.hidden) handleTabViolation(); // Window blur (not tab switch)
+  }, TAB_GRACE_MS);
+});
+
+window.addEventListener('focus', function(){
+  clearTimeout(tabGraceTimer);
+});
+
+function handleTabViolation(){
+  if(!quizIsActive) return;
+  tabStrikes++;
+  // Pause timer
+  tabTimerPaused = true;
+  pauseTimers();
+  const overlay = document.getElementById('tabWarnOverlay');
+  const msg = document.getElementById('tabWarnCountMsg');
+  if(tabStrikes >= TAB_MAX_STRIKES){
+    msg.textContent = '⚠ This is your final warning. The next switch will auto-submit your assessment.';
+  } else {
+    msg.textContent = 'Warning ' + tabStrikes + ' of ' + TAB_MAX_STRIKES + '. One more will auto-submit.';
+  }
+  overlay.classList.remove('hidden');
+}
+
+function dismissTabWarn(){
+  document.getElementById('tabWarnOverlay').classList.add('hidden');
+  if(tabStrikes > TAB_MAX_STRIKES){
+    forceSubmit();
+    return;
+  }
+  tabTimerPaused = false;
+  resumeTimers();
+}
+
+// pauseTimers / resumeTimers — hook into existing timer variables
+function pauseTimers(){
+  if(typeof fcsTimer !== 'undefined' && fcsTimer) clearInterval(fcsTimer);
+  if(typeof behavTimer !== 'undefined' && behavTimer) clearInterval(behavTimer);
+}
+
+function resumeTimers(){
+  // Re-start whichever timer is active based on current screen
+  const s1 = document.getElementById('screen1');
+  const sT12 = document.getElementById('screenT12');
+  const sT23 = document.getElementById('screenT23');
+  const s3 = document.getElementById('screen3');
+  // If FCS section is showing
+  if(s1 && !s1.classList.contains('hidden')){
+    if(typeof startFCSTimer === 'function') startFCSTimer();
+  }
+  // If behavioural section is showing
+  if((sT23 && !sT23.classList.contains('hidden')) || (s3 && !s3.classList.contains('hidden'))){
+    if(typeof startBehavTimer === 'function') startBehavTimer();
+  }
 }
 
 // Trainer badge
@@ -678,6 +826,7 @@ function startAssessment(){
   fcsBank=buildFCSBank(diamondType);
   document.getElementById('screen0').classList.add('hidden');
   document.getElementById('screen1').classList.remove('hidden');
+  setQuizActive(true);   // ← Enable tab-switch & screenshot enforcement
   startFCSTimer();
   renderFCSQ(0);
 }

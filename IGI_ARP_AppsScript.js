@@ -31,6 +31,7 @@ function getSettingsSheet() {
     sh.getRange('A1:B1').setBackground('#0D1B2E').setFontColor('#C9A84C').setFontWeight('bold');
     sh.getRange('A2:B2').setValues([['sessionCodeEnabled','false']]);
     sh.getRange('A3:B3').setValues([['sessionCode','']]);
+    sh.getRange('A4:B4').setValues([['sessionCodeExpiry','0']]);
     sh.setColumnWidth(1, 200);
     sh.setColumnWidth(2, 200);
   }
@@ -172,6 +173,14 @@ function doGet(e){
     // ── Public: is a session code required right now? ────────────────────────
     if (action === 'settingsPublic') {
       const enabled = getSetting('sessionCodeEnabled') === 'true';
+      // Check expiry
+      const expiryTs = parseInt(getSetting('sessionCodeExpiry') || '0');
+      const now = Date.now();
+      if (enabled && expiryTs > 0 && now > expiryTs) {
+        // Code has expired — auto-disable
+        setSetting('sessionCodeEnabled', 'false');
+        return json({ codeRequired: false, reason: 'expired' });
+      }
       return json({ codeRequired: enabled });
     }
 
@@ -179,6 +188,12 @@ function doGet(e){
     if (action === 'verifyCode') {
       const enabled = getSetting('sessionCodeEnabled') === 'true';
       if (!enabled) return json({ valid: true, reason: 'code_not_required' });
+      // Check expiry
+      const expiryTs = parseInt(getSetting('sessionCodeExpiry') || '0');
+      if (expiryTs > 0 && Date.now() > expiryTs) {
+        setSetting('sessionCodeEnabled', 'false');
+        return json({ valid: false, reason: 'expired' });
+      }
       const stored = (getSetting('sessionCode') || '').toString().trim().toUpperCase();
       const submitted = (p.code || '').trim().toUpperCase();
       if (!stored) return json({ valid: false, reason: 'no_code_set' });
@@ -191,7 +206,8 @@ function doGet(e){
       return json({
         status: 'ok',
         sessionCodeEnabled: getSetting('sessionCodeEnabled') === 'true',
-        sessionCode: getSetting('sessionCode') || ''
+        sessionCode: getSetting('sessionCode') || '',
+        expiryTs: parseInt(getSetting('sessionCodeExpiry') || '0')
       });
     }
 
@@ -199,9 +215,11 @@ function doGet(e){
     if (action === 'saveSettings') {
       const code = (p.code || '').trim().toUpperCase();
       const enabled = p.enabled === 'true';
+      const expiryTs = parseInt(p.expiryTs || '0');
       setSetting('sessionCode', code);
       setSetting('sessionCodeEnabled', enabled ? 'true' : 'false');
-      return json({ status: 'ok', sessionCode: code, sessionCodeEnabled: enabled });
+      setSetting('sessionCodeExpiry', expiryTs > 0 ? String(expiryTs) : '0');
+      return json({ status: 'ok', sessionCode: code, sessionCodeEnabled: enabled, expiryTs: expiryTs });
     }
 
     // ── Default: response count ──────────────────────────────────────────────

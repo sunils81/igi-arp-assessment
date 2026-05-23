@@ -97,11 +97,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
     </div>
     <div class="field">
       <label>Session Code <span style="font-size:10px;color:var(--gold)">(letters & numbers, e.g. ARP-2601)</span></label>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="scCodeInput" placeholder="e.g. ARP-2601" autocomplete="off" autocapitalize="characters"
-          style="flex:1;font-family:'DM Mono',monospace;letter-spacing:0.06em;text-transform:uppercase">
+          style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);background:var(--white);outline:none">
+        <button class="btn-outline" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px;font-size:12px;border-radius:8px;cursor:pointer">⚡ Generate</button>
         <button class="btn btn-primary" onclick="saveSessionCode()" style="white-space:nowrap;padding:10px 18px">Save Code</button>
       </div>
+    </div>
+    <div class="field" style="margin-top:4px">
+      <label>Code expires after</label>
+      <select id="scExpiry" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--navy);background:var(--white);outline:none">
+        <option value="0">No expiry (manual off only)</option>
+        <option value="60">1 hour</option>
+        <option value="120">2 hours</option>
+        <option value="240">4 hours</option>
+        <option value="480">8 hours (end of day)</option>
+      </select>
     </div>
     <div id="scSaveMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:4px"></div>
     <div id="scCurrentCode" style="display:none;margin-top:12px;padding:10px 14px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:8px;font-size:13px;color:var(--navy)">
@@ -210,7 +221,7 @@ let scEnabled = false;
         scEnabled = d.sessionCodeEnabled;
         document.getElementById('scCodeInput').value = d.sessionCode || '';
         updateScUI();
-        if(d.sessionCode) showActiveCode(d.sessionCode);
+        if(d.sessionCode) showActiveCode(d.sessionCode, d.expiryTs||0);
       }
     })
     .catch(()=>{ document.getElementById('scStatusLabel').textContent='Could not reach server'; });
@@ -236,38 +247,61 @@ function updateScUI(){
   }
 }
 
-function showActiveCode(code){
+function showActiveCode(code, expiryTs){
   const el = document.getElementById('scCurrentCode');
   const disp = document.getElementById('scActiveCodeDisplay');
-  if(code){ el.style.display='block'; disp.textContent=code; }
-  else { el.style.display='none'; }
+  if(code){
+    el.style.display='block';
+    let expStr = '';
+    if(expiryTs && expiryTs > 0){
+      const diff = Math.round((expiryTs - Date.now()) / 60000);
+      expStr = diff > 0 ? ' · Expires in ~' + diff + ' min' : ' · Expired';
+    }
+    disp.textContent = code + expStr;
+  } else {
+    el.style.display='none';
+  }
+}
+
+function generateCode(){
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mn = String(now.getMinutes()).padStart(2,'0');
+  const code = 'ARP-' + dd + mm + '-' + hh + mn;
+  document.getElementById('scCodeInput').value = code;
 }
 
 function toggleSessionCode(){
   scEnabled = !scEnabled;
   updateScUI();
   const code = (document.getElementById('scCodeInput').value||'').trim().toUpperCase();
-  persistSettings(code, scEnabled);
+  const expiry = parseInt(document.getElementById('scExpiry').value)||0;
+  persistSettings(code, scEnabled, expiry);
 }
 
 function saveSessionCode(){
   const code = (document.getElementById('scCodeInput').value||'').trim().toUpperCase();
   if(!code){ showScMsg('Please enter a session code first.', false); return; }
   document.getElementById('scCodeInput').value = code;
-  persistSettings(code, scEnabled);
+  const expiry = parseInt(document.getElementById('scExpiry').value)||0;
+  persistSettings(code, scEnabled, expiry);
 }
 
-function persistSettings(code, enabled){
+function persistSettings(code, enabled, expiryMins){
   const msgEl = document.getElementById('scSaveMsg');
   msgEl.style.display='none';
-  fetch(GAS_URL+'?action=saveSettings&code='+encodeURIComponent(code)+'&enabled='+enabled)
+  const expiryTs = expiryMins > 0 ? (Date.now() + expiryMins * 60000) : 0;
+  fetch(GAS_URL+'?action=saveSettings&code='+encodeURIComponent(code)+'&enabled='+enabled+'&expiryTs='+expiryTs)
     .then(r=>r.json())
     .then(d=>{
       if(d && d.status==='ok'){
-        showActiveCode(d.sessionCode);
+        showActiveCode(d.sessionCode, d.expiryTs);
         scEnabled = d.sessionCodeEnabled;
         updateScUI();
-        showScMsg('✓ Saved! Code: ' + (d.sessionCode||'(cleared)'), true);
+        const expStr = expiryMins > 0 ? ' · Expires in ' + expiryMins + ' min' : ' · No expiry';
+        showScMsg('✓ Saved! Code: ' + (d.sessionCode||'(cleared)') + expStr, true);
       } else {
         showScMsg('Error saving. Try again.', false);
       }
