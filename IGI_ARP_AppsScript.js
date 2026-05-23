@@ -32,6 +32,11 @@ function getSettingsSheet() {
     sh.getRange('A2:B2').setValues([['sessionCodeEnabled','false']]);
     sh.getRange('A3:B3').setValues([['sessionCode','']]);
     sh.getRange('A4:B4').setValues([['sessionCodeExpiry','0']]);
+    sh.getRange('A5:B5').setValues([['activeBatch','']]);
+    sh.getRange('A6:B6').setValues([['activeCentre','']]);
+    sh.getRange('A7:B7').setValues([['activeClient','']]);
+    sh.getRange('A8:B8').setValues([['activeTrainer','']]);
+    sh.getRange('A9:B9').setValues([['activeDiamonds','natural']]);
     sh.setColumnWidth(1, 200);
     sh.setColumnWidth(2, 200);
   }
@@ -286,8 +291,34 @@ function fixHeaders(){
   SpreadsheetApp.getUi().alert('Headers fixed! ' + HEADERS.length + ' columns set.');
 }
 
-// Run setupSettings() manually once to create the Settings sheet
+// Run setupSettings() manually once to create/update the Settings sheet
 function setupSettings(){
-  getSettingsSheet(); // creates it if it doesn't exist
-  SpreadsheetApp.getUi().alert('ARP_Settings sheet ready. sessionCodeEnabled=false, code is blank.');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SETTINGS_SHEET);
+  if (!sh) {
+    getSettingsSheet(); // creates fresh with all rows
+    SpreadsheetApp.getUi().alert('ARP_Settings sheet created with all keys.');
+    return;
+  }
+  // Sheet exists — add any missing keys
+  const required = [
+    ['sessionCodeEnabled','false'],
+    ['sessionCode',''],
+    ['sessionCodeExpiry','0'],
+    ['activeBatch',''],
+    ['activeCentre',''],
+    ['activeClient',''],
+    ['activeTrainer',''],
+    ['activeDiamonds','natural']
+  ];
+  const data = sh.getDataRange().getValues();
+  const existingKeys = data.slice(1).map(r => r[0]);
+  let added = 0;
+  required.forEach(function(row){
+    if(!existingKeys.includes(row[0])){
+      sh.appendRow(row);
+      added++;
+    }
+  });
+  SpreadsheetApp.getUi().alert('Done! ' + added + ' missing key(s) added to ARP_Settings.');
 }
