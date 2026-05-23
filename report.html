@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGI ARP — Batch Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FDFCF9;--off:#F4F1EB;--muted:#8A8070;--border:rgba(201,168,76,0.2);--teal:#1D9E75;--coral:#C9613A;--purple:#534AB7;--blue:#378ADD;--radius:12px;--shadow:0 4px 24px rgba(13,27,46,0.10)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);min-height:100vh;font-size:15px;line-height:1.6}
+#app{max-width:800px;margin:0 auto;padding:20px 16px 60px}
+.site-header{background:var(--navy);border-radius:var(--radius);margin-bottom:20px;overflow:hidden}
+.header-logo-band{padding:22px 24px 14px;display:flex;align-items:center;justify-content:center}
+.header-logo-band img{height:46px;width:auto}
+.header-divider{height:1px;background:rgba(201,168,76,0.3);margin:0 24px}
+.header-prog-band{padding:10px 24px 18px;text-align:center}
+.header-prog-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.header-tagline{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.04em;font-style:italic}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:26px;box-shadow:var(--shadow);margin-bottom:16px}
+.section-tag{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.card h2{font-size:19px;font-weight:600;color:var(--navy);line-height:1.3;font-family:"Playfair Display",serif}
+.card .sub{font-size:13px;color:var(--muted);margin-top:6px;margin-bottom:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;letter-spacing:0.02em;text-transform:uppercase}
+.field input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;background:var(--white);color:var(--navy);outline:none;transition:border-color 0.2s}
+.field input:focus{border-color:var(--gold)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 22px;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted);transition:all 0.18s}
+.btn-primary{background:var(--gold);color:var(--navy);border-color:var(--gold);width:100%;margin-top:6px}
+.btn-primary:hover{background:var(--gold-light)}
+.error-msg{font-size:12px;color:#C94A4A;padding:8px 12px;background:#FEF2F2;border-radius:6px;margin-top:8px;display:none}
+.hidden{display:none!important}
+/* REPORT STYLES */
+.report-header{background:var(--navy);border-radius:var(--radius);padding:28px;margin-bottom:16px;text-align:center}
+.report-header .client-name{font-size:28px;font-weight:700;font-family:"Playfair Display",serif;color:var(--gold-light);margin-bottom:4px}
+.report-header .batch-meta{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px}
+.report-header .igi-badge{display:inline-block;padding:4px 14px;border-radius:20px;background:rgba(201,168,76,0.15);border:1px solid var(--gold);color:var(--gold-light);font-size:11px;font-weight:600;letter-spacing:0.04em}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat-box{background:var(--white);border-radius:10px;padding:16px;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-box .val{font-size:30px;font-weight:700;font-family:"Playfair Display",serif;color:var(--navy)}
+.stat-box .lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:3px}
+.band-bar{display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:8px}
+.band-seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;transition:width 0.8s ease}
+/* HEATMAP */
+.heatmap-wrap{overflow-x:auto;margin-bottom:16px}
+.heatmap{border-collapse:collapse;width:100%;font-size:11px}
+.heatmap th{padding:8px 6px;text-align:left;font-weight:600;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap}
+.heatmap th.skill-col{max-width:130px;font-size:10px}
+.heatmap td{padding:6px;border-bottom:1px solid var(--border);vertical-align:middle}
+.heatmap td.assoc-name{font-weight:600;color:var(--navy);font-size:12px;white-space:nowrap}
+.cell-strong{background:#E1F5EE;color:#085041;text-align:center;border-radius:4px;font-size:9px;font-weight:700;padding:2px 4px}
+.cell-developing{background:#FFF8E7;color:#7A5C00;text-align:center;border-radius:4px;font-size:9px;font-weight:700;padding:2px 4px}
+.cell-gap{background:#FEF2F2;color:#991B1B;text-align:center;border-radius:4px;font-size:9px;font-weight:700;padding:2px 4px}
+/* ASSOC CARDS */
+.assoc-card{background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.assoc-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.assoc-card-name{font-size:15px;font-weight:600;color:var(--navy);font-family:"Playfair Display",serif}
+.assoc-card-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.assoc-score-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.assoc-gaps{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.gap-pill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px}
+/* PRIORITY RECS */
+.prio-card{background:var(--navy);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.prio-item{padding:14px;background:rgba(255,255,255,0.07);border-radius:8px;border-left:3px solid var(--gold);margin-bottom:10px}
+/* CTA */
+.cta-card{background:linear-gradient(135deg,var(--navy) 0%,#1a2f50 100%);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:16px;border:1px solid rgba(201,168,76,0.3)}
+@media(max-width:600px){.stat-grid{grid-template-columns:1fr 1fr}.heatmap th.skill-col{max-width:80px}}
+@media print{.card,.assoc-card,.stat-box{box-shadow:none}body{background:var(--off)!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="site-header">
+    <div class="header-logo-band">
+      <img src="https://www.igi.org/wp-content/uploads/2021/07/IGI-Logo-White.png" alt="IGI" onerror="this.style.display='none'">
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-prog-band">
+      <div class="header-prog-label">Batch Report</div>
+      <div class="header-tagline">IGI Sales Associate Readiness Profile — Team Analytics</div>
+    </div>
+  </div>
+
+  <!-- ACCESS GATE -->
+  <div id="gateScreen">
+    <div class="card">
+      <div class="section-tag">Secure Access</div>
+      <h2>View Batch Report</h2>
+      <p class="sub">Enter your batch code and the report password provided by your IGI trainer.</p>
+      <div class="field"><label>Batch Code</label><input type="text" id="rBatch" placeholder="e.g. MUM-POME-MAY26" autocomplete="off" style="text-transform:uppercase;font-family:'DM Mono',monospace;letter-spacing:0.06em"></div>
+      <div class="field"><label>Report Password</label><input type="password" id="rPass" placeholder="Provided by your trainer" autocomplete="off" onkeydown="if(event.key==='Enter') loadReport()"></div>
+      <div class="error-msg" id="gateErr">Incorrect batch code or password. Please check with your trainer.</div>
+      <button class="btn btn-primary" onclick="loadReport()" id="gateBtn">View Report →</button>
+      <p id="gateLoading" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;display:none">Loading report…</p>
+    </div>
+  </div>
+
+  <!-- REPORT CONTENT -->
+  <div id="reportScreen" class="hidden"></div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgOEE1ANt7dVynnOkeyMIuzwRgggFPrrngPMAOqXLkSBOM2udGN1rbtelWEDYFxGMI/exec';
+
+const SKILLS = ['Occasion-led discovery','Emotion-before-product sequencing','Diamond knowledge accuracy','Objection handling','Story-led selling','Confident single recommendation','Post-sale relationship building','Multi-stakeholder selling','Upsell and cross-sell instinct','Technical accuracy under pressure'];
+
+const SKILL_SHORT = ['Discovery','Emotion seq.','4Cs knowledge','Objection hdlg','Story selling','Recommendation','Post-sale rel.','Multi-stake','Upsell instinct','Tech accuracy'];
+
+const RSP_ROLE_FIT = {
+  PP:"Product-led interactions. Tends to present before exploring customer needs. Typically lower average transaction values and conversion rates.",
+  TA:"Transactions completed with care, but need discovery depth. Solves surface requests without fully uncovering the occasion or emotional context.",
+  PS:"Genuine problem-solver. Understands real customer needs but needs conviction in recommendation — tends to offer options rather than a single clear choice.",
+  EA:"Top-tier professional. Strong expertise and relationship depth. Final step: consistent completion of every interaction with a defined next step.",
+  TrA:"Reference standard. Customers seek out by name and refer. Development is about mentoring others to this level."
+};
+
+function gasGet(params, cb) {
+  const url = GAS_URL + '?' + Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const cbName = '_rpCb_' + Date.now();
+  const s = document.createElement('script');
+  let done = false;
+  window[cbName] = function(d){ done=true; delete window[cbName]; document.body.removeChild(s); cb(null,d); };
+  s.onerror = function(){ if(!done){done=true;delete window[cbName];try{document.body.removeChild(s);}catch(x){} cb(new Error('err'),null);} };
+  s.src = url + '&callback=' + cbName;
+  document.body.appendChild(s);
+  setTimeout(()=>{ if(!done){done=true;delete window[cbName];try{document.body.removeChild(s);}catch(x){} cb(new Error('timeout'),null);} }, 10000);
+}
+
+function computeSkillGaps(c2sStyle, rspStageKey, fcsPct) {
+  const analytical=c2sStyle==='Analytical', amiable=c2sStyle==='Amiable';
+  const expressive=c2sStyle==='Expressive', driver=c2sStyle==='Driver';
+  const rspNum={PP:1,TA:2,PS:3,EA:4,TrA:5}[rspStageKey]||1;
+  const k=fcsPct;
+  const s=(a,b)=>a||b||'developing';
+  const strong=(c)=>c?'strong':null, gap=(c)=>c?'gap':null;
+  return [
+    s(strong(rspNum>=3&&(amiable||expressive)), gap(rspNum<=2&&(analytical||driver))),
+    s(strong((amiable||expressive)&&rspNum>=3), gap((analytical||driver)&&rspNum<=2)),
+    s(strong(k>=75), gap(k<55)),
+    s(strong(rspNum>=4&&(driver||analytical)), gap(rspNum<=2&&(amiable||expressive))),
+    s(strong((expressive||amiable)&&rspNum>=3), gap(analytical&&rspNum<=2)),
+    s(strong((driver||analytical)&&rspNum>=3), gap(amiable&&rspNum<=2)),
+    s(strong(rspNum>=4), gap(rspNum<=2)),
+    s(strong((amiable||expressive)&&rspNum>=3), gap(driver&&rspNum<=2)),
+    s(strong(rspNum>=3&&k>=65), gap(rspNum<=2||k<55)),
+    s(strong(k>=75&&(analytical||driver)), gap(k<55))
+  ];
+}
+
+function loadReport() {
+  const batch = (document.getElementById('rBatch').value||'').trim().toUpperCase();
+  const pass  = (document.getElementById('rPass').value||'').trim();
+  const errEl = document.getElementById('gateErr');
+  const btn   = document.getElementById('gateBtn');
+  const loading = document.getElementById('gateLoading');
+  errEl.style.display='none';
+  if(!batch||!pass){ errEl.textContent='Please enter both batch code and password.'; errEl.style.display='block'; return; }
+  btn.style.display='none'; loading.style.display='block';
+  gasGet({action:'getBatchReport', batch, pass}, function(err, d){
+    btn.style.display='flex'; loading.style.display='none';
+    if(err || !d || d.status==='error'){
+      errEl.textContent = (d&&d.reason==='wrong_password') ? 'Incorrect password.' : (d&&d.reason==='no_data') ? 'No data found for this batch code.' : 'Could not load report. Please try again.';
+      errEl.style.display='block'; return;
+    }
+    if(!d.rows||!d.rows.length){ errEl.textContent='No assessments found for batch: '+batch; errEl.style.display='block'; return; }
+    renderReport(d.rows, batch, d.client||batch);
+    document.getElementById('gateScreen').classList.add('hidden');
+    document.getElementById('reportScreen').classList.remove('hidden');
+  });
+}
+
+function renderReport(rows, batch, client) {
+  const n = rows.length;
+  const avgRI = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
+  const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
+
+  // Band distribution
+  const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
+  const bandColors = {Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'};
+  rows.forEach(r=>{ const b=r.band||'Foundation'; bands[b]=(bands[b]||0)+1; });
+
+  // RSP distribution
+  const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
+  rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
+
+  // Skill gap matrix
+  const skillMatrix = rows.map(r=>({
+    name: r.name, desig: r.desig, ri: r.ri, band: r.band, rspKey: r.rspKey, rspLabel: r.rspLabel,
+    c2s: r.c2s, gaps: computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
+  }));
+
+  // Team-level gap counts per skill
+  const skillGapCounts = SKILLS.map((_,si)=>({
+    skill: SKILLS[si], short: SKILL_SHORT[si],
+    gapCount: skillMatrix.filter(a=>a.gaps[si]==='gap').length,
+    devCount: skillMatrix.filter(a=>a.gaps[si]==='developing').length
+  })).sort((a,b)=>(b.gapCount+b.devCount*0.5)-(a.gapCount+a.devCount*0.5));
+
+  // Top 3 training priorities
+  const topGaps = skillGapCounts.slice(0,3);
+
+  // Knowledge risk associates
+  const knowledgeRisk = rows.filter(r=>(parseFloat(r.fcs)||0)<56);
+
+  const html = `
+    <div class="report-header">
+      <div class="client-name">${client}</div>
+      <div class="batch-meta">Batch: ${batch} &nbsp;|&nbsp; ${n} associate${n!==1?'s':''} assessed &nbsp;|&nbsp; IGI Sales Associate Readiness Profile</div>
+      <div class="igi-badge">IGI School of Gemology — Pre-Training Assessment Report</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="val">${n}</div><div class="lbl">Assessed</div></div>
+      <div class="stat-box"><div class="val" style="color:${avgRI>=70?'var(--teal)':avgRI>=55?'var(--blue)':'var(--coral)'}">${avgRI}</div><div class="lbl">Avg. Index /100</div></div>
+      <div class="stat-box"><div class="val" style="color:${avgFcs>=75?'var(--teal)':avgFcs>=55?'var(--gold)':'var(--coral)'}">${avgFcs}%</div><div class="lbl">Avg. 4Cs Score</div></div>
+      <div class="stat-box"><div class="val" style="color:var(--coral)">${knowledgeRisk.length}</div><div class="lbl">Knowledge Risk</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-tag">Readiness Distribution</div>
+      <h2 style="margin-bottom:14px">Team Readiness Breakdown</h2>
+      <div class="band-bar">
+        ${Object.entries(bands).filter(([,v])=>v>0).map(([band,count])=>`
+          <div class="band-seg" style="width:${Math.round((count/n)*100)}%;background:${bandColors[band]};min-width:${count>0?'30px':'0'}">
+            ${Math.round((count/n)*100)>10?band:''}
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        ${Object.entries(bands).map(([band,count])=>`
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${bandColors[band]}"></div>
+            <span style="color:var(--navy);font-weight:600">${count}</span>
+            <span style="color:var(--muted)">${band}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-tag" style="color:var(--coral)">Team Skills Gap Heatmap</div>
+      <h2 style="margin-bottom:4px">Skills Assessment Across Team</h2>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Red = Gap requiring intervention &nbsp;|&nbsp; Amber = Developing &nbsp;|&nbsp; Green = Strong</p>
+      <div class="heatmap-wrap">
+        <table class="heatmap">
+          <thead>
+            <tr>
+              <th style="min-width:120px">Associate</th>
+              <th>Index</th>
+              <th>Stage</th>
+              ${SKILL_SHORT.map(s=>`<th class="skill-col" title="${s}">${s}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${skillMatrix.sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).map(a=>`
+              <tr>
+                <td class="assoc-name">${a.name}</td>
+                <td style="text-align:center;font-weight:600;color:${parseFloat(a.ri)>=70?'var(--teal)':parseFloat(a.ri)>=55?'var(--blue)':'var(--coral)'}">${a.ri}</td>
+                <td style="text-align:center;font-size:11px;font-weight:600;color:var(--muted)">${a.rspKey}</td>
+                ${a.gaps.map(g=>`<td><span class="cell-${g}">${g==='strong'?'S':g==='gap'?'G':'D'}</span></td>`).join('')}
+              </tr>`).join('')}
+            <tr style="border-top:2px solid var(--border)">
+              <td style="font-size:11px;font-weight:600;color:var(--muted)">Team Gaps</td>
+              <td></td><td></td>
+              ${skillGapCounts.sort((a,b)=>SKILLS.indexOf(a.skill)-SKILLS.indexOf(b.skill)).map(sg=>`
+                <td style="text-align:center;font-size:11px;font-weight:700;color:${sg.gapCount>n*0.5?'#C94A4A':sg.gapCount>n*0.25?'#B87A10':'var(--muted)'}">${sg.gapCount}G/${sg.devCount}D</td>`).join('')}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">G = Gap &nbsp;|&nbsp; D = Developing &nbsp;|&nbsp; S = Strong. Bottom row shows team-wide counts per skill.</p>
+    </div>
+
+    <div class="prio-card">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Team Training Priorities</div>
+      <h2 style="font-family:'Playfair Display',serif;color:var(--gold-light);font-size:20px;margin-bottom:14px">Top 3 gaps across your team</h2>
+      ${topGaps.map((g,i)=>`
+        <div class="prio-item">
+          <div style="font-size:10px;font-weight:600;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">Priority ${i+1}</div>
+          <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px">${g.skill}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px">${g.gapCount} associate${g.gapCount!==1?'s':''} with a gap &nbsp;|&nbsp; ${g.devCount} developing</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gold-light);padding:4px 10px;background:rgba(201,168,76,0.15);border-radius:6px;display:inline-block">
+            Recommended: IGI Retail Sales Excellence Program (RSP)
+          </div>
+        </div>`).join('')}
+      ${knowledgeRisk.length>0?`
+        <div class="prio-item" style="border-left-color:#C94A4A">
+          <div style="font-size:10px;font-weight:600;color:#C94A4A;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">⚠ Knowledge Risk — Immediate Action</div>
+          <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px">${knowledgeRisk.length} associate${knowledgeRisk.length!==1?'s':''} scored below 56% on Diamond Knowledge</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px">Associates with incomplete 4Cs knowledge risk making inaccurate product descriptions — particularly on clarity and color grades. This creates a false commitment risk that affects customer trust and post-purchase satisfaction.</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5)">${knowledgeRisk.map(r=>r.name).join(' &nbsp;|&nbsp; ')}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gold-light);padding:4px 10px;background:rgba(201,168,76,0.15);border-radius:6px;display:inline-block;margin-top:8px">Recommended: IGI 4Cs Knowledge Certification — Priority</div>
+        </div>`:''}
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-tag">Individual Results</div>
+      <h2 style="margin-bottom:16px">Associate Profiles</h2>
+      ${skillMatrix.sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).map(a=>{
+        const gapSkills = SKILLS.filter((_,i)=>a.gaps[i]==='gap');
+        const devSkills = SKILLS.filter((_,i)=>a.gaps[i]==='developing');
+        const bandColor = {Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'}[a.band]||'#8A8070';
+        return `<div class="assoc-card">
+          <div class="assoc-card-header">
+            <div>
+              <div class="assoc-card-name">${a.name}</div>
+              <div class="assoc-card-meta">${a.c2s} &bull; ${a.rspLabel||a.rspKey}</div>
+            </div>
+            <div>
+              <span class="assoc-score-badge" style="background:${bandColor}22;color:${bandColor}">${a.ri}/100 &mdash; ${a.band}</span>
+            </div>
+          </div>
+          ${RSP_ROLE_FIT[a.rspKey]?`<p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">${RSP_ROLE_FIT[a.rspKey]}</p>`:''}
+          ${gapSkills.length?`<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--coral)">Gaps: </span>
+            <div class="assoc-gaps">${gapSkills.map(s=>`<span class="gap-pill" style="background:#FEF2F2;color:#991B1B">${s}</span>`).join('')}</div></div>`:''}
+          ${devSkills.length?`<div><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--gold)">Developing: </span>
+            <div class="assoc-gaps">${devSkills.map(s=>`<span class="gap-pill" style="background:#FFF8E7;color:#7A5C00">${s}</span>`).join('')}</div></div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="cta-card">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Close These Gaps</div>
+      <div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold-light);margin-bottom:10px">Ready to elevate your team?</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.7;max-width:500px;margin:0 auto 20px">This report shows exactly where your team is today and what needs to change. The IGI Retail Sales Excellence Program is designed specifically to close these gaps — built on the same framework that produced this assessment.</p>
+      <div style="font-size:15px;font-weight:600;color:var(--gold-light);margin-bottom:6px">IGI School of Gemology</div>
+      <a href="mailto:Sunil.Sharma@igi.org" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Sunil.Sharma@igi.org</a>
+      <div style="margin-top:20px"><button class="btn" onclick="window.print()" style="background:rgba(255,255,255,0.1);color:var(--gold-light);border-color:rgba(201,168,76,0.3)">Print / Save as PDF</button></div>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">
+      IGI School of Gemology &mdash; Retail Sales Excellence Program &mdash; Confidential
+    </div>`;
+
+  document.getElementById('reportScreen').innerHTML = html;
+}
+</script>
+</body>
+</html>

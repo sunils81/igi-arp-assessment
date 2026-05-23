@@ -380,22 +380,38 @@ function gasGet(params, callback) {
 // ═══ SESSION CODE GATE ════════════════════════════════════
 (function(){
   const urlCode = PARAMS.get('code')||'';
+
+  // FAST PATH: code embedded in URL — show form immediately, verify silently
   if(urlCode){
-    const inp = document.getElementById('gateCodeInput');
-    if(inp) inp.value = urlCode.toUpperCase();
+    document.getElementById('gateCodeInput').value = urlCode.toUpperCase();
+    document.getElementById('sessionCheckingCard').classList.add('hidden');
+    document.getElementById('screen0').classList.remove('hidden');
+    document.getElementById('sessionCodeCard').classList.add('hidden');
+    document.getElementById('detailsFormCard').classList.remove('hidden');
+    // Silent background verify — only show gate if code is actually wrong
+    gasGet({action:'verifyCode', code:urlCode.toUpperCase()}, function(err, d){
+      if(!err && d && !d.valid){
+        document.getElementById('detailsFormCard').classList.add('hidden');
+        document.getElementById('sessionCodeCard').classList.remove('hidden');
+        const errEl = document.getElementById('gateError');
+        errEl.textContent = d.reason==='expired'
+          ? 'This session link has expired. Ask your trainer for a new one.'
+          : 'This session link is no longer valid. Ask your trainer for a new link.';
+        errEl.style.display='block';
+      }
+    });
+    return;
   }
-  // screen0 is hidden by default — show it after GAS check
+
+  // STANDARD PATH: no code in URL — check GAS settings
   gasGet({action:'settingsPublic'}, function(err, d){
     document.getElementById('sessionCheckingCard').classList.add('hidden');
     document.getElementById('screen0').classList.remove('hidden');
-
-    // Apply session config from GAS (only if URL params not already set)
     if(!err && d){
-      if(d.batch    && !BATCH)        { document.getElementById('fbatch').value   = d.batch; }
-      if(d.centre   && !CENTRE)       { document.getElementById('fcentre').value  = d.centre; }
+      if(d.batch   && !BATCH)               document.getElementById('fbatch').value  = d.batch;
+      if(d.centre  && !CENTRE)              document.getElementById('fcentre').value = d.centre;
       if(d.diamonds && !PARAMS.get('diamonds')){
         document.getElementById('fdiamondtype').value = d.diamonds;
-        // Re-render diamond indicator with new type
         const dtLabels={natural:'Natural Diamonds',lgd:'Lab Grown Diamonds',both:'Natural & Lab Grown Diamonds'};
         const dtColors={natural:'#1D9E75',lgd:'#534AB7',both:'#C9A84C'};
         const lbl=dtLabels[d.diamonds]||'Natural Diamonds';
@@ -404,11 +420,9 @@ function gasGet(params, callback) {
         if(ind) ind.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0"></div><div style="font-size:13px;color:#0D1B2E"><span style="font-weight:500">Diamond Knowledge section:</span> <span style="color:'+col+';font-weight:600">'+lbl+'</span></div>';
       }
     }
-
     if(!err && d && d.codeRequired){
       document.getElementById('sessionCodeCard').classList.remove('hidden');
       document.getElementById('detailsFormCard').classList.add('hidden');
-      if(urlCode) verifySessionCode();
     } else {
       document.getElementById('sessionCodeCard').classList.add('hidden');
       document.getElementById('detailsFormCard').classList.remove('hidden');
@@ -600,6 +614,177 @@ const RSP_DISPLAY={};
 const C2S_NAMES={"1": "Analytical", "2": "Amiable", "3": "Expressive", "4": "Driver"};
 const C2S_COLORS={"1": "#378ADD", "2": "#1D9E75", "3": "#D85A30", "4": "#534AB7"};
 const MATRIX={};
+
+// ═══ C2S ON-THE-FLOOR CONTEXT ════════════════════════════
+const C2S_FLOOR={
+  "Analytical":{
+    natural:"You naturally bring structure and knowledge to the floor. Customers feel you know your product deeply, and you rarely say something you cannot back up.",
+    demands:"High-value jewellery sales demand emotional connection before product logic. Customers buy a feeling first — the diamond's story, the occasion's meaning — and justify with facts second.",
+    gap:"Your conversion gap is the emotional opening. You tend to present what the product is before exploring what the moment means to the customer. This works with fellow Analytical buyers but loses Amiable and Expressive customers before you have even begun.",
+    risk:"Associates with a strong Analytical style and incomplete 4Cs knowledge carry a specific risk: they speak with the confidence of expertise but without the accuracy to back it up. On clarity and color especially, this can create unintentional misrepresentations that damage trust and lead to post-purchase complaints."
+  },
+  "Amiable":{
+    natural:"You create a genuinely welcoming floor presence. Customers feel comfortable with you quickly, and you rarely create pressure or awkwardness in high-emotion purchases.",
+    demands:"The role requires warmth to open the conversation and conviction to close it. A Trusted Advisor does not just make customers feel good — they guide customers to confident decisions.",
+    gap:"Your conversion gap is the recommendation. You discover well but often defer to the customer rather than committing to a clear suggestion. The result is customers who like you but leave undecided — or worse, go to a more decisive associate at a competitor.",
+    risk:"Amiable associates sometimes avoid technically detailed conversations to keep the atmosphere comfortable. If 4Cs knowledge is incomplete, this avoidance becomes a liability — customers who ask precise questions get vague answers, and the trust built by warmth is lost in a single exchange."
+  },
+  "Expressive":{
+    natural:"Your energy transforms the buying experience. Customers enjoy interacting with you, remember you, and often return because of how you made them feel.",
+    demands:"Jewellery retail at the premium end requires energy to be channelled into the customer's story, not the product's features. The associate's expressiveness should amplify the occasion, not the transaction.",
+    gap:"Your conversion gap is depth. Your energy can carry a conversation forward beautifully but sometimes arrives at the close before the customer's emotional conviction has fully formed. The result is customers who feel excited in the moment but have second thoughts later.",
+    risk:"Expressive associates with knowledge gaps tend to fill silence with enthusiasm rather than accuracy. On technical questions about cut grade or clarity, confidence without correctness creates a specific risk: the customer trusts the energy and makes a purchase based on information that may not be fully accurate."
+  },
+  "Driver":{
+    natural:"You are decisive, efficient, and purposeful. Customers with clear intent appreciate your directness, and you waste nobody's time.",
+    demands:"Premium jewellery purchases are almost always emotionally significant. The role requires the associate to slow down enough to honour the emotional weight of the occasion before moving toward a decision.",
+    gap:"Your conversion gap is the emotional pause. You often identify the right product quickly and move toward the close efficiently — but customers who need to feel understood before they decide experience this as pressure, not guidance. The result is objections that feel sudden but were building throughout the conversation.",
+    risk:"Driver associates with incomplete 4Cs knowledge are the highest-risk profile for false commitments. Their natural confidence means they answer technical questions without hesitation — but if the knowledge is incomplete, that confidence becomes the problem. A customer who later discovers an inaccuracy feels deceived, not just disappointed."
+  }
+};
+
+// ═══ RSP ROLE FIT CONTEXT ════════════════════════════════
+const RSP_ROLE_FIT={
+  "PP":"At this stage, your interactions on the floor are primarily product-led. You tend to present what you know about the piece rather than explore what the customer needs from the moment. In a jewellery context, this typically means shorter conversations, lower average transaction values, and customers who leave without buying because they never felt fully understood. The distance to Trusted Advisor is significant — but the journey starts with one habit: ask before you tell.",
+  "TA":"You are getting transactions done with consistency and a degree of care. Customers leave served, if not always inspired. In a premium jewellery context, the difference between Transaction Achiever and the next level is the depth of the need you uncover. You are currently solving the surface request. The customer who says 'I need something for an anniversary' has a much deeper story — and that story, when uncovered, is where premium purchases happen.",
+  "PS":"You understand customers genuinely and solve their real problem with care. This is a meaningful strength in jewellery retail where purchase decisions are often complex and emotionally loaded. The gap to Expert Advisor is conviction — you discover well but sometimes present options rather than making a clear recommendation. A customer who trusts your understanding but receives three choices instead of one clear suggestion is left doing work they came to you to avoid.",
+  "EA":"You operate at a level of expertise and relationship depth that puts you in the top tier of retail jewellery professionals. Customers trust your recommendations and many return to you specifically. The final step to Trusted Advisor is the completion habit — every warm, high-quality interaction needs a defined next step. A referral asked for. A follow-up committed to. An anniversary noted. Without this, your exceptional interactions remain one-time events rather than the foundation of a loyal client base.",
+  "TrA":"You represent the standard that jewellery retail aspires to. Customers seek you out by name, bring their most significant occasions to you, and refer their families and friends. At this level, your development is not about closing gaps — it is about multiplying your impact. Every junior associate you mentor extends your standard across the floor. Every system you build for relationship management turns your natural excellence into a repeatable practice."
+};
+
+// ═══ SKILL GAP ENGINE ════════════════════════════════════
+function computeSkillGaps(c2sStyle, rspStageKey, fcsPct, fcsTagScores){
+  // Returns array of {skill, rating: 'strong'|'developing'|'gap', note}
+  const isStrong=(cond)=>cond?'strong':null;
+  const isGap=(cond)=>cond?'gap':null;
+  const s=(a,b)=>a||b||'developing';
+
+  const analytical = c2sStyle==='Analytical';
+  const amiable    = c2sStyle==='Amiable';
+  const expressive = c2sStyle==='Expressive';
+  const driver     = c2sStyle==='Driver';
+
+  const rspNum = {PP:1,TA:2,PS:3,EA:4,TrA:5}[rspStageKey]||1;
+  const kScore = fcsPct;
+
+  const clarityPct = fcsTagScores.clarity ? Math.round((fcsTagScores.clarity.correct/fcsTagScores.clarity.total)*100) : 50;
+  const colorPct   = fcsTagScores.color   ? Math.round((fcsTagScores.color.correct/fcsTagScores.color.total)*100)     : 50;
+  const cutPct     = fcsTagScores.cut     ? Math.round((fcsTagScores.cut.correct/fcsTagScores.cut.total)*100)         : 50;
+  const caratPct   = fcsTagScores.carat   ? Math.round((fcsTagScores.carat.correct/fcsTagScores.carat.total)*100)     : 50;
+
+  return [
+    {
+      skill:'Occasion-led discovery',
+      rating: s(isStrong(rspNum>=3 && (amiable||expressive)), isGap(rspNum<=2 && (analytical||driver))),
+      note: rspNum<=2 ? 'Tends to move to product before understanding the emotional context of the purchase.' : rspNum>=4 ? 'Consistently uncovers the real occasion before presenting any product.' : 'Developing — discovery happens but depth varies across interactions.'
+    },
+    {
+      skill:'Emotion-before-product sequencing',
+      rating: s(isStrong((amiable||expressive) && rspNum>=3), isGap((analytical||driver) && rspNum<=2)),
+      note: (analytical||driver) && rspNum<=2 ? 'High risk of presenting product logic before the customer\'s emotional readiness. Results in objections that feel sudden.' : (amiable||expressive) && rspNum>=3 ? 'Naturally sequences connection before recommendation.' : 'Inconsistent — present in some interactions, absent under time pressure.'
+    },
+    {
+      skill:'Diamond knowledge accuracy',
+      rating: s(isStrong(kScore>=75), isGap(kScore<55)),
+      note: kScore<55 ? 'Knowledge gaps create real floor risk. Customers asking detailed questions may receive confident but inaccurate answers — particularly on clarity and color grades.' : kScore>=75 ? 'Strong technical foundation. Able to answer customer questions with accuracy and confidence.' : 'Adequate for basic conversations. Gaps appear on nuanced questions about cut optimisation and clarity grades.'
+    },
+    {
+      skill:'Objection handling',
+      rating: s(isStrong(rspNum>=4 && (driver||analytical)), isGap(rspNum<=2 && (amiable||expressive))),
+      note: rspNum<=2 ? 'Objections tend to be met with either capitulation (Amiable) or price deflection (Driver/Expressive) rather than genuine exploration of the underlying concern.' : rspNum>=4 ? 'Handles objections as information rather than obstacles. Explores the concern before responding.' : 'Can handle common objections. Struggles with price-value objections that require deep product knowledge.'
+    },
+    {
+      skill:'Story-led selling',
+      rating: s(isStrong((expressive||amiable) && rspNum>=3), isGap(analytical && rspNum<=2)),
+      note: analytical && rspNum<=2 ? 'Defaults to feature-and-specification selling. The emotional story of the piece — its craftsmanship, its meaning for the occasion — is underused.' : (expressive||amiable) && rspNum>=3 ? 'Uses narrative naturally. Connects product attributes to the customer\'s occasion and emotion.' : 'Story present but inconsistent. Strong on product facts, developing on occasion-linked narrative.'
+    },
+    {
+      skill:'Confident single recommendation',
+      rating: s(isStrong((driver||analytical) && rspNum>=3), isGap(amiable && rspNum<=2)),
+      note: amiable && rspNum<=2 ? 'Tends to present multiple options rather than committing to a recommendation. Customers experience this as helpful but are left with the burden of deciding alone.' : (driver||analytical) && rspNum>=3 ? 'Makes clear, confident recommendations. Customers leave with conviction rather than uncertainty.' : 'Recommendation confidence is developing. Improves when product knowledge is strong.'
+    },
+    {
+      skill:'Post-sale relationship building',
+      rating: s(isStrong(rspNum>=4), isGap(rspNum<=2)),
+      note: rspNum<=2 ? 'Interaction typically ends at the transaction. No systematic investment in the relationship after the sale — leaving significant repeat and referral revenue on the table.' : rspNum>=4 ? 'Treats the sale as the beginning of the relationship. Follows up, notes occasions, and builds genuine client loyalty.' : 'Aware of relationship importance but follow-through is inconsistent. Needs a simple system to make it habitual.'
+    },
+    {
+      skill:'Multi-stakeholder selling',
+      rating: s(isStrong((amiable||expressive) && rspNum>=3), isGap(driver && rspNum<=2)),
+      note: driver && rspNum<=2 ? 'Tends to focus on the primary decision-maker and move quickly. In family or couple purchases, secondary stakeholders feel unseen — creating resistance that delays or kills the sale.' : (amiable||expressive) && rspNum>=3 ? 'Naturally manages group dynamics. Brings all stakeholders into the conversation and builds collective conviction.' : 'Manageable in simple two-person dynamics. More complex group situations need development.'
+    },
+    {
+      skill:'Upsell and cross-sell instinct',
+      rating: s(isStrong(rspNum>=3 && kScore>=65), isGap(rspNum<=2 || kScore<55)),
+      note: rspNum<=2 || kScore<55 ? 'Upsell attempts are either absent or transactional. Without strong product knowledge and customer insight, upsell feels like pressure rather than guidance.' : rspNum>=4 && kScore>=75 ? 'Upsells and cross-sells feel like natural extensions of the conversation — the customer sees them as helpful suggestions, not sales attempts.' : 'Present in straightforward situations. Needs more confidence in knowledge to upsell on technical attributes like cut grade or stone quality.'
+    },
+    {
+      skill:'Technical accuracy under pressure',
+      rating: s(isStrong(kScore>=75 && (analytical||driver)), isGap(kScore<55)),
+      note: kScore<55 ? 'This is the highest-priority gap. When customers ask specific questions about grades, certificates, or pricing rationale, incomplete knowledge creates a risk of unintentional misrepresentation. This matters most on clarity and color — the two grades most commonly misunderstood and most consequential for purchase decisions.' : kScore>=75 ? 'Able to handle technical pressure confidently and accurately. Customer trust is well-founded.' : 'Solid under routine questions. Specific gaps on clarity grading nuances and cut optimisation under high-pressure situations.'
+    }
+  ];
+}
+
+// ═══ FLOOR RISK PER 4Cs CATEGORY ═════════════════════════
+const FCS_FLOOR_RISK={
+  cut:{
+    low:"An associate who cannot confidently explain cut quality is unable to justify why two diamonds at the same carat weight and price can look completely different. Customers asking 'why is this one so much more expensive?' leave without a satisfying answer — and often without buying.",
+    medium:"Can explain cut basics but struggles with the nuanced connection between cut grade, brilliance, and price. Customers who have done online research will notice the gap.",
+    safe:null
+  },
+  clarity:{
+    low:"Clarity is the most consequential knowledge gap in retail jewellery. An associate who is uncertain about inclusion grades may describe a stone inaccurately — not through dishonesty but through incomplete knowledge. This creates a false commitment risk: the customer buys based on a description that may not match the certificate. Post-purchase complaints and returns are the typical outcome.",
+    medium:"Understands the clarity scale but may not be able to explain the visual difference between grades confidently. Customers comparing stones by certificate will find inconsistencies in explanations.",
+    safe:null
+  },
+  color:{
+    low:"Color grading is where premium pricing is most difficult to defend without knowledge. An associate who cannot explain the difference between D-F (colourless) and G-J (near-colourless) cannot justify why a customer should pay significantly more. The result is customers who feel the premium is arbitrary — and go elsewhere.",
+    medium:"Can explain the color scale but struggles to connect specific grades to visible differences and pricing logic. Upselling on color grade becomes guesswork rather than guided recommendation.",
+    safe:null
+  },
+  carat:{
+    low:"Carat weight versus visual size is one of the most common points of customer confusion — and one of the easiest for a knowledgeable associate to resolve. Without this knowledge, the associate cannot help a customer who says 'I want a bigger-looking diamond at this price' — a question that has a very good answer if you understand how cut affects perceived size.",
+    medium:"Understands carat weight basics but may not be able to explain how cut quality affects the face-up appearance of a stone. Loses customers who want to optimise for visual impact within a budget.",
+    safe:null
+  },
+  general:{
+    low:"General 4Cs knowledge gaps affect the associate's overall credibility. Customers who have done basic research online may know more than the associate on fundamental concepts — a trust-damaging dynamic that is difficult to recover from mid-conversation.",
+    medium:"Foundational knowledge is present but inconsistent across categories. Can handle straightforward questions but struggles when customers push deeper.",
+    safe:null
+  }
+};
+
+// ═══ IDP ACTION10 REPLACEMENTS (skill drills, no module refs) ════
+const IDP_SKILL_DRILLS={
+  "discovery":["Practice the 'occasion-first' rule in every interaction this week: do not mention any product until you have asked about the occasion, the recipient, and what the customer wants them to feel.","Role-play the discovery sequence with a colleague: one plays a time-pressed customer, one plays an associate. Practise asking two qualifying questions before any product is shown.","Write down the three questions you will ask every new customer before showing a single piece. Keep them on a card until they are automatic."],
+  "emotion_seq":["Before your next floor shift, set a personal rule: no product presentation until you have said something that acknowledges the emotion or occasion. Practise this as a discipline.","Debrief three interactions at end of shift: did you connect with the emotion before the product? What changed in conversations where you did?","Study luxury retail customer psychology — specifically why customers at premium price points buy feeling first and justify with logic second."],
+  "knowledge":["Take the IGI 4Cs self-study module focused specifically on your lowest-scoring category. Test yourself with flashcards until you can answer without hesitation.","Ask a colleague or manager to quiz you on ten random 4Cs questions before each shift this week. Track your accuracy daily.","Read the certificate of every stone you sell this week — describe to yourself what each grade means in practical terms before a customer asks."],
+  "objection":["Write down the three most common objections you receive. For each, write the underlying customer concern it represents — then write a response that addresses the concern, not the surface objection.","Role-play price objection scenarios specifically. Practise responding with product knowledge and value framing rather than discount offers.","Debrief every lost sale this week. What was the real objection? Did your response address it?"],
+  "story":["Before showing a piece, practise saying one sentence about what makes this stone or design distinctive — not its specifications, but its character. Make it specific to the occasion.","Ask a top performer on your floor to walk you through how they describe a piece to a customer. Note the ratio of story to specification.","Build a vocabulary list of ten descriptive phrases for your top five pieces. Use them in customer conversations this week."],
+  "recommendation":["Practise ending every discovery conversation with one recommendation — not two or three. Say: 'Based on what you've told me, this is the one.' Commit to it.","After every sale this week, ask yourself: did I recommend clearly or did I present options? Track the difference in customer confidence and conversion.","Read the Trusted Advisor framework section on self-orientation — the most common reason associates present options rather than recommendations is fear of being wrong. Understand this pattern in yourself."],
+  "relationship":["Create a simple client note system — a note on your phone or a paper card. After every significant sale, write the customer's name, the occasion, what they bought, and when their next relevant occasion might be.","Set a reminder to follow up with your last three significant customers — a simple message asking if they are happy with their purchase.","Think about which of your customers you actually know by name and occasion. For each one you cannot name, that is a relationship investment you have not yet made."],
+  "multistake":["In every group purchase situation this week, make one specific comment or question directed at the person who is not the primary buyer. Watch how the dynamic shifts.","Practise reading group dynamics in the first 30 seconds: who is the decision-maker, who is the influencer, who needs to feel included. Adapt your attention accordingly.","Study the psychology of the joint purchase decision — specifically how dissent from a secondary stakeholder kills sales that the primary buyer was already committed to."],
+  "upsell":["Identify your top three upsell opportunities — the natural steps up in quality or complementary pieces that genuinely add value. Practise introducing them naturally, not transactionally.","This week, attempt one genuine upsell in every sale. Track how customers respond. The goal is not to push — it is to offer a better option when you genuinely see one.","Learn the specific quality attributes that justify the price difference between your most common mid-range and premium options. Be able to explain this in two sentences."],
+  "technical":["Focus your knowledge development on the category where your assessment showed the biggest gap. Study that category specifically until you can answer any customer question without hesitation.","Before your next floor shift, review the certificates of the five highest-value pieces on display. Know the grade, know what it means, know how to explain it simply.","Find the one technical question you are least confident answering. Write the correct answer. Memorise it. That question will come up again."]
+};
+
+// ═══ TRAINING RECOMMENDATION ENGINE ══════════════════════
+function getTrainingRec(c2sStyle, rspStageKey, fcsPct, skillGaps){
+  const gapSkills = skillGaps.filter(s=>s.rating==='gap').map(s=>s.skill);
+  const devSkills = skillGaps.filter(s=>s.rating==='developing').map(s=>s.skill);
+  const rspNum = {PP:1,TA:2,PS:3,EA:4,TrA:5}[rspStageKey]||1;
+  const nextStage = {PP:'Transaction Achiever',TA:'Problem Solver',PS:'Expert Advisor',EA:'Trusted Advisor',TrA:'Master — focus on mentoring'}[rspStageKey];
+
+  const priorities=[];
+  if(fcsPct<65) priorities.push({area:'Diamond Knowledge',reason:'Technical gaps create floor risk and undermine customer confidence. This is the foundation everything else builds on.',program:'IGI 4Cs Knowledge Certification'});
+  if(rspNum<=2) priorities.push({area:'Sales Conversation Skills',reason:'Moving from ' +rspStageKey+ ' to '+nextStage+' requires a fundamental shift in how customer conversations are opened and developed.',program:'IGI Retail Sales Excellence Program (RSP)'});
+  if(rspNum===3) priorities.push({area:'Recommendation Confidence',reason:'The gap between Problem Solver and Expert Advisor is conviction — making clear recommendations rather than presenting options.',program:'IGI Retail Sales Excellence Program (RSP) — Expert Module'});
+  if(rspNum>=4) priorities.push({area:'Coaching and Leadership',reason:'At this level, individual development is best multiplied through mentoring others.',program:'IGI Retail Leadership Program (RLP)'});
+  if(c2sStyle==='Analytical'||c2sStyle==='Driver') priorities.push({area:'Emotional Intelligence in Sales',reason:'Your communication style is strong on logic and efficiency but needs deliberate development on the emotional sequencing that premium jewellery purchases require.',program:'IGI RSP Behavioural Module'});
+
+  return {priorities, nextStage, gapCount: gapSkills.length, devCount: devSkills.length};
+}
 const C2S_BLEND={"1-3": "Your Analytical-Expressive blend is rare \u2014 you think in facts but communicate with energy. The tension between needing precision and wanting connection is actually your greatest asset on the floor. Learn to sequence them: logic first to build your own confidence, emotion second to bring the customer with you.", "1-2": "Your Analytical-Amiable blend means you are both careful and kind. You rarely rush customers and you rarely get things wrong. The gap is initiating \u2014 both styles tend to wait. Your development goal is learning to lead the conversation forward once you have all the information you need.", "1-4": "Your Analytical-Driver blend makes you highly effective and efficient. You know what you are talking about and you move with purpose. Watch that you do not bypass the emotional layer entirely \u2014 customers often need to feel understood before they will accept even the most accurate recommendation.", "2-3": "Your Expressive-Amiable blend creates a naturally warm and engaging presence. People enjoy being around you and feel welcomed. The risk is that your energy can soften into social conversation that does not convert. Channel your expressiveness with a clear destination in mind.", "3-4": "Your Expressive-Driver blend is high-octane \u2014 you generate excitement and you close. The risk is that you run past Analytical and Amiable customers who need more time. The most powerful thing you can do is pause, ask one deep question, and genuinely wait for the full answer.", "2-4": "Your Amiable-Driver blend is unusual and valuable \u2014 you are both warm and decisive. You get things done without being cold about it. The tension is that under pressure your Driver side can dominate and the warmth that made the customer trust you disappears. Protecting that warmth under pressure is your key development goal."};
 const RSP_BLEND={};
 const FCS_SHARED_TAGS=["carat", "carat", "color", "color", "clarity", "clarity", "clarity", "cut", "cut", "clarity", "general", "clarity", "cut", "color", "cut"];
@@ -1049,6 +1234,53 @@ function submitAll(){
   const timeTaken='4Cs: '+Math.floor(fcsUsed/60)+'m '+fcsUsed%60+'s | Behav: '+Math.floor(behavUsed/60)+'m '+behavUsed%60+'s';
   const dtLabel={natural:'Natural Diamonds',lgd:'Lab Grown Diamonds',both:'Both'}[diamondType]||diamondType;
 
+  // ── Compute new analytics ──────────────────────────────
+  const skillGaps = computeSkillGaps(c2sA.label, rspA.stage.key, fcsPct, fcsResult.tagScores);
+  const trainingRec = getTrainingRec(c2sA.label, rspA.stage.key, fcsPct, skillGaps);
+  const floorCtx = C2S_FLOOR[c2sA.label] || C2S_FLOOR['Amiable'];
+  const rspRoleFit = RSP_ROLE_FIT[rspA.stage.key] || RSP_ROLE_FIT['PS'];
+
+  // ── Skill Gap Card ─────────────────────────────────────
+  const ratingConfig = {
+    strong: {label:'Strong',bg:'#E1F5EE',color:'#085041',dot:'#1D9E75'},
+    developing: {label:'Developing',bg:'#FFF8E7',color:'#7A5C00',dot:'#C9A84C'},
+    gap: {label:'Gap',bg:'#FEF2F2',color:'#991B1B',dot:'#C94A4A'}
+  };
+  const gapCount = skillGaps.filter(s=>s.rating==='gap').length;
+  const devCount = skillGaps.filter(s=>s.rating==='developing').length;
+  const strongCount = skillGaps.filter(s=>s.rating==='strong').length;
+
+  const skillGapHTML = `
+    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--coral)">
+      <div class="section-tag" style="color:var(--coral)">Skills Gap Analysis</div>
+      <h2 style="margin-bottom:4px">Where ${fname} stands today</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Based on your Diamond Knowledge score, Communication Style, and Sales Persona — assessed against what the jewellery retail floor demands.</p>
+      <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+        <div style="flex:1;min-width:80px;padding:12px;background:#FEF2F2;border-radius:8px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#C94A4A;font-family:'Playfair Display',serif">${gapCount}</div>
+          <div style="font-size:11px;font-weight:600;color:#991B1B;text-transform:uppercase;letter-spacing:0.04em">Gaps</div>
+        </div>
+        <div style="flex:1;min-width:80px;padding:12px;background:#FFF8E7;border-radius:8px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#B87A10;font-family:'Playfair Display',serif">${devCount}</div>
+          <div style="font-size:11px;font-weight:600;color:#7A5C00;text-transform:uppercase;letter-spacing:0.04em">Developing</div>
+        </div>
+        <div style="flex:1;min-width:80px;padding:12px;background:#E1F5EE;border-radius:8px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#085041;font-family:'Playfair Display',serif">${strongCount}</div>
+          <div style="font-size:11px;font-weight:600;color:#085041;text-transform:uppercase;letter-spacing:0.04em">Strong</div>
+        </div>
+      </div>
+      ${skillGaps.map(sg=>{
+        const cfg = ratingConfig[sg.rating];
+        return `<div style="margin-bottom:12px;padding:12px 14px;background:${cfg.bg};border-radius:8px;border-left:3px solid ${cfg.dot}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <span style="font-size:13px;font-weight:600;color:var(--navy)">${sg.skill}</span>
+            <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:${cfg.dot}22;color:${cfg.color};letter-spacing:0.05em;text-transform:uppercase">${cfg.label}</span>
+          </div>
+          <p style="font-size:12px;color:${sg.rating==='gap'?'#7F1D1D':'var(--muted)'};line-height:1.5;margin:0">${sg.note}</p>
+        </div>`;
+      }).join('')}
+    </div>`;
+
   // C2S bar chart
   const c2sVals=[c2sRaw[1],c2sRaw[2],c2sRaw[3],c2sRaw[4]];
   const c2sColors=[C2S_COLORS[1],C2S_COLORS[2],C2S_COLORS[3],C2S_COLORS[4]];
@@ -1071,7 +1303,7 @@ function submitAll(){
   // RSP now uses maturity score display — no radar needed
   const rspSVG='';
 
-  // RSP ladder
+  // RSP ladder + role fit
   const ladderHTML=`
     <div class="ladder-card">
       <div class="ladder-title">&#8594; Sales Persona Progression Ladder</div>
@@ -1080,10 +1312,9 @@ function submitAll(){
         <div class="ladder-steps">
           ${RSP_STAGES.map(d=>{
             const isCurrent=d.key===rspA.stage.key;
-            const dotClass=isCurrent?"current":"";
             return `<div class="ladder-step">
-              <div class="ls-dot ${dotClass}">${isCurrent?"&#9733;":"&#9679;"}</div>
-              <div class="ls-name ${isCurrent?"current":""}" ${isCurrent?'style="color:'+d.color+'"':''}>${d.label}</div>
+              <div class="ls-dot ${isCurrent?'current':''}">${isCurrent?"&#9733;":"&#9679;"}</div>
+              <div class="ls-name ${isCurrent?'current':''}" ${isCurrent?'style="color:'+d.color+'"':''}>${d.label}</div>
               <div class="ls-tag">(${d.range})</div>
             </div>`;
           }).join("")}
@@ -1093,9 +1324,15 @@ function submitAll(){
         <strong style="color:var(--gold)">${fname}&apos;s current position:</strong> ${rspA.label}
         ${rspA.blendNarrative?`<div class="blend-panel"><div class="blend-label">Blend insight</div>${rspA.blendNarrative}</div>`:''}
       </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--coral)">
+      <div class="section-tag" style="color:var(--coral)">What This Means on the Floor</div>
+      <h2 style="margin-bottom:12px">${rspA.label} — Jewellery Retail Context</h2>
+      <p style="font-size:13px;color:var(--navy);line-height:1.75">${rspRoleFit}</p>
+      ${trainingRec.nextStage!=='Master — focus on mentoring'?`<div style="margin-top:14px;padding:10px 14px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:8px;font-size:12px;color:var(--navy)"><strong style="color:var(--gold);display:block;margin-bottom:3px;font-size:10px;letter-spacing:0.06em;text-transform:uppercase">Next stage: ${trainingRec.nextStage}</strong>The distance between where you are and where the role demands you to be is specific and closeable — with the right training and deliberate practice.</div>`:''}
     </div>`;
 
-  // 4Cs breakdown
+  // 4Cs breakdown with floor risk
   const catConfig={
     cut:{label:'Cut',color:'#534AB7',icon:'✂'},
     color:{label:'Color',color:'#378ADD',icon:'🎨'},
@@ -1107,13 +1344,15 @@ function submitAll(){
     const cfg=catConfig[tag]||{label:tag,color:'#8A8070',icon:'◆'};
     const pct=s.total>0?Math.round((s.correct/s.total)*100):0;
     const flagColor=pct<56?'#C94A4A':pct<76?'#C9A84C':'#1D9E75';
+    const risk=FCS_FLOOR_RISK[tag];
+    const riskText=risk?(pct<56?risk.low:pct<76?risk.medium:null):null;
     return `<div class="fcs-cat-row">
       <div class="fcs-cat-header">
         <span class="fcs-cat-name">${cfg.icon} ${cfg.label}</span>
         <span class="fcs-cat-score" style="color:${flagColor}">${s.correct}/${s.total} (${pct}%)</span>
       </div>
       <div class="fcs-cat-track"><div class="fcs-cat-fill" style="width:${pct}%;background:${cfg.color}"></div></div>
-      ${pct<56?'<div style="font-size:10px;color:#C94A4A;margin-top:3px">&#9888; Focus area — training recommended</div>':''}
+      ${riskText?`<div style="font-size:11px;color:${pct<56?'#991B1B':'#7A5C00'};margin-top:6px;padding:6px 10px;background:${pct<56?'#FEF2F2':'#FFF8E7'};border-radius:6px;line-height:1.5">${pct<56?'⚠ ':'ℹ '}${riskText}</div>`:''}
     </div>`;
   }).join('');
 
@@ -1129,10 +1368,30 @@ function submitAll(){
           <div class="idp-actions">
             <div class="idp-action"><span class="idp-action-badge badge-70">70%</span><span>${area.action70}</span></div>
             <div class="idp-action"><span class="idp-action-badge badge-20">20%</span><span>${area.action20}</span></div>
-            <div class="idp-action"><span class="idp-action-badge badge-10">10%</span><span>${area.action10}</span></div>
+            <div class="idp-action"><span class="idp-action-badge badge-10">10%</span><span>${area.action10.replace(/Study IGI Module \d+[^.]*\./g,'').replace(/Review your \d+Cs assessment[^.]*\./g,'Review your weakest category from the Diamond Knowledge results above.').replace(/Study the Trusted Advisor model[^.]*\./g,'Study the Trusted Advisor framework — what Intimacy and Self-Orientation mean in a sales context.').replace(/Study coaching[^.]*\./g,'Study core coaching principles — how to ask questions that develop others rather than demonstrating to them.').replace(/Read one [^.]*\./g,'Read one article on luxury retail customer behaviour or jewellery sales excellence this month.').trim()||IDP_SKILL_DRILLS.technical[2]}</span></div>
           </div>
         </div>`).join('')}
     </div>`:'';
+
+  // Training CTA
+  const trainingCTAHTML = `
+    <div style="background:var(--navy);border-radius:var(--radius);padding:26px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Training Recommendation</div>
+      <h2 style="font-family:'Playfair Display',serif;color:var(--gold-light);font-size:20px;margin-bottom:12px">Closing ${fname}&apos;s gaps</h2>
+      <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.7;margin-bottom:18px">This assessment identified <strong style="color:var(--gold-light)">${gapCount} skill gap${gapCount!==1?'s':''}</strong> and <strong style="color:var(--gold-light)">${devCount} developing area${devCount!==1?'s':''}</strong> that require focused intervention. The distance from ${rspA.label} to ${trainingRec.nextStage} is specific and trainable — but it requires structured development, not just time on the floor.</p>
+      ${trainingRec.priorities.map((p,i)=>`
+        <div style="margin-bottom:12px;padding:14px;background:rgba(255,255,255,0.07);border-radius:8px;border-left:3px solid var(--gold)">
+          <div style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);margin-bottom:4px">Priority ${i+1}</div>
+          <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px">${p.area}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:8px;line-height:1.5">${p.reason}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gold-light);padding:4px 10px;background:rgba(201,168,76,0.15);border-radius:6px;display:inline-block">Recommended: ${p.program}</div>
+        </div>`).join('')}
+      <div style="margin-top:18px;padding:16px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:8px;text-align:center">
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:6px">To discuss training solutions for your team</div>
+        <div style="font-size:15px;font-weight:600;color:var(--gold-light)">IGI School of Gemology</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px">Sunil.Sharma@igi.org</div>
+      </div>
+    </div>`;
 
   const html=`
     <div class="result-hero">
@@ -1167,6 +1426,8 @@ function submitAll(){
         </div>
       </div>
     </div>
+
+    ${skillGapHTML}
 
     <div class="radar-wrap">
       <div class="radar-card">
@@ -1227,19 +1488,26 @@ function submitAll(){
     ${idpHTML}
 
     <div class="trainer-note">
-      <div class="tn-tag">&#128274; Trainer & Manager Notes &mdash; ${fname}</div>
+      <div class="tn-tag">&#128274; Trainer &amp; Manager Notes &mdash; ${fname}</div>
       <div class="tn-body">${profile.trainerNote}</div>
+      <div style="margin-bottom:14px;padding:12px 14px;background:rgba(201,168,76,0.08);border-radius:8px;border-left:3px solid var(--gold)">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">Technical Accuracy Risk Assessment</div>
+        ${skillGaps.filter(s=>s.skill==='Technical accuracy under pressure').map(s=>`<p style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.6;margin:0">${s.note}</p>`).join('')}
+      </div>
       <div class="tn-grid">
         <div class="tn-item"><div class="tn-lbl">C2S Profile</div><div class="tn-val">${c2sA.label} (${c2sA.classification})</div></div>
         <div class="tn-item"><div class="tn-lbl">RSP Profile</div><div class="tn-val">${rspA.label} (${rspA.classification})</div></div>
         <div class="tn-item"><div class="tn-lbl">Excellence Index</div><div class="tn-val">${readiness.total}/100 &mdash; ${readinessBand.label}</div></div>
         <div class="tn-item"><div class="tn-lbl">4Cs Score</div><div class="tn-val">${fcsPct}% (${fcsResult.correct}/25) ${fcsGrade.flag?'&#9888; Training needed':''}</div></div>
+        <div class="tn-item"><div class="tn-lbl">Skill Gaps</div><div class="tn-val">${gapCount} gap${gapCount!==1?'s':''}, ${devCount} developing</div></div>
         <div class="tn-item"><div class="tn-lbl">Diamond Type</div><div class="tn-val">${dtLabel}</div></div>
         <div class="tn-item"><div class="tn-lbl">Trainer</div><div class="tn-val">${TRAINER||'Not specified'}</div></div>
         <div class="tn-item"><div class="tn-lbl">Batch</div><div class="tn-val">${document.getElementById('fbatch').value||'Not specified'}</div></div>
         <div class="tn-item" style="grid-column:1/-1"><div class="tn-lbl">Time taken</div><div class="tn-val">${timeTaken}</div></div>
       </div>
     </div>
+
+    ${trainingCTAHTML}
 
     <div class="strength-card">
       <div class="ref-row">

@@ -250,10 +250,53 @@ function doGet(e){
       if (p.client)   setSetting('activeClient',   p.client);
       if (p.trainer)  setSetting('activeTrainer',  p.trainer);
       if (p.diamonds) setSetting('activeDiamonds', p.diamonds);
+      if (p.reportPassword) setSetting('reportPassword', p.reportPassword);
       return respond({
         status: 'ok', sessionCode: code,
         sessionCodeEnabled: enabled, expiryTs: expiryTs
       });
+    }
+
+    // ── Batch report (for retail owner dashboard) ───────────────────────────
+    if (action === 'getBatchReport') {
+      const batchParam = (p.batch || '').trim().toUpperCase();
+      const passParam  = (p.pass  || '').trim();
+      const storedPass = getSetting('reportPassword') || '';
+      if (!storedPass || passParam !== storedPass) {
+        return respond({ status: 'error', reason: 'wrong_password' });
+      }
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      if (!sheet) return respond({ status: 'error', reason: 'no_data' });
+      const data = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const idx = {
+        batch: headers.indexOf('Batch Code'),
+        name:  headers.indexOf('Name'),
+        desig: headers.indexOf('Designation'),
+        c2s:   headers.indexOf('C2S Classification'),
+        rspKey:headers.indexOf('RSP Classification'),
+        rspLabel:headers.indexOf('RSP Label'),
+        ri:    headers.indexOf('Readiness Total'),
+        band:  headers.indexOf('Readiness Band'),
+        fcs:   headers.indexOf('4Cs Percentage'),
+        client:headers.indexOf('Client')
+      };
+      const rows = data.slice(1)
+        .filter(r => (r[idx.batch]||'').toString().trim().toUpperCase() === batchParam)
+        .map(r => ({
+          name:     r[idx.name]  || '',
+          desig:    r[idx.desig] || '',
+          c2s:      r[idx.c2s]   || '',
+          rspKey:   r[idx.rspKey]|| '',
+          rspLabel: r[idx.rspLabel]||'',
+          ri:       r[idx.ri]    || 0,
+          band:     r[idx.band]  || '',
+          fcs:      r[idx.fcs]   || 0,
+          client:   r[idx.client]|| ''
+        }));
+      if (!rows.length) return respond({ status: 'error', reason: 'no_data' });
+      const client = rows[0].client || batchParam;
+      return respond({ status: 'ok', rows, client });
     }
 
     // ── Default: response count ──────────────────────────────────────────────
@@ -309,7 +352,8 @@ function setupSettings(){
     ['activeCentre',''],
     ['activeClient',''],
     ['activeTrainer',''],
-    ['activeDiamonds','natural']
+    ['activeDiamonds','natural'],
+    ['reportPassword','']
   ];
   const data = sh.getDataRange().getValues();
   const existingKeys = data.slice(1).map(r => r[0]);
