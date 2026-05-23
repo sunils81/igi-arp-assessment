@@ -168,6 +168,20 @@ function doPost(e){
 function doGet(e){
   const p = e && e.parameter ? e.parameter : {};
   const action = p.action || '';
+  const cbFn = p.callback || ''; // JSONP callback support
+
+  function respond(obj) {
+    const jsonStr = JSON.stringify(obj);
+    if (cbFn) {
+      // JSONP response — wraps JSON in callback function call
+      return ContentService
+        .createTextOutput(cbFn + '(' + jsonStr + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService
+      .createTextOutput(jsonStr)
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 
   try {
     // ── Public: is a session code required right now? ────────────────────────
@@ -177,33 +191,32 @@ function doGet(e){
       const expiryTs = parseInt(getSetting('sessionCodeExpiry') || '0');
       const now = Date.now();
       if (enabled && expiryTs > 0 && now > expiryTs) {
-        // Code has expired — auto-disable
         setSetting('sessionCodeEnabled', 'false');
-        return json({ codeRequired: false, reason: 'expired' });
+        return respond({ codeRequired: false, reason: 'expired' });
       }
-      return json({ codeRequired: enabled });
+      return respond({ codeRequired: enabled });
     }
 
     // ── Public: validate a session code ─────────────────────────────────────
     if (action === 'verifyCode') {
       const enabled = getSetting('sessionCodeEnabled') === 'true';
-      if (!enabled) return json({ valid: true, reason: 'code_not_required' });
+      if (!enabled) return respond({ valid: true, reason: 'code_not_required' });
       // Check expiry
       const expiryTs = parseInt(getSetting('sessionCodeExpiry') || '0');
       if (expiryTs > 0 && Date.now() > expiryTs) {
         setSetting('sessionCodeEnabled', 'false');
-        return json({ valid: false, reason: 'expired' });
+        return respond({ valid: false, reason: 'expired' });
       }
       const stored = (getSetting('sessionCode') || '').toString().trim().toUpperCase();
       const submitted = (p.code || '').trim().toUpperCase();
-      if (!stored) return json({ valid: false, reason: 'no_code_set' });
-      if (submitted === stored) return json({ valid: true });
-      return json({ valid: false, reason: 'wrong_code' });
+      if (!stored) return respond({ valid: false, reason: 'no_code_set' });
+      if (submitted === stored) return respond({ valid: true });
+      return respond({ valid: false, reason: 'wrong_code' });
     }
 
-    // ── Instructor: get current settings (for the panel) ────────────────────
+    // ── Instructor: get current settings ────────────────────────────────────
     if (action === 'getSettings') {
-      return json({
+      return respond({
         status: 'ok',
         sessionCodeEnabled: getSetting('sessionCodeEnabled') === 'true',
         sessionCode: getSetting('sessionCode') || '',
@@ -219,15 +232,15 @@ function doGet(e){
       setSetting('sessionCode', code);
       setSetting('sessionCodeEnabled', enabled ? 'true' : 'false');
       setSetting('sessionCodeExpiry', expiryTs > 0 ? String(expiryTs) : '0');
-      return json({ status: 'ok', sessionCode: code, sessionCodeEnabled: enabled, expiryTs: expiryTs });
+      return respond({ status: 'ok', sessionCode: code, sessionCodeEnabled: enabled, expiryTs: expiryTs });
     }
 
     // ── Default: response count ──────────────────────────────────────────────
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    return json({ status: 'ok', responses: sheet ? sheet.getLastRow() - 1 : 0 });
+    return respond({ status: 'ok', responses: sheet ? sheet.getLastRow() - 1 : 0 });
 
   } catch(err) {
-    return json({ status: 'error', message: err.toString() });
+    return respond({ status: 'error', message: err.toString() });
   }
 }
 
@@ -235,6 +248,15 @@ function json(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// GAS doesn't support real CORS headers on doGet, but deploying as
+// "Anyone (even anonymous)" + using no-cors fetch mode on client handles it.
+// This doOptions stub satisfies pre-flight for modern browsers.
+function doOptions(e) {
+  return ContentService
+    .createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 // ═══ ONE-TIME SETUP ══════════════════════════════════════════════════════════

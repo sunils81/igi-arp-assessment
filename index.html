@@ -347,32 +347,43 @@ if(BATCH) document.getElementById('fbatch').value=BATCH;
 if(CENTRE) document.getElementById('fcentre').value=CENTRE;
 document.getElementById('fdiamondtype').value=DIAMOND_TYPE;
 
+// ═══ GAS FETCH HELPER (JSONP — bypasses CORS) ════════════
+function gasGet(params, callback) {
+  const url = SHEET_URL + '?' + Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const cbName = '_gasCb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+  const script = document.createElement('script');
+  let done = false;
+  window[cbName] = function(data){
+    done = true;
+    delete window[cbName];
+    document.body.removeChild(script);
+    callback(null, data);
+  };
+  script.onerror = function(){
+    if(!done){ done=true; delete window[cbName]; try{document.body.removeChild(script);}catch(x){} callback(new Error('network'),null); }
+  };
+  // GAS supports ?callback= for JSONP
+  script.src = url + '&callback=' + cbName;
+  document.body.appendChild(script);
+  setTimeout(function(){
+    if(!done){ done=true; delete window[cbName]; try{document.body.removeChild(script);}catch(x){} callback(new Error('timeout'),null); }
+  }, 8000);
+}
+
 // ═══ SESSION CODE GATE ════════════════════════════════════
 (function(){
-  // If a ?code= param is in the URL, pre-fill the gate input
   const urlCode = PARAMS.get('code')||'';
-  if(urlCode) {
+  if(urlCode){
     const inp = document.getElementById('gateCodeInput');
     if(inp) inp.value = urlCode.toUpperCase();
   }
-  // Ask GAS: is a session code required?
-  fetch(SHEET_URL+'?action=settingsPublic')
-    .then(r=>r.json())
-    .then(d=>{
-      if(d && d.codeRequired){
-        // Code required — show gate
-        const gate = document.getElementById('sessionGate');
-        gate.classList.remove('hidden');
-        // If URL already has a ?code= param, auto-verify it
-        if(urlCode){
-          verifySessionCode();
-        }
-      }
-      // No code required — gate stays hidden, app proceeds normally
-    })
-    .catch(()=>{
-      // If GAS unreachable, silently allow (don't block users)
-    });
+  gasGet({action:'settingsPublic'}, function(err, d){
+    if(!err && d && d.codeRequired){
+      document.getElementById('sessionGate').classList.remove('hidden');
+      if(urlCode) verifySessionCode();
+    }
+    // If error or codeRequired=false — gate stays hidden
+  });
 })();
 
 function verifySessionCode(){
@@ -384,30 +395,28 @@ function verifySessionCode(){
   if(!code){ errEl.textContent='Please enter the session code.'; errEl.style.display='block'; return; }
   btnEl.style.display='none';
   verEl.style.display='block';
-  fetch(SHEET_URL+'?action=verifyCode&code='+encodeURIComponent(code))
-    .then(r=>r.json())
-    .then(d=>{
-      if(d && d.valid){
-        document.getElementById('sessionGate').classList.add('hidden');
-      } else {
-        verEl.style.display='none';
-        btnEl.style.display='flex';
-        const reason = d && d.reason;
-        if(reason==='no_code_set'){
-          errEl.textContent='No session code has been set yet. Ask your trainer to set one.';
-        } else if(reason==='expired'){
-          errEl.textContent='This session code has expired. Ask your trainer for a new one.';
-        } else {
-          errEl.textContent='Incorrect code. Please check with your trainer.';
-        }
-        errEl.style.display='block';
-        document.getElementById('gateCodeInput').select();
-      }
-    })
-    .catch(()=>{
-      // Network error — let user through (fail open so participants aren't blocked)
+  gasGet({action:'verifyCode', code:code}, function(err, d){
+    if(!err && d && d.valid){
       document.getElementById('sessionGate').classList.add('hidden');
-    });
+    } else {
+      verEl.style.display='none';
+      btnEl.style.display='flex';
+      const reason = d && d.reason;
+      if(reason==='no_code_set'){
+        errEl.textContent='No session code has been set yet. Ask your trainer to set one.';
+      } else if(reason==='expired'){
+        errEl.textContent='This session code has expired. Ask your trainer for a new one.';
+      } else if(err){
+        // Network error — fail open so participants aren't blocked
+        document.getElementById('sessionGate').classList.add('hidden');
+        return;
+      } else {
+        errEl.textContent='Incorrect code. Please check with your trainer.';
+      }
+      errEl.style.display='block';
+      document.getElementById('gateCodeInput').select();
+    }
+  });
 }
 
 // ═══ SCREENSHOT DETERRENT ═════════════════════════════════
