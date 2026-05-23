@@ -201,8 +201,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 
   <!-- SCREEN 0: DETAILS -->
-  <div id="screen0">
-    <div class="card">
+  <div id="screen0" class="hidden">
+
+    <!-- SESSION CODE INLINE GATE (shown only when code is required) -->
+    <div id="sessionCodeCard" class="card hidden" style="margin-bottom:16px;border:2px solid var(--gold)">
+      <div class="section-tag">Session Access</div>
+      <h2 style="margin-bottom:6px">Enter Session Code</h2>
+      <p class="sub" style="margin-bottom:16px">Your trainer will share a code before the session begins.</p>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="flex:1">
+          <input type="text" id="gateCodeInput" placeholder="e.g. IGI2026" autocomplete="off" autocapitalize="characters" spellcheck="false"
+            style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:16px;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);background:var(--white);outline:none;text-align:center"
+            onkeydown="if(event.key==='Enter') verifySessionCode()">
+          <div id="gateError" style="display:none;font-size:12px;color:#C94A4A;padding:6px 10px;background:#FEF2F2;border-radius:6px;margin-top:6px"></div>
+        </div>
+        <button class="btn btn-primary" id="gateBtn" onclick="verifySessionCode()" style="padding:11px 22px;white-space:nowrap">Unlock →</button>
+      </div>
+      <p id="gateVerifying" style="font-size:12px;color:var(--muted);margin-top:8px;display:none">Verifying…</p>
+    </div>
+
+    <!-- LOADING STATE (shown while GAS check is in progress) -->
+    <div id="sessionCheckingCard" class="card" style="text-align:center;padding:32px">
+      <div style="font-size:28px;margin-bottom:10px">⏳</div>
+      <p style="font-size:14px;color:var(--muted)">Loading session…</p>
+    </div>
+
+    <div id="detailsFormCard" class="card hidden">
       <div class="section-tag">Getting started</div>
       <h2>Your details</h2>
       <p class="sub">This helps personalise your profile. There are no right or wrong answers in the behavioural sections.</p>
@@ -246,8 +270,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
       <div id="diamondIndicator"></div>
       <div class="error-msg" id="err0">Please fill in all fields before continuing.</div>
       <button class="btn btn-primary btn-full" onclick="startAssessment()">Begin Assessment &rarr;</button>
-    </div>
-  </div>
+    </div><!-- /detailsFormCard -->
+  </div><!-- /screen0 -->
 
   <div id="screen1" class="hidden"><div class="card q-screen" id="questionCard"></div></div>
 
@@ -311,24 +335,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 </div>
 
-<!-- SESSION PASSWORD GATE -->
-<div class="overlay hidden" id="sessionGate">
-  <div class="overlay-box" style="max-width:400px">
-    <div style="font-size:38px;margin-bottom:10px">🔐</div>
-    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Session Access</div>
-    <h2 style="margin-bottom:8px">Enter Access Code</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.55">Your trainer will share a session code before the assessment begins.</p>
-    <div class="field" style="text-align:left">
-      <label style="font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:6px;letter-spacing:0.02em">Session Code</label>
-      <input type="text" id="gateCodeInput" placeholder="e.g. ARP-2601" autocomplete="off" autocapitalize="characters" spellcheck="false"
-        style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:15px;letter-spacing:0.06em;text-transform:uppercase;outline:none;text-align:center"
-        onkeydown="if(event.key==='Enter') verifySessionCode()">
-    </div>
-    <div id="gateError" class="error-msg" style="margin-bottom:12px">Incorrect code. Please check with your trainer.</div>
-    <button class="btn btn-primary btn-full" onclick="verifySessionCode()" id="gateBtn">Unlock Assessment →</button>
-    <p id="gateVerifying" style="font-size:12px;color:var(--muted);margin-top:10px;display:none">Verifying…</p>
-  </div>
-</div>
+<!-- SESSION PASSWORD GATE overlay removed — now inline in screen0 -->
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════
@@ -377,12 +384,20 @@ function gasGet(params, callback) {
     const inp = document.getElementById('gateCodeInput');
     if(inp) inp.value = urlCode.toUpperCase();
   }
+  // screen0 is hidden by default — show it after GAS check
   gasGet({action:'settingsPublic'}, function(err, d){
+    document.getElementById('sessionCheckingCard').classList.add('hidden');
+    document.getElementById('screen0').classList.remove('hidden');
     if(!err && d && d.codeRequired){
-      document.getElementById('sessionGate').classList.remove('hidden');
+      // Show inline code entry, hide the form
+      document.getElementById('sessionCodeCard').classList.remove('hidden');
+      document.getElementById('detailsFormCard').classList.add('hidden');
       if(urlCode) verifySessionCode();
+    } else {
+      // No code needed — show form directly
+      document.getElementById('sessionCodeCard').classList.add('hidden');
+      document.getElementById('detailsFormCard').classList.remove('hidden');
     }
-    // If error or codeRequired=false — gate stays hidden
   });
 })();
 
@@ -393,22 +408,25 @@ function verifySessionCode(){
   const verEl = document.getElementById('gateVerifying');
   errEl.style.display='none';
   if(!code){ errEl.textContent='Please enter the session code.'; errEl.style.display='block'; return; }
-  btnEl.style.display='none';
+  btnEl.disabled=true;
   verEl.style.display='block';
   gasGet({action:'verifyCode', code:code}, function(err, d){
+    btnEl.disabled=false;
+    verEl.style.display='none';
     if(!err && d && d.valid){
-      document.getElementById('sessionGate').classList.add('hidden');
+      // Hide code card, show form
+      document.getElementById('sessionCodeCard').classList.add('hidden');
+      document.getElementById('detailsFormCard').classList.remove('hidden');
     } else {
-      verEl.style.display='none';
-      btnEl.style.display='flex';
       const reason = d && d.reason;
       if(reason==='no_code_set'){
-        errEl.textContent='No session code has been set yet. Ask your trainer to set one.';
+        errEl.textContent='No session code set yet. Ask your trainer.';
       } else if(reason==='expired'){
         errEl.textContent='This session code has expired. Ask your trainer for a new one.';
       } else if(err){
-        // Network error — fail open so participants aren't blocked
-        document.getElementById('sessionGate').classList.add('hidden');
+        // Network error — fail open
+        document.getElementById('sessionCodeCard').classList.add('hidden');
+        document.getElementById('detailsFormCard').classList.remove('hidden');
         return;
       } else {
         errEl.textContent='Incorrect code. Please check with your trainer.';
