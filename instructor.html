@@ -393,6 +393,33 @@ function updateAll(){
 function generateURL(){
   updateAll();
   document.getElementById('urlOutput').scrollIntoView({behavior:'smooth',block:'nearest'});
+  // Auto-save active session config to GAS so base URL reflects this batch
+  pushActiveSession();
+}
+
+function pushActiveSession(){
+  const centreCode  = document.getElementById('gCentre').value;
+  const centreLabel = CENTRE_LABELS[centreCode] || centreCode;
+  const client   = document.getElementById('gClient').value.trim();
+  const trainer  = document.getElementById('gTrainer').value.trim();
+  const batch    = document.getElementById('gBatch').value.trim();
+  const diamonds = getSelectedDiamond();
+  const code     = (document.getElementById('scCodeInput').value||'').trim().toUpperCase();
+  const expiry   = parseInt(document.getElementById('scExpiry').value)||0;
+  const expiryTs = expiry > 0 ? (Date.now() + expiry * 60000) : 0;
+  const params = new URLSearchParams({
+    action:'saveSettings', code, enabled: scEnabled, expiryTs,
+    batch, centre: centreLabel, client, trainer, diamonds
+  });
+  fetch(GAS_URL + '?' + params.toString())
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.status==='ok'){
+        showScMsg('✓ Active session updated: ' + batch + ' · ' + diamonds, true);
+        if(d.sessionCode) showActiveCode(d.sessionCode, d.expiryTs||0);
+      }
+    })
+    .catch(()=>{}); // silent fail — link still generated
 }
 
 function copyURL(){
