@@ -1557,6 +1557,7 @@ function submitAll(){
     experience:document.getElementById('fexp').value,
     country:document.getElementById('fcountry').value,
     diamondType:dtLabel,timeTaken,
+    sessionCode: (document.getElementById('gateCodeInput') ? document.getElementById('gateCodeInput').value.trim().toUpperCase() : (PARAMS.get('code')||'')).toUpperCase(),
     c2sPrimary:C2S_NAMES[c2sA.primary],c2sClassification:c2sA.classification,
     c2sLabel:c2sA.label,c2sScores:JSON.stringify(c2sRaw),
     rspScore:rspA.avg,rspStage:rspA.stage.label,rspStageKey:rspA.stage.key,
