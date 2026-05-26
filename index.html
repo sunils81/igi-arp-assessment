@@ -1046,16 +1046,38 @@ function pauseBehavTimer(){clearInterval(behavTimer);}
 function startAssessment(){
   const ids=['fname','fmobile','fbranch','fdesig','fexp','fcountry'];
   if(ids.some(id=>!document.getElementById(id).value.trim())){
-    document.getElementById('err0').style.display='block';return;
+    document.getElementById('err0').textContent='Please fill in all fields before continuing.';
+    document.getElementById('err0').style.display='block';
+    return;
   }
   document.getElementById('err0').style.display='none';
-  diamondType=document.getElementById('fdiamondtype').value||'natural';
-  fcsBank=buildFCSBank(diamondType);
-  document.getElementById('screen0').classList.add('hidden');
-  document.getElementById('screen1').classList.remove('hidden');
-  setQuizActive(true);   // ← Enable tab-switch & screenshot enforcement
-  startFCSTimer();
-  renderFCSQ(0);
+
+  const mobile = document.getElementById('fmobile').value.trim();
+  const batch  = document.getElementById('fbatch').value.trim();
+  const startBtn = document.querySelector('[onclick="startAssessment()"]');
+
+  // Disable button + show checking state
+  if(startBtn){ startBtn.disabled=true; startBtn.textContent='Checking…'; }
+
+  gasGet({action:'checkMobile', mobile, batch}, function(err, d){
+    if(startBtn){ startBtn.disabled=false; startBtn.textContent='Begin Assessment →'; }
+
+    if(!err && d && d.attempted){
+      document.getElementById('err0').textContent='This mobile number has already completed the assessment' + (batch ? ' for batch '+batch : '') + '. Each participant can only attempt once.';
+      document.getElementById('err0').style.display='block';
+      return;
+    }
+
+    // Proceed — network errors or unexpected responses fail open (don't block participant)
+    document.getElementById('err0').style.display='none';
+    diamondType=document.getElementById('fdiamondtype').value||'natural';
+    fcsBank=buildFCSBank(diamondType);
+    document.getElementById('screen0').classList.add('hidden');
+    document.getElementById('screen1').classList.remove('hidden');
+    setQuizActive(true);
+    startFCSTimer();
+    renderFCSQ(0);
+  });
 }
 
 function moveToBehav(){

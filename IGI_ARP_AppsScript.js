@@ -203,6 +203,27 @@ function doPost(e){
       }
     }
 
+    // ── Duplicate mobile guard ────────────────────────────────────────────
+    // Belt-and-suspenders: even if the client check is bypassed, reject here.
+    if (d.mobile) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const iMob   = HEADERS.indexOf('Mobile');
+        const iBatch = HEADERS.indexOf('Batch Code');
+        const mobs   = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
+        const inMob  = String(d.mobile).trim();
+        const inBatch= String(d.batchCode||'').trim().toUpperCase();
+        for (let i = 0; i < mobs.length; i++) {
+          const rowMob   = String(mobs[i][iMob]  ||'').trim();
+          const rowBatch = String(mobs[i][iBatch] ||'').trim().toUpperCase();
+          if (rowMob === inMob && (!inBatch || rowBatch === inBatch)) {
+            lock.releaseLock();
+            return jsonResponse({status:'error', message:'This mobile number has already completed the assessment for this batch.'});
+          }
+        }
+      }
+    }
+
     // Session code server-side revalidation
     const codeCheck = verifySessionCode(ss, d.sessionCode || '');
     if (codeCheck.required && !codeCheck.ok) {
@@ -292,6 +313,28 @@ function doGet(e){
   }
 
   try {
+    if (action === 'checkMobile') {
+      const mobile = (p.mobile||'').trim();
+      const batch  = (p.batch ||'').trim().toUpperCase();
+      const sheet  = ss.getSheetByName(SHEET_NAME);
+      if (!mobile) return respond({attempted: false});
+      if (sheet && sheet.getLastRow() > 1) {
+        const lastRow = sheet.getLastRow();
+        const data    = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
+        const iMob    = HEADERS.indexOf('Mobile');
+        const iBatch  = HEADERS.indexOf('Batch Code');
+        for (let i = 0; i < data.length; i++) {
+          const rowMob   = String(data[i][iMob]  ||'').trim();
+          const rowBatch = String(data[i][iBatch] ||'').trim().toUpperCase();
+          // If batch is provided, scope the check to that batch only
+          if (rowMob === mobile && (!batch || rowBatch === batch)) {
+            return respond({attempted: true});
+          }
+        }
+      }
+      return respond({attempted: false});
+    }
+
     if (action === 'settingsPublic') {
       const enabled  = getSettingBool('sessionCodeEnabled');
       const expiryTs = parseInt(getSetting('sessionCodeExpiry')||'0');
