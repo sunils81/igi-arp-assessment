@@ -1546,6 +1546,13 @@ function submitAll(){
     comboProfile:comboKey,insightTitle:profile.title
   };
   if(SHEET_URL) {
+    let submitted = false; // guard: ensure only one fetch fires per assessment
+    function doSubmit(extraPayload) {
+      if (submitted) return;
+      submitted = true;
+      const body = Object.assign({}, payload, extraPayload||{});
+      fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(body)}).catch(()=>{});
+    }
     if(typeof html2pdf !== 'undefined') {
       setTimeout(() => {
         const opt = {
@@ -1556,14 +1563,13 @@ function submitAll(){
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().from(s3).set(opt).outputPdf('datauristring').then(function(pdfDataUri) {
-          payload.pdfBase64 = pdfDataUri.substring(pdfDataUri.indexOf(',') + 1);
-          fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+          doSubmit({ pdfBase64: pdfDataUri.substring(pdfDataUri.indexOf(',') + 1) });
         }).catch(() => {
-          fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+          doSubmit({}); // PDF failed — submit without PDF, never double-fire
         });
       }, 500); // allow UI to render first
     } else {
-      fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{});
+      doSubmit({});
     }
   }
 }
