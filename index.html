@@ -229,14 +229,38 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
     <div id="detailsFormCard" class="card hidden">
       <div class="section-tag">Getting started</div>
       <h2>Your details</h2>
-      <p class="sub">This helps personalise your profile. There are no right or wrong answers in the behavioural sections.</p>
+      <p class="sub">This helps personalize your profile. There are no right or wrong answers in the behavioral sections.</p>
       <div class="grid2">
         <div class="field"><label>Batch code</label><input type="text" id="fbatch" placeholder="e.g. MUM-POME-MAY26" readonly></div>
         <div class="field"><label>IGI Centre</label><input type="text" id="fcentre" placeholder="e.g. Mumbai" readonly></div>
       </div>
       <div class="grid2">
         <div class="field"><label>Full name</label><input type="text" id="fname" placeholder="e.g. Priya Sharma"></div>
-        <div class="field"><label>Mobile number</label><input type="tel" id="fmobile" placeholder="10-digit number"></div>
+        <div class="field">
+          <label>Mobile number</label>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <select id="fcountrycode" style="width:110px;flex-shrink:0;padding:10px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);color:var(--navy)">
+              <option value="+91"  selected>🇮🇳 +91</option>
+              <option value="+32">🇧🇪 +32</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+971">🇦🇪 +971</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+852">🇭🇰 +852</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+65">🇸🇬 +65</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+1-CA">🇨🇦 +1</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+972">🇮🇱 +972</option>
+              <option value="+66">🇹🇭 +66</option>
+              <option value="+90">🇹🇷 +90</option>
+              <option value="+39">🇮🇹 +39</option>
+              <option value="+27">🇿🇦 +27</option>
+              <option value="other">🌍 Other</option>
+            </select>
+            <input type="tel" id="fmobile" placeholder="e.g. 9876543210" style="flex:1">
+          </div>
+        </div>
       </div>
       <div class="grid2">
         <div class="field"><label>Store / branch</label><input type="text" id="fbranch" placeholder="e.g. Bandra, Mumbai"></div>
@@ -258,13 +282,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
           </select>
         </div>
         <div class="field"><label>Country</label>
-          <select id="fcountry">
+          <select id="fcountry" onchange="updateArpCountry(this.value)">
             <option value="">Select country</option>
-            <option>India</option><option>UAE</option><option>USA</option><option>UK</option>
-            <option>Belgium</option><option>Israel</option><option>Thailand</option>
-            <option>Hong Kong</option><option>Singapore</option><option>Other</option>
+            <option value="India"        selected>🇮🇳 India</option>
+            <option value="Belgium">🇧🇪 Belgium</option>
+            <option value="USA">🇺🇸 United States</option>
+            <option value="UAE">🇦🇪 UAE</option>
+            <option value="China">🇨🇳 China</option>
+            <option value="Hong Kong">🇭🇰 Hong Kong</option>
+            <option value="UK">🇬🇧 United Kingdom</option>
+            <option value="Singapore">🇸🇬 Singapore</option>
+            <option value="Australia">🇦🇺 Australia</option>
+            <option value="Canada">🇨🇦 Canada</option>
+            <option value="Japan">🇯🇵 Japan</option>
+            <option value="Israel">🇮🇱 Israel</option>
+            <option value="Thailand">🇹🇭 Thailand</option>
+            <option value="Turkey">🇹🇷 Turkey</option>
+            <option value="Italy">🇮🇹 Italy</option>
+            <option value="South Africa">🇿🇦 South Africa</option>
+            <option value="Other">🌍 Other</option>
           </select>
         </div>
+      </div>
+      <div class="grid2" id="arpCityRow" style="display:none">
+        <div class="field">
+          <label id="arpCityLabel">City</label>
+          <input type="text" id="farpCity" placeholder="Your city">
+        </div>
+        <div class="field"></div>
       </div>
       <input type="hidden" id="fdiamondtype" value="natural">
       <div id="diamondIndicator"></div>
@@ -865,14 +910,78 @@ const FCS_LGD=[
   {q:"Why are lab grown diamonds typically priced lower than natural diamonds of the same grade?",opts:[{t:"They are lower quality",c:false},{t:"They are not certified",c:false},{t:"They can be produced at scale — the price reflects supply, not quality",c:true},{t:"IGI does not certify them",c:false}]},
   {q:"A customer says their budget is limited but they want a bigger diamond. Why is lab grown a good recommendation?",opts:[{t:"It is lower quality so cheaper",c:false},{t:"It allows them to access a larger, higher-grade stone within their budget without compromising on the 4Cs",c:true},{t:"It will appreciate in value",c:false},{t:"It is easier to insure",c:false}]},
   {q:"How should you describe the sustainability story of a lab grown diamond to a conscious consumer?",opts:[{t:"Avoid the topic",c:false},{t:"Lab grown diamonds have a significantly lower land impact than mined diamonds and are a modern, conscious luxury choice",c:true},{t:"Tell them all diamonds are the same",c:false},{t:"Only mention it if asked directly",c:false}]},
-  {q:"Which organisation certifies lab grown diamonds with the same rigour as natural diamonds?",opts:[{t:"Only GIA",c:false},{t:"IGI certifies both natural and lab grown diamonds to the same grading standards",c:true},{t:"No organisation certifies lab grown",c:false},{t:"Only GCAL",c:false}]},
+  {q:"Which organization certifies lab grown diamonds with the same rigor as natural diamonds?",opts:[{t:"Only GIA",c:false},{t:"IGI certifies both natural and lab grown diamonds to the same grading standards",c:true},{t:"No organization certifies lab grown",c:false},{t:"Only GCAL",c:false}]},
   {q:"A customer compares a natural and lab grown of identical 4Cs. What is most important to help them understand?",opts:[{t:"Always recommend natural",c:false},{t:"Always recommend lab grown",c:false},{t:"Help them understand natural rarity vs lab grown accessibility — and let them decide based on what matters most to them",c:true},{t:"Tell them price is the only difference",c:false}]},
   {q:"What does HPHT stand for in lab grown diamond creation?",opts:[{t:"High Pressure High Temperature",c:true},{t:"Highly Polished High Transparency",c:false},{t:"Hydrogen Pressure Heat Treatment",c:false},{t:"Heavy Particle Heat Technology",c:false}]},
-  {q:"A customer asks if a lab grown diamond will look different from a natural one. You say:",opts:[{t:"Yes, you can clearly see the difference",c:false},{t:"No — even trained gemologists cannot distinguish them with the naked eye. Only specialised equipment can detect the difference",c:true},{t:"Only under magnification",c:false},{t:"Only in certain lighting",c:false}]}
+  {q:"A customer asks if a lab grown diamond will look different from a natural one. You say:",opts:[{t:"Yes, you can clearly see the difference",c:false},{t:"No — even trained gemologists cannot distinguish them with the naked eye. Only specialized equipment can detect the difference",c:true},{t:"Only under magnification",c:false},{t:"Only in certain lighting",c:false}]}
 ];
 
-// ═══ UTILITIES ═══════════════════════════════════════════
-function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// ═══ COUNTRY / CITY / MOBILE HELPERS ════════════════════
+const ARP_CITY_PLACEHOLDERS = {
+  'India':        'e.g. Mumbai, Delhi, Surat, Jaipur…',
+  'Belgium':      'e.g. Antwerp, Brussels, Ghent…',
+  'USA':          'e.g. New York, Los Angeles, Chicago, Miami…',
+  'UAE':          'e.g. Dubai, Abu Dhabi, Sharjah…',
+  'China':        'e.g. Shanghai, Shenzhen, Beijing, Guangzhou…',
+  'Hong Kong':    'e.g. Central, Kowloon, Causeway Bay…',
+  'UK':           'e.g. London, Birmingham, Manchester…',
+  'Singapore':    'e.g. Orchard, Marina Bay, Jurong…',
+  'Australia':    'e.g. Sydney, Melbourne, Brisbane, Perth…',
+  'Canada':       'e.g. Toronto, Vancouver, Montreal, Calgary…',
+  'Japan':        'e.g. Tokyo, Osaka, Nagoya, Yokohama…',
+  'Israel':       'e.g. Tel Aviv, Jerusalem, Haifa…',
+  'Thailand':     'e.g. Bangkok, Chiang Mai, Pattaya…',
+  'Turkey':       'e.g. Istanbul, Ankara, Izmir…',
+  'Italy':        'e.g. Milan, Vicenza, Rome, Florence…',
+  'South Africa': 'e.g. Johannesburg, Cape Town, Durban…',
+  'Other':        'Your city or region'
+};
+const ARP_CC_MAP = {
+  'India':'+91','Belgium':'+32','USA':'+1','UAE':'+971','China':'+86',
+  'Hong Kong':'+852','UK':'+44','Singapore':'+65','Australia':'+61',
+  'Canada':'+1-CA','Japan':'+81','Israel':'+972','Thailand':'+66',
+  'Turkey':'+90','Italy':'+39','South Africa':'+27'
+};
+const ARP_MOBILE_PLACEHOLDERS = {
+  'India':'e.g. 9876543210','Belgium':'e.g. 0471123456','USA':'e.g. 2125551234',
+  'UAE':'e.g. 501234567','China':'e.g. 13912345678','Hong Kong':'e.g. 91234567',
+  'UK':'e.g. 7911123456','Singapore':'e.g. 91234567','Australia':'e.g. 412345678',
+  'Canada':'e.g. 4161234567','Japan':'e.g. 9012345678','Israel':'e.g. 521234567',
+  'Thailand':'e.g. 812345678','Turkey':'e.g. 5321234567','Italy':'e.g. 3121234567',
+  'South Africa':'e.g. 821234567','Other':'Your mobile number'
+};
+
+function updateArpCountry(country) {
+  // Update country code dropdown
+  const ccSel = document.getElementById('fcountrycode');
+  if (ccSel && ARP_CC_MAP[country]) ccSel.value = ARP_CC_MAP[country];
+
+  // Update mobile placeholder
+  const mob = document.getElementById('fmobile');
+  if (mob) mob.placeholder = ARP_MOBILE_PLACEHOLDERS[country] || 'Your mobile number';
+
+  // Show/hide city row
+  const cityRow   = document.getElementById('arpCityRow');
+  const cityLabel = document.getElementById('arpCityLabel');
+  const cityInput = document.getElementById('farpCity');
+  if (!cityRow) return;
+  if (!country) { cityRow.style.display = 'none'; return; }
+  cityRow.style.display = 'grid';
+  if (country === 'India') {
+    cityLabel.textContent = 'City *';
+    cityInput.placeholder = ARP_CITY_PLACEHOLDERS['India'];
+    cityInput.required = true;
+  } else {
+    cityLabel.textContent = 'City / Region (optional)';
+    cityInput.placeholder = ARP_CITY_PLACEHOLDERS[country] || 'Your city or region';
+    cityInput.required = false;
+  }
+}
+
+// Init on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateArpCountry(document.getElementById('fcountry')?.value || 'India');
+});
 
 function buildFCSBank(dt){
   let specific=[],specificTags=[];
@@ -1047,6 +1156,12 @@ function startAssessment(){
   const ids=['fname','fmobile','fbranch','fdesig','fexp','fcountry'];
   if(ids.some(id=>!document.getElementById(id).value.trim())){
     document.getElementById('err0').textContent='Please fill in all fields before continuing.';
+    document.getElementById('err0').style.display='block';
+    return;
+  }
+  // India requires city
+  if(document.getElementById('fcountry').value==='India' && !document.getElementById('farpCity')?.value?.trim()){
+    document.getElementById('err0').textContent='Please enter your city.';
     document.getElementById('err0').style.display='block';
     return;
   }
@@ -1556,6 +1671,8 @@ function submitAll(){
     designation:document.getElementById('fdesig').value,
     experience:document.getElementById('fexp').value,
     country:document.getElementById('fcountry').value,
+    city:document.getElementById('farpCity')?.value||'',
+    countryCode:document.getElementById('fcountrycode')?.value||'+91',
     diamondType:dtLabel,timeTaken,
     sessionCode: (document.getElementById('gateCodeInput') ? document.getElementById('gateCodeInput').value.trim().toUpperCase() : (PARAMS.get('code')||'')).toUpperCase(),
     c2sPrimary:C2S_NAMES[c2sA.primary],c2sClassification:c2sA.classification,
