@@ -100,7 +100,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
       <div style="display:flex;gap:8px;align-items:center">
         <input type="text" id="scCodeInput" placeholder="e.g. ARP-2601" autocomplete="off" autocapitalize="characters"
           style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);background:var(--white);outline:none">
-        <button class="btn-outline" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px;font-size:12px;border-radius:8px;cursor:pointer">⚡ Generate</button>
+        <button class="btn-outline" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px;font-size:12px;border-radius:8px;cursor:pointer">⚡ Generate Password</button>
         <button class="btn btn-primary" onclick="saveSessionCode()" style="white-space:nowrap;padding:10px 18px">Save Code</button>
       </div>
     </div>
@@ -124,10 +124,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
     <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">
       <div class="section-tag" style="margin-bottom:6px">Batch Report Access</div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Set a password for the batch report page. Share this with retail owners so they can view their team's results at <strong>igi-arp-assessment.vercel.app/report</strong></p>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="reportPassInput" placeholder="e.g. JEWLBX2026" autocomplete="off"
-          style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:14px;color:var(--navy);background:var(--white);outline:none">
-        <button class="btn btn-primary" onclick="saveReportPass()" style="white-space:nowrap;padding:10px 18px">Save Password</button>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input type="text" id="reportPassInput" placeholder="e.g. JEWLBX2026 — create a memorable password for this batch" autocomplete="off"
+          style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:14px;color:var(--navy);background:var(--white);outline:none">
+        <button class="btn btn-primary" onclick="saveReportPass()" style="padding:11px 18px">Save Password</button>
       </div>
       <div id="reportPassMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:6px"></div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
@@ -144,25 +144,36 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
     <div class="grid2">
       <div class="field"><label>Your name (Trainer)</label><input type="text" id="gTrainer" placeholder="e.g. Sunita" oninput="updateAll()"></div>
       <div class="field">
-        <label>IGI Centre</label>
-        <select id="gCentre" onchange="updateAll()">
-          <option value="">Select centre</option>
-          <option value="MUM">Mumbai</option>
-          <option value="DEL">Delhi</option>
-          <option value="KOL">Kolkata</option>
-          <option value="SRT">Surat</option>
-          <option value="CHE">Chennai</option>
-          <option value="HYD">Hyderabad</option>
-          <option value="BLR">Bangalore</option>
-          <option value="JAI">Jaipur</option>
-          <option value="AMD">Ahmedabad</option>
-          <option value="PUN">Pune</option>
-          <option value="DXB">Dubai</option>
-          <option value="OTH">Other</option>
+        <label>IGI Country</label>
+        <select id="gCountry" onchange="updateCentreOptions(); updateAll()">
+          <option value="">Select country</option>
+          <option value="India" selected>🇮🇳 India</option>
+          <option value="Belgium">🇧🇪 Belgium</option>
+          <option value="USA">🇺🇸 United States</option>
+          <option value="UAE">🇦🇪 UAE</option>
+          <option value="China">🇨🇳 China</option>
+          <option value="Hong Kong">🇭🇰 Hong Kong</option>
+          <option value="UK">🇬🇧 United Kingdom</option>
+          <option value="Singapore">🇸🇬 Singapore</option>
+          <option value="Australia">🇦🇺 Australia</option>
+          <option value="Canada">🇨🇦 Canada</option>
+          <option value="Japan">🇯🇵 Japan</option>
+          <option value="Israel">🇮🇱 Israel</option>
+          <option value="Thailand">🇹🇭 Thailand</option>
+          <option value="Turkey">🇹🇷 Turkey</option>
+          <option value="Italy">🇮🇹 Italy</option>
+          <option value="South Africa">🇿🇦 South Africa</option>
+          <option value="Other">🌍 Other</option>
         </select>
       </div>
     </div>
     <div class="grid2">
+      <div class="field">
+        <label>IGI Centre / City</label>
+        <select id="gCentre" onchange="updateAll()">
+          <option value="">Select centre / city</option>
+        </select>
+      </div>
       <div class="field"><label>Client / Brand</label><input type="text" id="gClient" placeholder="e.g. POME" oninput="updateAll()"></div>
       <div class="field">
         <label>Month / Year</label>
@@ -230,7 +241,46 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g22cFqEPsGNdQbV1Ko-idi3miM9A8ZswK2EFU5k6__fZe6Fg/exec';
 const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-const CENTRE_LABELS = {MUM:'Mumbai',DEL:'Delhi',KOL:'Kolkata',SRT:'Surat',CHE:'Chennai',HYD:'Hyderabad',BLR:'Bangalore',JAI:'Jaipur',AMD:'Ahmedabad',PUN:'Pune',DXB:'Dubai',OTH:'Other'};
+const CENTRE_LABELS = {MUM:'Mumbai',DEL:'Delhi',KOL:'Kolkata',SRT:'Surat',CHE:'Chennai',HYD:'Hyderabad',BLR:'Bangalore',JAI:'Jaipur',AMD:'Ahmedabad',PUN:'Pune',LKO:'Lucknow',DXB:'Dubai',ANT:'Antwerp',NYC:'New York',LA:'Los Angeles',LON:'London',SIN:'Singapore',HKG:'Hong Kong',SYD:'Sydney',TYO:'Tokyo',TLV:'Tel Aviv',BKK:'Bangkok',MIL:'Milan',JHB:'Johannesburg',OTH:'Other'};
+
+// Country → cities map for centre dropdown
+const COUNTRY_CENTRES = {
+  'India':        [{v:'MUM',l:'Mumbai'},{v:'DEL',l:'Delhi'},{v:'KOL',l:'Kolkata'},{v:'SRT',l:'Surat'},{v:'CHE',l:'Chennai'},{v:'HYD',l:'Hyderabad'},{v:'BLR',l:'Bangalore'},{v:'JAI',l:'Jaipur'},{v:'AMD',l:'Ahmedabad'},{v:'PUN',l:'Pune'},{v:'LKO',l:'Lucknow'},{v:'OTH',l:'Other'}],
+  'UAE':          [{v:'DXB',l:'Dubai'},{v:'AUH',l:'Abu Dhabi'},{v:'SHJ',l:'Sharjah'},{v:'OTH',l:'Other'}],
+  'Belgium':      [{v:'ANT',l:'Antwerp'},{v:'BRU',l:'Brussels'},{v:'OTH',l:'Other'}],
+  'USA':          [{v:'NYC',l:'New York'},{v:'LA',l:'Los Angeles'},{v:'CHI',l:'Chicago'},{v:'MIA',l:'Miami'},{v:'OTH',l:'Other'}],
+  'UK':           [{v:'LON',l:'London'},{v:'BHM',l:'Birmingham'},{v:'MAN',l:'Manchester'},{v:'OTH',l:'Other'}],
+  'Singapore':    [{v:'SIN',l:'Singapore'},{v:'OTH',l:'Other'}],
+  'Hong Kong':    [{v:'HKG',l:'Hong Kong Central'},{v:'KOW',l:'Kowloon'},{v:'OTH',l:'Other'}],
+  'Australia':    [{v:'SYD',l:'Sydney'},{v:'MEL',l:'Melbourne'},{v:'BRI',l:'Brisbane'},{v:'OTH',l:'Other'}],
+  'Canada':       [{v:'TOR',l:'Toronto'},{v:'VAN',l:'Vancouver'},{v:'MTL',l:'Montreal'},{v:'OTH',l:'Other'}],
+  'Japan':        [{v:'TYO',l:'Tokyo'},{v:'OSA',l:'Osaka'},{v:'OTH',l:'Other'}],
+  'Israel':       [{v:'TLV',l:'Tel Aviv'},{v:'JER',l:'Jerusalem'},{v:'OTH',l:'Other'}],
+  'Thailand':     [{v:'BKK',l:'Bangkok'},{v:'CNX',l:'Chiang Mai'},{v:'OTH',l:'Other'}],
+  'Turkey':       [{v:'IST',l:'Istanbul'},{v:'ANK',l:'Ankara'},{v:'OTH',l:'Other'}],
+  'Italy':        [{v:'MIL',l:'Milan'},{v:'VIC',l:'Vicenza'},{v:'ROM',l:'Rome'},{v:'OTH',l:'Other'}],
+  'South Africa': [{v:'JHB',l:'Johannesburg'},{v:'CPT',l:'Cape Town'},{v:'DUR',l:'Durban'},{v:'OTH',l:'Other'}],
+  'China':        [{v:'SHA',l:'Shanghai'},{v:'SZX',l:'Shenzhen'},{v:'BEJ',l:'Beijing'},{v:'CAN',l:'Guangzhou'},{v:'OTH',l:'Other'}],
+  'Other':        [{v:'OTH',l:'Other'}]
+};
+
+function updateCentreOptions(){
+  const country = document.getElementById('gCountry')?.value || 'India';
+  const sel = document.getElementById('gCentre');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Select centre / city</option>';
+  const cities = COUNTRY_CENTRES[country] || COUNTRY_CENTRES['Other'];
+  cities.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.v; opt.textContent = c.l;
+    if(c.v === prev) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Also update the CENTRE_LABELS live
+  cities.forEach(c => { CENTRE_LABELS[c.v] = c.l; });
+  // Reset batch if not manually edited
+  if(!batchManuallyEdited) document.getElementById('gBatch').value = '';
+}
 let savedLinks = JSON.parse(localStorage.getItem('igi_instructor_links')||'[]');
 let batchManuallyEdited = false;
 let scEnabled = false;
@@ -394,6 +444,8 @@ function copyReportLink(){
     if(i===0) opt.selected=true;
     sel.appendChild(opt);
   }
+  // Init centre list for India (default)
+  updateCentreOptions();
 })();
 
 function getSelectedDiamond(){
@@ -420,6 +472,7 @@ function buildURL(){
   const trainer = document.getElementById('gTrainer').value.trim();
   const centreCode = document.getElementById('gCentre').value;
   const centreLabel = CENTRE_LABELS[centreCode]||centreCode;
+  const country = document.getElementById('gCountry')?.value || '';
   const client = document.getElementById('gClient').value.trim();
   const batch = document.getElementById('gBatch').value.trim();
   const base = document.getElementById('gBaseUrl').value.trim()||'https://igi-arp-assessment.vercel.app';
@@ -428,6 +481,7 @@ function buildURL(){
   const params = new URLSearchParams();
   if(trainer) params.set('trainer',trainer);
   if(centreLabel) params.set('centre',centreLabel);
+  if(country) params.set('country',country);
   if(client) params.set('client',client);
   if(batch) params.set('batch',batch);
   params.set('diamonds',getSelectedDiamond());
