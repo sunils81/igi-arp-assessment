@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,92 +5,155 @@
 <title>IGI ARP — Batch Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FDFCF9;--off:#F4F1EB;--muted:#8A8070;--border:rgba(201,168,76,0.2);--teal:#1D9E75;--coral:#C9613A;--purple:#534AB7;--blue:#378ADD;--radius:12px;--shadow:0 4px 24px rgba(13,27,46,0.10)}
+:root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FFFFFF;--off:#F7F5F0;--muted:#6B6357;--border:#E2DDD6;--teal:#1D9E75;--coral:#C9613A;--purple:#534AB7;--blue:#378ADD;--gap-fill:#C94A4A;--dev-fill:#B87A10;--str-fill:#1D9E75;--rm:4px;--sh:0 1px 4px rgba(13,27,46,0.07),0 4px 16px rgba(13,27,46,0.05)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);min-height:100vh;font-size:15px;line-height:1.6}
-#app{max-width:800px;margin:0 auto;padding:20px 16px 60px}
-.site-header{background:var(--navy);border-radius:var(--radius);margin-bottom:20px;overflow:hidden}
-.header-logo-band{padding:22px 24px 14px;display:flex;align-items:center;justify-content:center}
-.header-logo-band img{height:46px;width:auto}
-.header-divider{height:1px;background:rgba(201,168,76,0.3);margin:0 24px}
-.header-prog-band{padding:10px 24px 18px;text-align:center}
-.header-prog-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
-.header-tagline{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.04em;font-style:italic}
-.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:26px;box-shadow:var(--shadow);margin-bottom:16px}
-.section-tag{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
-.card h2{font-size:19px;font-weight:600;color:var(--navy);line-height:1.3;font-family:"Playfair Display",serif}
-.card .sub{font-size:13px;color:var(--muted);margin-top:6px;margin-bottom:20px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;letter-spacing:0.02em;text-transform:uppercase}
-.field input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;background:var(--white);color:var(--navy);outline:none;transition:border-color 0.2s}
-.field input:focus{border-color:var(--gold)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 22px;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted);transition:all 0.18s}
-.btn-primary{background:var(--gold);color:var(--navy);border-color:var(--gold);width:100%;margin-top:6px}
-.btn-primary:hover{background:var(--gold-light)}
-.error-msg{font-size:12px;color:#C94A4A;padding:8px 12px;background:#FEF2F2;border-radius:6px;margin-top:8px;display:none}
+body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);min-height:100vh;font-size:14px;line-height:1.75;-webkit-font-smoothing:antialiased}
+#app{max-width:860px;margin:0 auto;padding:32px 20px 80px}
 .hidden{display:none!important}
-/* REPORT STYLES */
-.report-header{background:var(--navy);border-radius:var(--radius);padding:28px;margin-bottom:16px;text-align:center}
-.report-header .client-name{font-size:28px;font-weight:700;font-family:"Playfair Display",serif;color:var(--gold-light);margin-bottom:4px}
-.report-header .batch-meta{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px}
-.report-header .igi-badge{display:inline-block;padding:4px 14px;border-radius:20px;background:rgba(201,168,76,0.15);border:1px solid var(--gold);color:var(--gold-light);font-size:11px;font-weight:600;letter-spacing:0.04em}
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat-box{background:var(--white);border-radius:10px;padding:16px;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow)}
-.stat-box .val{font-size:30px;font-weight:700;font-family:"Playfair Display",serif;color:var(--navy)}
-.stat-box .lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:3px}
-.band-bar{display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:8px}
-.band-seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;transition:width 0.8s ease}
-/* HEATMAP */
-.heatmap-wrap{overflow-x:auto;margin-bottom:16px}
+/* ── GATE ── */
+.gate-wrap{max-width:420px;margin:0 auto;padding:48px 0}
+.gate-logo{text-align:center;margin-bottom:32px}
+.gate-logo img{height:44px}
+.gate-card{background:var(--white);border:1px solid var(--border);border-top:3px solid var(--gold);padding:36px 32px;box-shadow:var(--sh)}
+.gate-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.gate-card h2{font-family:"Playfair Display",serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;line-height:1.2}
+.gate-card p{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.field input{width:100%;padding:10px 0;border:none;border-bottom:2px solid var(--border);background:transparent;font-family:"DM Sans",sans-serif;font-size:15px;color:var(--navy);outline:none;transition:border-color .2s;border-radius:0}
+.field input:focus{border-bottom-color:var(--gold)}
+.field input::placeholder{color:#B0A898}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.02em;border-radius:var(--rm)}
+.btn-primary{background:var(--navy);color:var(--gold-light);border:none;width:100%;margin-top:8px}
+.btn-primary:hover{background:#1a2f50}
+.error-msg{font-size:12px;color:#C94A4A;padding:8px 12px;background:#FEF2F2;border-left:3px solid #C94A4A;margin-top:8px;display:none}
+/* ── MASTHEAD ── */
+.rpt-masthead{background:var(--navy);padding:36px 40px 28px;margin-bottom:0;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.rpt-mh-left{flex:1;min-width:200px}
+.rpt-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.rpt-eyebrow::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.3)}
+.rpt-client{font-family:"Playfair Display",serif;font-size:36px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:6px}
+.rpt-meta{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.8}
+.rpt-mh-right{text-align:right;flex-shrink:0}
+.rpt-mh-right img{height:36px;opacity:.85;display:block;margin-left:auto;margin-bottom:10px}
+.rpt-conf{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+/* ── METRICS ── */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);background:var(--white);margin-bottom:28px;box-shadow:var(--sh)}
+.mc{padding:22px 20px;border-right:1px solid var(--border);position:relative}
+.mc:last-child{border-right:none}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border)}
+.mc.mg::before{background:var(--gold)}
+.mc.mt::before{background:var(--teal)}
+.mc.mr::before{background:var(--coral)}
+.mv{font-family:"Playfair Display",serif;font-size:38px;font-weight:700;line-height:1;margin-bottom:6px;color:var(--navy)}
+.ml{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ms{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+/* ── SECTION HEAD ── */
+.sh{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--navy)}
+.sh-num{font-family:"DM Mono",monospace;font-size:11px;font-weight:500;color:var(--gold);letter-spacing:.06em;flex-shrink:0}
+.sh-title{font-family:"Playfair Display",serif;font-size:18px;font-weight:600;color:var(--navy)}
+.sh-rule{flex:1;height:1px;background:var(--border)}
+/* ── PANEL ── */
+.panel{background:var(--white);border:1px solid var(--border);padding:28px 32px;margin-bottom:20px;box-shadow:var(--sh)}
+.pt{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+/* ── BAND TRACK ── */
+.band-track{height:6px;display:flex;overflow:hidden;margin:16px 0 12px;background:var(--border)}
+.bs{height:100%;transition:width .9s cubic-bezier(0.4,0,0.2,1)}
+.band-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px}
+.bli{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--navy)}
+.bld{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* ── BENCHMARK TABLE ── */
+.bench-t{width:100%;border-collapse:collapse;font-size:12px}
+.bench-t tr{border-bottom:1px solid var(--border)}
+.bench-t tr:last-child{border-bottom:none}
+.bench-t td{padding:12px 0;vertical-align:top}
+.b-range{font-family:"Playfair Display",serif;font-size:17px;font-weight:700;width:80px;padding-right:16px}
+.b-band{font-weight:600;font-size:12px;width:100px;padding-right:16px}
+.b-desc{font-size:11px;color:var(--muted);line-height:1.6}
+.b-act{font-size:11px;color:var(--navy);font-weight:500;padding-left:16px;width:180px;line-height:1.5}
+.b-bar{width:4px;padding-right:12px}
+.b-bar span{display:block;width:4px;height:36px;border-radius:2px}
+/* ── DOT HEATMAP ── */
+.heatmap-wrap{overflow-x:auto;margin-bottom:4px}
 .heatmap{border-collapse:collapse;width:100%;font-size:11px}
-.heatmap th{padding:8px 6px;text-align:left;font-weight:600;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap}
-.heatmap th.skill-col{max-width:130px;font-size:10px}
-.heatmap td{padding:6px;border-bottom:1px solid var(--border);vertical-align:middle}
-.heatmap td.assoc-name{font-weight:600;color:var(--navy);font-size:12px;white-space:nowrap}
-.cell-strong{background:#E1F5EE;color:#085041;text-align:center;border-radius:4px;font-size:9px;font-weight:700;padding:2px 4px}
-.cell-developing{background:#FFF8E7;color:#7A5C00;text-align:center;border-radius:4px;font-size:9px;font-weight:700;padding:2px 4px}
-.cell-gap{background:#FEF2F2;color:#991B1B;text-align:center;border-radius:4px;font-size:9px;font-weight:700;padding:2px 4px}
-/* ASSOC CARDS */
-.assoc-card{background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
-.assoc-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.assoc-card-name{font-size:15px;font-weight:600;color:var(--navy);font-family:"Playfair Display",serif}
-.assoc-card-meta{font-size:11px;color:var(--muted);margin-top:2px}
-.assoc-score-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
-.assoc-gaps{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.gap-pill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px}
-/* PRIORITY RECS */
-.prio-card{background:var(--navy);border-radius:var(--radius);padding:24px;margin-bottom:16px}
-.prio-item{padding:14px;background:rgba(255,255,255,0.07);border-radius:8px;border-left:3px solid var(--gold);margin-bottom:10px}
-/* CTA */
-.cta-card{background:linear-gradient(135deg,var(--navy) 0%,#1a2f50 100%);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:16px;border:1px solid rgba(201,168,76,0.3)}
-@media(max-width:600px){.stat-grid{grid-template-columns:1fr 1fr}.heatmap th.skill-col{max-width:80px}}
-@media print{.card,.assoc-card,.stat-box{box-shadow:none}body{background:var(--off)!important}}
+.heatmap thead tr{border-bottom:2px solid var(--navy)}
+.heatmap th{padding:8px 6px 8px 0;text-align:left;font-weight:600;color:var(--muted);font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.heatmap th.sc{max-width:90px;font-size:9px}
+.heatmap tbody tr{border-bottom:1px solid var(--border)}
+.heatmap tbody tr:hover{background:#FAFAF7}
+.heatmap td{padding:7px 6px 7px 0;vertical-align:middle}
+.heatmap td.an{font-weight:600;color:var(--navy);font-size:12px;white-space:nowrap;padding-right:12px}
+.heatmap td.ar{font-weight:700;font-size:13px;font-family:"Playfair Display",serif;text-align:center;padding-right:8px}
+.heatmap td.as{font-size:10px;font-weight:600;color:var(--muted);text-align:center;padding-right:8px;white-space:nowrap}
+.dc{text-align:center;padding:6px 3px}
+.dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:middle}
+.d-g{background:var(--gap-fill)}
+.d-d{background:none;border:2px solid var(--dev-fill)}
+.d-s{background:var(--str-fill);opacity:.2}
+.heatmap tfoot tr{border-top:2px solid var(--navy)}
+.heatmap tfoot td{padding:8px 3px;font-size:9px;font-weight:700;text-align:center;color:var(--navy)}
+.hm-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--muted)}
+.hml{display:flex;align-items:center;gap:6px}
+/* ── PRIORITY ── */
+.pri-block{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.pri-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.pri-num{font-family:"DM Mono",monospace;font-size:28px;font-weight:400;color:var(--gold);line-height:1;margin-bottom:6px}
+.pri-skill{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.pri-stat{font-size:12px;color:var(--muted);margin-bottom:8px}
+.pri-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border:1px solid var(--gold);color:var(--gold);border-radius:var(--rm)}
+/* ── ASSOC TABLE ── */
+.at{width:100%;border-collapse:collapse;font-size:12px}
+.at thead tr{border-bottom:2px solid var(--navy)}
+.at th{padding:8px 12px 8px 0;text-align:left;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.at tbody tr{border-bottom:1px solid var(--border)}
+.at tbody tr:hover{background:#FAFAF7}
+.at td{padding:12px 12px 12px 0;vertical-align:top}
+.atn{font-weight:600;font-size:13px;color:var(--navy)}
+.atm{font-size:11px;color:var(--muted);margin-top:1px}
+.ats{font-family:"Playfair Display",serif;font-size:20px;font-weight:700;line-height:1}
+.atb{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.atst{font-size:11px;font-weight:600;color:var(--muted)}
+.atg{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.atgt{font-size:10px;font-weight:500;padding:2px 7px;background:#FEF2F2;color:#991B1B;border-radius:var(--rm)}
+.atdt{font-size:10px;font-weight:500;padding:2px 7px;background:#FFF8E7;color:#7A5C00;border-radius:var(--rm)}
+.bstr{width:3px;padding-right:12px}
+.bstr span{display:block;width:3px;min-height:40px;border-radius:1px}
+/* ── RISK ── */
+.risk-block{border-left:3px solid var(--coral);padding:14px 18px;background:#FEF9F7;margin-bottom:12px}
+.risk-title{font-size:11px;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+/* ── CTA ── */
+.cta-block{background:var(--navy);padding:40px;margin-bottom:20px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
+.cta-ey{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.cta-title{font-family:"Playfair Display",serif;font-size:24px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:10px}
+.cta-body{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.7}
+.cta-trl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:4px;margin-top:14px}
+.cta-trn{font-size:14px;font-weight:600;color:var(--gold-light)}
+.cta-act{flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.btn-print{background:transparent;color:var(--gold-light);border:1px solid rgba(201,168,76,0.4);padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;letter-spacing:.03em;border-radius:var(--rm);transition:all .18s}
+.btn-print:hover{background:rgba(201,168,76,0.1)}
+.conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
+@media print{body{background:white!important}.metrics-row,.panel{box-shadow:none!important}.rpt-masthead{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="site-header">
-    <div class="header-logo-band">
-      <img src="https://www.igi.org/wp-content/uploads/2021/07/IGI-Logo-White.png" alt="IGI" onerror="this.style.display='none'">
-    </div>
-    <div class="header-divider"></div>
-    <div class="header-prog-band">
-      <div class="header-prog-label">Batch Report</div>
-      <div class="header-tagline">IGI Sales Associate Readiness Profile — Team Analytics</div>
-    </div>
-  </div>
-
   <!-- ACCESS GATE -->
   <div id="gateScreen">
-    <div class="card">
-      <div class="section-tag">Secure Access</div>
-      <h2>View Batch Report</h2>
-      <p class="sub">Enter your batch code and the report password provided by your IGI trainer.</p>
-      <div class="field"><label>Batch Code</label><input type="text" id="rBatch" placeholder="e.g. MUM-POME-MAY26" autocomplete="off" style="text-transform:uppercase;font-family:'DM Mono',monospace;letter-spacing:0.06em"></div>
-      <div class="field"><label>Report Password</label><input type="password" id="rPass" placeholder="Provided by your trainer" autocomplete="off" onkeydown="if(event.key==='Enter') loadReport()"></div>
-      <div class="error-msg" id="gateErr">Incorrect batch code or password. Please check with your trainer.</div>
-      <button class="btn btn-primary" onclick="loadReport()" id="gateBtn">View Report →</button>
-      <p id="gateLoading" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;display:none">Loading report…</p>
+    <div class="gate-wrap">
+      <div class="gate-logo">
+        <img src="https://www.igi.org/wp-content/uploads/2021/07/IGI-Logo-White.png" alt="IGI" onerror="this.style.filter='invert(1)'" style="filter:invert(1) sepia(1) saturate(3) hue-rotate(5deg)">
+      </div>
+      <div class="gate-card">
+        <div class="gate-eyebrow">IGI School of Gemology</div>
+        <h2>Batch Report Access</h2>
+        <p>Enter your batch code and the report password provided by your IGI trainer.</p>
+        <div class="field"><label>Batch Code</label><input type="text" id="rBatch" placeholder="e.g. MUM-POME-MAY26" autocomplete="off" style="text-transform:uppercase;font-family:'DM Mono',monospace;letter-spacing:0.06em"></div>
+        <div class="field"><label>Report Password</label><input type="password" id="rPass" placeholder="Provided by your trainer" autocomplete="off" onkeydown="if(event.key==='Enter') loadReport()"></div>
+        <div class="error-msg" id="gateErr">Incorrect batch code or password. Please check with your trainer.</div>
+        <button class="btn btn-primary" onclick="loadReport()" id="gateBtn">View Report →</button>
+        <p id="gateLoading" style="font-size:12px;color:var(--muted);text-align:center;margin-top:12px;display:none">Loading report…</p>
+      </div>
     </div>
   </div>
 
@@ -171,206 +233,240 @@ function loadReport() {
 
 function renderReport(rows, batch, client, trainerName) {
   const n = rows.length;
-  const avgRI = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
+  const avgRI  = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
   const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
-
-  // Band distribution
-  const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
   const bandColors = {Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'};
+  const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
   rows.forEach(r=>{ const b=r.band||'Foundation'; bands[b]=(bands[b]||0)+1; });
-
-  // RSP distribution
   const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
   rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
-
-  // Skill gap matrix
   const skillMatrix = rows.map(r=>({
-    name: r.name, desig: r.desig, ri: r.ri, band: r.band, rspKey: r.rspKey, rspLabel: r.rspLabel,
-    c2s: r.c2s, gaps: computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
+    name:r.name, desig:r.desig, ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
+    c2s:r.c2s, fcs:r.fcs, gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
   }));
-
-  // Team-level gap counts per skill
   const skillGapCounts = SKILLS.map((_,si)=>({
-    skill: SKILLS[si], short: SKILL_SHORT[si],
-    gapCount: skillMatrix.filter(a=>a.gaps[si]==='gap').length,
-    devCount: skillMatrix.filter(a=>a.gaps[si]==='developing').length
+    skill:SKILLS[si], short:SKILL_SHORT[si],
+    gapCount:skillMatrix.filter(a=>a.gaps[si]==='gap').length,
+    devCount:skillMatrix.filter(a=>a.gaps[si]==='developing').length
   })).sort((a,b)=>(b.gapCount+b.devCount*0.5)-(a.gapCount+a.devCount*0.5));
-
-  // Top 3 training priorities
   const topGaps = skillGapCounts.slice(0,3);
-
-  // Knowledge risk associates
   const knowledgeRisk = rows.filter(r=>(parseFloat(r.fcs)||0)<56);
+  const avgBand = avgRI>=85?'Outstanding':avgRI>=70?'Proficient':avgRI>=55?'Developing':'Foundation';
+  const avgColor = bandColors[avgBand];
+  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
   const html = `
-    <div class="report-header">
-      <div class="client-name">${client}</div>
-      <div class="batch-meta">Batch: ${batch} &nbsp;|&nbsp; ${n} associate${n!==1?'s':''} assessed &nbsp;|&nbsp; IGI Sales Associate Readiness Profile</div>
-      <div class="igi-badge">IGI School of Gemology — Pre-Training Assessment Report</div>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-box"><div class="val">${n}</div><div class="lbl">Assessed</div></div>
-      <div class="stat-box"><div class="val" style="color:${avgRI>=70?'var(--teal)':avgRI>=55?'var(--blue)':'var(--coral)'}">${avgRI}</div><div class="lbl">Avg. Index /100</div></div>
-      <div class="stat-box"><div class="val" style="color:${avgFcs>=75?'var(--teal)':avgFcs>=55?'var(--gold)':'var(--coral)'}">${avgFcs}%</div><div class="lbl">Avg. 4Cs Score</div></div>
-      <div class="stat-box"><div class="val" style="color:var(--coral)">${knowledgeRisk.length}</div><div class="lbl">Knowledge Risk</div></div>
-    </div>
-
-    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--gold)">
-      <div class="section-tag">IGI Retail Sales Excellence Index — What the Score Means</div>
-      <h2 style="margin-bottom:14px">Benchmark Reference Guide</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div style="padding:14px;background:#F9F3E3;border-radius:10px;border-left:4px solid #C9A84C">
-          <div style="font-size:18px;font-weight:700;color:#C9A84C;font-family:'Playfair Display',serif">85 – 100</div>
-          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Outstanding</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">Store-ready for high-value, complex sales independently. Minimal supervision needed. Can be considered for mentoring junior associates.</div>
-        </div>
-        <div style="padding:14px;background:#E8F5EE;border-radius:10px;border-left:4px solid #1D9E75">
-          <div style="font-size:18px;font-weight:700;color:#1D9E75;font-family:'Playfair Display',serif">70 – 84</div>
-          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Proficient</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">Solid performer. Handles most floor situations well. Ready for next-level responsibility with light coaching on 1–2 specific gaps.</div>
-        </div>
-        <div style="padding:14px;background:#EEF4FB;border-radius:10px;border-left:4px solid #378ADD">
-          <div style="font-size:18px;font-weight:700;color:#378ADD;font-family:'Playfair Display',serif">55 – 69</div>
-          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Developing</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">Foundational capability present. Needs structured coaching on specific gaps before independent high-value selling. Strong potential with investment.</div>
-        </div>
-        <div style="padding:14px;background:#FEF2F2;border-radius:10px;border-left:4px solid #C9613A">
-          <div style="font-size:18px;font-weight:700;color:#C9613A;font-family:'Playfair Display',serif">0 – 54</div>
-          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Foundation</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">Significant gaps in knowledge or behavioral maturity. Training required before floor deployment on premium products. Prioritize 4Cs knowledge first.</div>
-        </div>
-      </div>
-      <div style="background:var(--off);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
-        <div style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">How the Index is calculated</div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
-          <div style="font-size:12px;color:var(--navy)"><strong style="color:var(--purple)">70 pts</strong> — Diamond Knowledge (4Cs score × 70%)</div>
-          <div style="font-size:12px;color:var(--navy)"><strong style="color:var(--gold)">15 pts</strong> — Communication Style clarity (C2S dominance)</div>
-          <div style="font-size:12px;color:var(--navy)"><strong style="color:var(--teal)">15 pts</strong> — Sales Persona maturity (RSP stage progression)</div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">This batch average of <strong style="color:${avgRI>=70?'var(--teal)':avgRI>=55?'var(--blue)':'var(--coral)'}">${avgRI}/100</strong> places your team in the <strong>${avgRI>=85?'Outstanding':avgRI>=70?'Proficient':avgRI>=55?'Developing':'Foundation'}</strong> range. ${avgRI>=70?'Your team has a strong foundation for the IGI RSP program to accelerate further.':avgRI>=55?'Targeted RSP training will move most associates to Proficient within 4–6 weeks.':'Recommend prioritizing 4Cs knowledge training before behavioral skills development.'}</div>
+  <div class="rpt-masthead">
+    <div class="rpt-mh-left">
+      <div class="rpt-eyebrow">IGI Retail Sales Excellence Program</div>
+      <div class="rpt-client">${client}</div>
+      <div class="rpt-meta">
+        Batch: ${batch} &nbsp;&bull;&nbsp; ${n} associate${n!==1?'s':''} assessed &nbsp;&bull;&nbsp; ${today}<br>
+        IGI Sales Associate Readiness Profile — Pre-Training Assessment
       </div>
     </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div class="section-tag">Readiness Distribution</div>
-      <h2 style="margin-bottom:14px">Team Readiness Breakdown</h2>
-      <div class="band-bar">
-        ${Object.entries(bands).filter(([,v])=>v>0).map(([band,count])=>`
-          <div class="band-seg" style="width:${Math.round((count/n)*100)}%;background:${bandColors[band]};min-width:${count>0?'30px':'0'}">
-            ${Math.round((count/n)*100)>10?band:''}
-          </div>`).join('')}
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        ${Object.entries(bands).map(([band,count])=>`
-          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-            <div style="width:10px;height:10px;border-radius:50%;background:${bandColors[band]}"></div>
-            <span style="color:var(--navy);font-weight:600">${count}</span>
-            <span style="color:var(--muted)">${band}</span>
-          </div>`).join('')}
-      </div>
+    <div class="rpt-mh-right">
+      <img src="https://www.igi.org/wp-content/uploads/2021/07/IGI-Logo-White.png" alt="IGI" onerror="this.style.display='none'">
+      <div class="rpt-conf">Confidential</div>
     </div>
+  </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <div class="section-tag" style="color:var(--coral)">Team Skills Gap Heatmap</div>
-      <h2 style="margin-bottom:4px">Skills Assessment Across Team</h2>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Red = Gap requiring intervention &nbsp;|&nbsp; Amber = Developing &nbsp;|&nbsp; Green = Strong</p>
-      <div class="heatmap-wrap">
-        <table class="heatmap">
-          <thead>
-            <tr>
-              <th style="min-width:120px">Associate</th>
-              <th>Index</th>
-              <th>Stage</th>
-              ${SKILL_SHORT.map(s=>`<th class="skill-col" title="${s}">${s}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${skillMatrix.sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).map(a=>`
-              <tr>
-                <td class="assoc-name">${a.name}</td>
-                <td style="text-align:center;font-weight:600;color:${parseFloat(a.ri)>=70?'var(--teal)':parseFloat(a.ri)>=55?'var(--blue)':'var(--coral)'}">${a.ri}</td>
-                <td style="text-align:center;font-size:11px;font-weight:600;color:var(--muted)">${a.rspKey}</td>
-                ${a.gaps.map(g=>`<td><span class="cell-${g}">${g==='strong'?'S':g==='gap'?'G':'D'}</span></td>`).join('')}
-              </tr>`).join('')}
-            <tr style="border-top:2px solid var(--border)">
-              <td style="font-size:11px;font-weight:600;color:var(--muted)">Team Gaps</td>
-              <td></td><td></td>
-              ${skillGapCounts.sort((a,b)=>SKILLS.indexOf(a.skill)-SKILLS.indexOf(b.skill)).map(sg=>`
-                <td style="text-align:center;font-size:11px;font-weight:700;color:${sg.gapCount>n*0.5?'#C94A4A':sg.gapCount>n*0.25?'#B87A10':'var(--muted)'}">${sg.gapCount}G/${sg.devCount}D</td>`).join('')}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="font-size:11px;color:var(--muted);margin-top:8px">G = Gap &nbsp;|&nbsp; D = Developing &nbsp;|&nbsp; S = Strong. Bottom row shows team-wide counts per skill.</p>
+  <div class="metrics-row">
+    <div class="mc mg">
+      <div class="mv">${n}</div>
+      <div class="ml">Associates Assessed</div>
     </div>
+    <div class="mc" style="${avgRI>=70?'--t:var(--teal)':'--t:var(--coral)'}">
+      <div class="mv" style="color:${avgColor}">${avgRI}</div>
+      <div class="ml">Avg. Readiness Index</div>
+      <div class="ms">${avgBand} band</div>
+    </div>
+    <div class="mc mt">
+      <div class="mv" style="color:${avgFcs>=70?'var(--teal)':avgFcs>=56?'var(--gold)':'var(--coral)'}">${avgFcs}%</div>
+      <div class="ml">Avg. 4Cs Knowledge</div>
+      <div class="ms">${avgFcs>=70?'Strong':'Needs development'}</div>
+    </div>
+    <div class="mc mr">
+      <div class="mv" style="color:${knowledgeRisk.length>0?'var(--coral)':'var(--teal)'}">${knowledgeRisk.length}</div>
+      <div class="ml">Knowledge Risk</div>
+      <div class="ms">Below 56% threshold</div>
+    </div>
+  </div>
 
-    <div class="prio-card">
-      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Team Training Priorities</div>
-      <h2 style="font-family:'Playfair Display',serif;color:var(--gold-light);font-size:20px;margin-bottom:14px">Top 3 gaps across your team</h2>
-      ${topGaps.map((g,i)=>`
-        <div class="prio-item">
-          <div style="font-size:10px;font-weight:600;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">Priority ${i+1}</div>
-          <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px">${g.skill}</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px">${g.gapCount} associate${g.gapCount!==1?'s':''} with a gap &nbsp;|&nbsp; ${g.devCount} developing</div>
-          <div style="font-size:11px;font-weight:600;color:var(--gold-light);padding:4px 10px;background:rgba(201,168,76,0.15);border-radius:6px;display:inline-block">
-            Recommended: IGI Retail Sales Excellence Program (RSP)
-          </div>
+  <div class="sh"><span class="sh-num">01</span><span class="sh-title">Readiness Distribution</span><span class="sh-rule"></span></div>
+  <div class="panel">
+    <div class="pt">Team Band Breakdown — ${n} Associates</div>
+    <div class="band-track">
+      ${Object.entries(bands).filter(([,v])=>v>0).map(([band,count])=>
+        `<div class="bs" style="width:${Math.round((count/n)*100)}%;background:${bandColors[band]}"></div>`
+      ).join('')}
+    </div>
+    <div class="band-legend">
+      ${Object.entries(bands).map(([band,count])=>`
+        <div class="bli">
+          <div class="bld" style="background:${bandColors[band]}"></div>
+          <span style="font-weight:600">${count}</span>
+          <span style="color:var(--muted)">${band} (${Math.round((count/n)*100)}%)</span>
         </div>`).join('')}
-      ${knowledgeRisk.length>0?`
-        <div class="prio-item" style="border-left-color:#C94A4A">
-          <div style="font-size:10px;font-weight:600;color:#C94A4A;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">⚠ Knowledge Risk — Immediate Action</div>
-          <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px">${knowledgeRisk.length} associate${knowledgeRisk.length!==1?'s':''} scored below 56% on Diamond Knowledge</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px">Associates with incomplete 4Cs knowledge risk making inaccurate product descriptions — particularly on clarity and color grades. This creates a false commitment risk that affects customer trust and post-purchase satisfaction.</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.5)">${knowledgeRisk.map(r=>r.name).join(' &nbsp;|&nbsp; ')}</div>
-          <div style="font-size:11px;font-weight:600;color:var(--gold-light);padding:4px 10px;background:rgba(201,168,76,0.15);border-radius:6px;display:inline-block;margin-top:8px">Recommended: IGI 4Cs Knowledge Certification — Priority</div>
-        </div>`:''}
     </div>
+  </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <div class="section-tag">Individual Results</div>
-      <h2 style="margin-bottom:16px">Associate Profiles</h2>
-      ${skillMatrix.sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).map(a=>{
-        const gapSkills = SKILLS.filter((_,i)=>a.gaps[i]==='gap');
-        const devSkills = SKILLS.filter((_,i)=>a.gaps[i]==='developing');
-        const bandColor = {Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'}[a.band]||'#8A8070';
-        return `<div class="assoc-card">
-          <div class="assoc-card-header">
-            <div>
-              <div class="assoc-card-name">${a.name}</div>
-              <div class="assoc-card-meta">${a.c2s} &bull; ${a.rspLabel||a.rspKey}</div>
-            </div>
-            <div>
-              <span class="assoc-score-badge" style="background:${bandColor}22;color:${bandColor}">${a.ri}/100 &mdash; ${a.band}</span>
-            </div>
-          </div>
-          ${RSP_ROLE_FIT[a.rspKey]?`<p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">${RSP_ROLE_FIT[a.rspKey]}</p>`:''}
-          ${gapSkills.length?`<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--coral)">Gaps: </span>
-            <div class="assoc-gaps">${gapSkills.map(s=>`<span class="gap-pill" style="background:#FEF2F2;color:#991B1B">${s}</span>`).join('')}</div></div>`:''}
-          ${devSkills.length?`<div><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--gold)">Developing: </span>
-            <div class="assoc-gaps">${devSkills.map(s=>`<span class="gap-pill" style="background:#FFF8E7;color:#7A5C00">${s}</span>`).join('')}</div></div>`:''}
-        </div>`;
-      }).join('')}
+  <div class="panel" style="border-left:3px solid var(--gold)">
+    <div class="pt">IGI Retail Sales Excellence Index — Benchmark Reference</div>
+    <table class="bench-t">
+      ${[
+        {range:'85–100',band:'Outstanding',color:'#C9A84C',desc:'Store-ready for high-value, complex sales independently. Minimal supervision needed.',action:'Consider for mentor / buddy role'},
+        {range:'70–84', band:'Proficient',  color:'#1D9E75',desc:'Solid performer. Handles most floor situations well. 1–2 specific gaps to close.',action:'Light coaching, RSP advanced module'},
+        {range:'55–69', band:'Developing',  color:'#378ADD',desc:'Foundational capability present. Structured coaching needed before premium selling.',action:'Structured RSP program, priority'},
+        {range:'0–54',  band:'Foundation',  color:'#C9613A',desc:'Significant gaps. 4Cs training required before floor deployment on premium products.',action:'4Cs certification first, then RSP'}
+      ].map(b=>`
+        <tr style="${avgBand===b.band?'background:#FAFAF7':''}">
+          <td class="b-bar"><span style="background:${b.color}"></span></td>
+          <td class="b-range" style="color:${b.color}">${b.range}</td>
+          <td class="b-band" style="color:${b.color}">${b.band}${avgBand===b.band?' ◀':''}</td>
+          <td class="b-desc">${b.desc}</td>
+          <td class="b-act">${b.action}</td>
+        </tr>`).join('')}
+    </table>
+    <div style="margin-top:14px;padding:10px 14px;background:var(--off);border-left:2px solid var(--gold);font-size:12px;color:var(--navy)">
+      <strong>This batch:</strong> Average index of <strong style="color:${avgColor}">${avgRI}/100</strong> — ${avgBand} band.
+      ${avgRI>=70?'Strong foundation. IGI RSP program will accelerate further.':avgRI>=55?'Targeted RSP training expected to move most associates to Proficient within 4–6 weeks.':'Prioritize 4Cs knowledge certification before behavioral skills development.'}
     </div>
-
-    <div class="cta-card">
-      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Close These Gaps</div>
-      <div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold-light);margin-bottom:10px">Ready to elevate your team?</div>
-      <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.7;max-width:500px;margin:0 auto 20px">This report shows exactly where your team is today and what needs to change. The IGI Retail Sales Excellence Program is designed specifically to close these gaps — built on the same framework that produced this assessment.</p>
-      <div style="font-size:15px;font-weight:600;color:var(--gold-light);margin-bottom:6px">IGI School of Gemology</div>
-      ${trainerName
-        ? `<div style="font-size:13px;color:rgba(255,255,255,0.65);margin-bottom:4px">Contact your IGI trainer</div>
-           <div style="font-size:15px;font-weight:600;color:var(--gold-light)">${trainerName}</div>`
-        : `<div style="font-size:13px;color:rgba(255,255,255,0.65)">Contact your IGI trainer for next steps</div>`
-      }
-      <div style="margin-top:20px"><button class="btn" onclick="window.print()" style="background:rgba(255,255,255,0.1);color:var(--gold-light);border-color:rgba(201,168,76,0.3)">Print / Save as PDF</button></div>
-    </div>
-
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">
-      IGI School of Gemology &mdash; Retail Sales Excellence Program &mdash; Confidential
-    </div>`;
-
+  </div>
+`;
   document.getElementById('reportScreen').innerHTML = html;
+  renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor);
+}
+
+function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor) {
+  const sorted = skillMatrix.sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0));
+  const origOrder = skillGapCounts.sort((a,b)=>SKILLS.indexOf(a.skill)-SKILLS.indexOf(b.skill));
+
+  const heatmapHtml = `
+  <div class="sh"><span class="sh-num">02</span><span class="sh-title">Skills Gap Heatmap</span><span class="sh-rule"></span></div>
+  <div class="panel">
+    <div class="pt">Dot Matrix — Each dot represents one skill per associate</div>
+    <div class="heatmap-wrap">
+      <table class="heatmap">
+        <thead>
+          <tr>
+            <th>Associate</th>
+            <th style="text-align:center">Index</th>
+            <th style="text-align:center">Stage</th>
+            ${SKILL_SHORT.map(s=>`<th class="sc" title="${s}">${s}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map(a=>`
+            <tr>
+              <td class="an">${a.name}</td>
+              <td class="ar" style="color:${parseFloat(a.ri)>=70?'var(--teal)':parseFloat(a.ri)>=55?'var(--blue)':'var(--coral)'}">${a.ri}</td>
+              <td class="as">${a.rspKey}</td>
+              ${a.gaps.map(g=>`<td class="dc"><span class="dot ${g==='gap'?'d-g':g==='developing'?'d-d':'d-s'}" title="${g}"></span></td>`).join('')}
+            </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="text-align:left;font-size:10px;font-weight:600;color:var(--muted);padding-left:0">Team Gaps</td>
+            ${origOrder.map(sg=>`
+              <td style="color:${sg.gapCount>n*0.5?'var(--gap-fill)':sg.gapCount>n*0.25?'var(--dev-fill)':'var(--muted)'}">
+                ${sg.gapCount>0?sg.gapCount+'G':'—'}
+              </td>`).join('')}
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="hm-legend">
+      <div class="hml"><span class="dot d-g" style="width:12px;height:12px;display:inline-block"></span> Gap — immediate training required</div>
+      <div class="hml"><span class="dot d-d" style="width:12px;height:12px;display:inline-block"></span> Developing — coaching recommended</div>
+      <div class="hml"><span class="dot d-s" style="width:12px;height:12px;display:inline-block"></span> Strong — maintain and build on</div>
+    </div>
+  </div>`;
+
+  const priorityHtml = `
+  <div class="sh"><span class="sh-num">03</span><span class="sh-title">Training Priorities</span><span class="sh-rule"></span></div>
+  <div class="panel">
+    <div class="pt">Top Skill Gaps Across the Team — Ranked by Urgency</div>
+    ${topGaps.map((g,i)=>`
+      <div class="pri-block">
+        <div class="pri-num">0${i+1}</div>
+        <div class="pri-skill">${g.skill}</div>
+        <div class="pri-stat">${g.gapCount} associate${g.gapCount!==1?'s':''} with a critical gap &nbsp;&bull;&nbsp; ${g.devCount} developing</div>
+        <span class="pri-tag">IGI Retail Sales Excellence Program</span>
+      </div>`).join('')}
+    ${knowledgeRisk.length>0?`
+      <div class="risk-block">
+        <div class="risk-title">⚠ Knowledge Risk — Immediate Action Required</div>
+        <div style="font-size:12px;color:var(--navy);line-height:1.6">
+          <strong>${knowledgeRisk.length} associate${knowledgeRisk.length!==1?'s':''}</strong> scored below 56% on Diamond Knowledge.
+          Associates with incomplete 4Cs knowledge risk making inaccurate product descriptions on clarity and color grades — the two grades most consequential for purchase trust.
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted)">${knowledgeRisk.map(r=>r.name).join(' &nbsp;&bull;&nbsp; ')}</div>
+      </div>
+      <span class="pri-tag" style="margin-top:8px;display:inline-block">4Cs Knowledge Certification — Priority Track</span>
+    `:''}
+  </div>`;
+
+  const assocHtml = `
+  <div class="sh"><span class="sh-num">04</span><span class="sh-title">Individual Associate Profiles</span><span class="sh-rule"></span></div>
+  <div class="panel">
+    <div class="pt">Associates ranked by Readiness Index — descending</div>
+    <table class="at">
+      <thead>
+        <tr>
+          <td style="width:3px;padding:0"></td>
+          <th>Associate</th>
+          <th style="text-align:center;width:80px">Index</th>
+          <th style="width:100px">Stage</th>
+          <th>Gaps &amp; Development Areas</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map(a=>{
+          const bc = bandColors[a.band]||'#8A8070';
+          const gapSkills = SKILLS.filter((_,i)=>a.gaps[i]==='gap');
+          const devSkills = SKILLS.filter((_,i)=>a.gaps[i]==='developing');
+          return `<tr>
+            <td class="bstr"><span style="background:${bc}"></span></td>
+            <td>
+              <div class="atn">${a.name}</div>
+              <div class="atm">${a.c2s}${a.desig?' &bull; '+a.desig:''}</div>
+            </td>
+            <td style="text-align:center;vertical-align:middle">
+              <div class="ats" style="color:${bc}">${a.ri}</div>
+              <div class="atb" style="color:${bc}">${a.band}</div>
+            </td>
+            <td style="vertical-align:middle">
+              <div class="atst">${a.rspLabel||a.rspKey}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5">${RSP_ROLE_FIT[a.rspKey]?RSP_ROLE_FIT[a.rspKey].split('.')[0]+'.':''}</div>
+            </td>
+            <td>
+              <div class="atg">
+                ${gapSkills.map(s=>`<span class="atgt">${s}</span>`).join('')}
+                ${devSkills.map(s=>`<span class="atdt">${s}</span>`).join('')}
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  const ctaHtml = `
+  <div class="cta-block">
+    <div>
+      <div class="cta-ey">Close These Gaps</div>
+      <div class="cta-title">Ready to elevate your team?</div>
+      <div class="cta-body">This report shows exactly where your team is today. The IGI Retail Sales Excellence Program closes these gaps — built on the same framework that produced this assessment.</div>
+      ${trainerName?`<div class="cta-trl">Contact your IGI trainer</div><div class="cta-trn">${trainerName}</div>`:'<div class="cta-trl" style="margin-top:14px">Contact your IGI trainer for next steps</div>'}
+    </div>
+    <div class="cta-act">
+      <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
+    </div>
+  </div>
+  <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>`;
+
+  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + ctaHtml;
 }
 </script>
 </body>
