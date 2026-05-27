@@ -97,21 +97,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
     </div>
     <div class="field">
       <label>Session Code <span style="font-size:10px;color:var(--gold)">(letters & numbers, e.g. ARP-2601)</span></label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="scCodeInput" placeholder="e.g. ARP-2601" autocomplete="off" autocapitalize="characters"
-          style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);background:var(--white);outline:none">
-        <button class="btn-outline" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px;font-size:12px;border-radius:8px;cursor:pointer">⚡ Generate Password</button>
-        <button class="btn btn-primary" onclick="saveSessionCode()" style="white-space:nowrap;padding:10px 18px">Save Code</button>
+      <input type="text" id="scCodeInput" placeholder="Type a code or click Generate Password below" autocomplete="off" autocapitalize="characters" spellcheck="false"
+        style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:15px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);background:var(--white);outline:none;text-align:left">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-outline" onclick="generateCode()" style="flex:1;padding:10px 14px;font-size:13px;border-radius:8px;cursor:pointer">⚡ Generate Password</button>
+        <button class="btn btn-primary" onclick="saveSessionCode()" style="flex:1;padding:10px 18px">Save Code</button>
       </div>
     </div>
     <div class="field" style="margin-top:4px">
       <label>Code expires after</label>
       <select id="scExpiry" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--navy);background:var(--white);outline:none">
         <option value="0">No expiry (manual off only)</option>
-        <option value="60">1 hour</option>
-        <option value="120">2 hours</option>
-        <option value="240">4 hours</option>
-        <option value="480">8 hours (end of day)</option>
+        <optgroup label="── Hours ──────────────">
+          <option value="60">1 hour</option>
+          <option value="120">2 hours</option>
+          <option value="240">4 hours</option>
+          <option value="480">8 hours (end of day)</option>
+        </optgroup>
+        <optgroup label="── Days ───────────────">
+          <option value="1440">1 day</option>
+          <option value="2880">2 days</option>
+          <option value="4320">3 days</option>
+          <option value="10080">7 days (1 week)</option>
+        </optgroup>
       </select>
     </div>
     <div id="scSaveMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:4px"></div>
