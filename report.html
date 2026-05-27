@@ -163,13 +163,13 @@ function loadReport() {
       errEl.style.display='block'; return;
     }
     if(!d.rows||!d.rows.length){ errEl.textContent='No assessments found for batch: '+batch; errEl.style.display='block'; return; }
-    renderReport(d.rows, batch, d.client||batch);
+    renderReport(d.rows, batch, d.client||batch, d.trainerName||'');
     document.getElementById('gateScreen').classList.add('hidden');
     document.getElementById('reportScreen').classList.remove('hidden');
   });
 }
 
-function renderReport(rows, batch, client) {
+function renderReport(rows, batch, client, trainerName) {
   const n = rows.length;
   const avgRI = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
   const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
@@ -358,7 +358,11 @@ function renderReport(rows, batch, client) {
       <div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold-light);margin-bottom:10px">Ready to elevate your team?</div>
       <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.7;max-width:500px;margin:0 auto 20px">This report shows exactly where your team is today and what needs to change. The IGI Retail Sales Excellence Program is designed specifically to close these gaps — built on the same framework that produced this assessment.</p>
       <div style="font-size:15px;font-weight:600;color:var(--gold-light);margin-bottom:6px">IGI School of Gemology</div>
-      <a href="mailto:Sunil.Sharma@igi.org" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Sunil.Sharma@igi.org</a>
+      ${trainerName
+        ? `<div style="font-size:13px;color:rgba(255,255,255,0.65);margin-bottom:4px">Contact your IGI trainer</div>
+           <div style="font-size:15px;font-weight:600;color:var(--gold-light)">${trainerName}</div>`
+        : `<div style="font-size:13px;color:rgba(255,255,255,0.65)">Contact your IGI trainer for next steps</div>`
+      }
       <div style="margin-top:20px"><button class="btn" onclick="window.print()" style="background:rgba(255,255,255,0.1);color:var(--gold-light);border-color:rgba(201,168,76,0.3)">Print / Save as PDF</button></div>
     </div>
 

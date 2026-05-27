@@ -323,18 +323,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   <div id="screenT12" class="hidden">
     <div class="card transition-card">
       <div class="big-check">&#9989;</div>
-      <h2>Diamond Knowledge complete!</h2>
-      <p>Great work. Now Section 2 &mdash; Communication Style. 24 questions. Choose what feels most natural to you in everyday work situations.</p>
-      <button class="btn btn-primary" onclick="startC2S()">Continue to Communication Style &rarr;</button>
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Section 1 of 3 Complete</div>
+      <h2>Diamond Knowledge done!</h2>
+      <p style="margin-bottom:6px">2 more sections to go. Next up: <strong>Communication Style</strong> — 24 quick questions. No right or wrong answers. Choose what feels most natural to you in everyday work situations.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:20px">This assessment is <strong>not complete yet.</strong> Please continue to get your full profile.</p>
+      <div id="t12CountdownWrap" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--muted)">Continuing automatically in <span id="t12Countdown" style="font-weight:700;color:var(--gold);font-size:16px">5</span> seconds…</div>
+        <div style="height:4px;background:var(--off);border-radius:2px;margin-top:8px;overflow:hidden">
+          <div id="t12Bar" style="height:100%;background:var(--gold);border-radius:2px;width:100%;transition:width 1s linear"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startC2S(true)">Continue to Section 2 Now &rarr;</button>
     </div>
   </div>
 
   <div id="screenT23" class="hidden">
     <div class="card transition-card">
       <div class="big-check">&#9989;</div>
-      <h2>Communication Style complete!</h2>
-      <p>Almost there. Final section &mdash; your Sales Persona. 16 questions. Choose what feels most natural to you on the floor.</p>
-      <button class="btn btn-primary" onclick="startRSP()">Continue to Sales Persona &rarr;</button>
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Section 2 of 3 Complete</div>
+      <h2>Communication Style done!</h2>
+      <p style="margin-bottom:6px">One final section. Next up: <strong>Sales Persona</strong> — 16 questions about how you handle real floor situations. Choose what feels most like you.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:20px">Almost there — <strong>one more section</strong> and your profile is ready.</p>
+      <div id="t23CountdownWrap" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--muted)">Continuing automatically in <span id="t23Countdown" style="font-weight:700;color:var(--gold);font-size:16px">5</span> seconds…</div>
+        <div style="height:4px;background:var(--off);border-radius:2px;margin-top:8px;overflow:hidden">
+          <div id="t23Bar" style="height:100%;background:var(--gold);border-radius:2px;width:100%;transition:width 1s linear"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startRSP(true)">Continue to Section 3 Now &rarr;</button>
     </div>
   </div>
 
@@ -1195,21 +1211,49 @@ function startAssessment(){
   });
 }
 
+// ── Transition countdown helper ───────────────────────────
+let _transitionTimer = null;
+function startTransitionCountdown(countdownId, barId, seconds, onComplete) {
+  if (_transitionTimer) clearInterval(_transitionTimer);
+  let remaining = seconds;
+  const countEl = document.getElementById(countdownId);
+  const barEl   = document.getElementById(barId);
+  if (!countEl || !barEl) { onComplete(); return; }
+  // Start bar shrink — CSS transition handles smoothly
+  requestAnimationFrame(() => { barEl.style.width = '0%'; });
+  _transitionTimer = setInterval(() => {
+    remaining--;
+    if (countEl) countEl.textContent = remaining;
+    if (remaining <= 0) {
+      clearInterval(_transitionTimer);
+      _transitionTimer = null;
+      onComplete();
+    }
+  }, 1000);
+}
+
+function cancelTransitionCountdown() {
+  if (_transitionTimer) { clearInterval(_transitionTimer); _transitionTimer = null; }
+}
+
 function moveToBehav(){
   document.getElementById('fcsTimerOverlay').classList.add('hidden');
   pauseFCSTimer();
   document.getElementById('screen1').classList.add('hidden');
   document.getElementById('screenT12').classList.remove('hidden');
+  startTransitionCountdown('t12Countdown', 't12Bar', 5, () => startC2S(false));
 }
 
-function startC2S(){
+function startC2S(manual){
+  cancelTransitionCountdown();
   document.getElementById('screenT12').classList.add('hidden');
   document.getElementById('screen1').classList.remove('hidden');
   startBehavTimer();
   renderBehavQ(0);
 }
 
-function startRSP(){
+function startRSP(manual){
+  cancelTransitionCountdown();
   document.getElementById('screenT23').classList.add('hidden');
   document.getElementById('screen1').classList.remove('hidden');
   renderBehavQ(C2S_COUNT);
@@ -1261,6 +1305,7 @@ function goNextFCS(){
     pauseFCSTimer();
     document.getElementById('screen1').classList.add('hidden');
     document.getElementById('screenT12').classList.remove('hidden');
+    startTransitionCountdown('t12Countdown','t12Bar',5,()=>startC2S(false));
     return;
   }
   renderFCSQ(fcsCurrentQ+1);
@@ -1277,44 +1322,96 @@ function renderBehavQ(idx){
   const answered=isC2S?c2sAnswers[idx]:rspAnswers[idx-C2S_COUNT];
   const qNum=idx+1;
   const pct=Math.round((qNum/TOTAL_BEHAV)*100);
-  document.getElementById('qProgLabel').textContent='Behavioural: Q '+qNum+' of '+TOTAL_BEHAV;
+
+  // Section label with overall progress context
+  const sectionLabel = isC2S
+    ? `Section 2 of 3 &mdash; Communication Style &mdash; Q${idx+1} of ${C2S_COUNT}`
+    : `Section 3 of 3 &mdash; Sales Persona &mdash; Q${idx-C2S_COUNT+1} of ${RSP_Q.length}`;
+
+  document.getElementById('qProgLabel').textContent=isC2S
+    ? `Communication Style: Q ${idx+1} of ${C2S_COUNT}`
+    : `Sales Persona: Q ${idx-C2S_COUNT+1} of ${RSP_Q.length}`;
   document.getElementById('qProgFill').style.width=pct+'%';
-  const badge=isC2S?'<span class="q-badge c2s">Section 2 of 3 &#8212; Communication Style</span>':'<span class="q-badge rsp">Section 3 of 3 &#8212; Sales Persona</span>';
+
+  const badge=isC2S
+    ? `<span class="q-badge c2s">Section 2 of 3 — Communication Style — Q${idx+1} of ${C2S_COUNT}</span>`
+    : `<span class="q-badge rsp">Section 3 of 3 — Sales Persona — Q${idx-C2S_COUNT+1} of ${RSP_Q.length}</span>`;
+
   const isLast=idx===TOTAL_BEHAV-1;
-  document.getElementById('questionCard').innerHTML=`
-    <div class="q-screen">
-      ${badge}
-      <div class="q-num">Question ${qNum} of ${TOTAL_BEHAV}</div>
-      <div class="q-text">${isC2S?q.q:q.q}</div>
-      <div class="options">${q.opts.map((o,j)=>`
-        <div class="opt${answered===j?' selected':''}" onclick="selectBehav(${j})">
-          <div class="opt-letter">${String.fromCharCode(65+j)}</div>
-          <div class="opt-text">${typeof o==='string'?o:o.t}</div>
-        </div>`).join('')}</div>
-      <div class="nav-row">
-        <button class="btn" onclick="goBackBehav()" ${idx===0?'disabled':''}>&larr; Back</button>
-        <button class="btn btn-primary" id="nextBtn" onclick="goNextBehav()" ${answered===null?'disabled':''}>
-          ${isLast?'Generate My Profile &rarr;':'Next &rarr;'}
-        </button>
-      </div>
-    </div>`;
+
+  // C2S: auto-advance — no Next button, options are tappable only
+  // RSP: keep Next button — scenario text is long and needs reading time
+  if(isC2S){
+    document.getElementById('questionCard').innerHTML=`
+      <div class="q-screen">
+        ${badge}
+        <div class="q-num">Question ${idx+1} of ${TOTAL_BEHAV}</div>
+        <div class="q-text">${q.q}</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center">Tap the option that feels most like you — it will advance automatically</p>
+        <div class="options">${q.opts.map((o,j)=>`
+          <div class="opt${answered===j?' selected':''}" onclick="selectBehavC2S(${j})" style="cursor:pointer">
+            <div class="opt-letter">${String.fromCharCode(65+j)}</div>
+            <div class="opt-text">${typeof o==='string'?o:o.t}</div>
+          </div>`).join('')}</div>
+        <div class="nav-row">
+          <button class="btn" onclick="goBackBehav()" ${idx===0?'disabled':''}>&larr; Back</button>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('questionCard').innerHTML=`
+      <div class="q-screen">
+        ${badge}
+        <div class="q-num">Question ${idx+1} of ${TOTAL_BEHAV}</div>
+        <div class="q-text">${q.q}</div>
+        <div class="options">${q.opts.map((o,j)=>`
+          <div class="opt${answered===j?' selected':''}" onclick="selectBehavRSP(${j})">
+            <div class="opt-letter">${String.fromCharCode(65+j)}</div>
+            <div class="opt-text">${typeof o==='string'?o:o.t}</div>
+          </div>`).join('')}</div>
+        <div class="nav-row">
+          <button class="btn" onclick="goBackBehav()" ${idx===0?'disabled':''}>&larr; Back</button>
+          <button class="btn btn-primary" id="nextBtn" onclick="goNextBehav()" ${answered===null?'disabled':''}>
+            ${isLast?'Generate My Profile &rarr;':'Next &rarr;'}
+          </button>
+        </div>
+      </div>`;
+  }
 }
 
+// C2S auto-advance: select + 300ms visual feedback + advance
+function selectBehavC2S(opt){
+  c2sAnswers[currentQ] = opt;
+  document.querySelectorAll('.opt').forEach((el,j) => el.classList.toggle('selected', j===opt));
+  // Visual confirmation then auto-advance
+  setTimeout(() => {
+    if(currentQ === C2S_COUNT - 1){
+      // Last C2S question → show T23 transition with countdown
+      document.getElementById('screen1').classList.add('hidden');
+      document.getElementById('screenT23').classList.remove('hidden');
+      startTransitionCountdown('t23Countdown', 't23Bar', 5, () => startRSP(false));
+    } else {
+      renderBehavQ(currentQ + 1);
+    }
+  }, 300);
+}
+
+// RSP: select only — Next button still required
+function selectBehavRSP(opt){
+  rspAnswers[currentQ - C2S_COUNT] = opt;
+  document.querySelectorAll('.opt').forEach((el,j) => el.classList.toggle('selected', j===opt));
+  const nextBtn = document.getElementById('nextBtn');
+  if(nextBtn) nextBtn.disabled = false;
+}
+
+// Legacy selectBehav kept for safety
 function selectBehav(opt){
-  if(currentQ<C2S_COUNT) c2sAnswers[currentQ]=opt;
-  else rspAnswers[currentQ-C2S_COUNT]=opt;
-  document.querySelectorAll('.opt').forEach((el,j)=>el.classList.toggle('selected',j===opt));
-  document.getElementById('nextBtn').disabled=false;
+  if(currentQ < C2S_COUNT) selectBehavC2S(opt);
+  else selectBehavRSP(opt);
 }
 
 function goNextBehav(){
   const ans=currentQ<C2S_COUNT?c2sAnswers[currentQ]:rspAnswers[currentQ-C2S_COUNT];
   if(ans===null) return;
-  if(currentQ===C2S_COUNT-1){
-    document.getElementById('screen1').classList.add('hidden');
-    document.getElementById('screenT23').classList.remove('hidden');
-    return;
-  }
   if(currentQ===TOTAL_BEHAV-1){pauseBehavTimer();submitAll();return;}
   renderBehavQ(currentQ+1);
 }

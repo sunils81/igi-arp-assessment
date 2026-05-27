@@ -463,7 +463,8 @@ function doGet(e){
         ri:       headers.indexOf('Readiness Total'),
         band:     headers.indexOf('Readiness Band'),
         fcs:      headers.indexOf('4Cs Percentage'),
-        client:   headers.indexOf('Client')
+        client:   headers.indexOf('Client'),
+        trainer:  headers.indexOf('Trainer Name')
       };
       const rows = batchRows.map(r => ({
         name:r[idx.name]||'', desig:r[idx.desig]||'',
@@ -471,7 +472,8 @@ function doGet(e){
         ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||''
       }));
       if (!rows.length) return respond({status:'error', reason:'no_data'});
-      return respond({status:'ok', rows, client:rows[0].client||batchParam});
+      const trainerName = idx.trainer >= 0 ? String(batchRows[0][idx.trainer]||'') : '';
+      return respond({status:'ok', rows, client:rows[0].client||batchParam, trainerName});
     }
 
     const sheet = ss.getSheetByName(SHEET_NAME);
