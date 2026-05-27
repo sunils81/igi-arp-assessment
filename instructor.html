@@ -131,16 +131,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 
     <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">
       <div class="section-tag" style="margin-bottom:6px">Batch Report Access</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Set a password for the batch report page. Share this with retail owners so they can view their team's results at <strong>igi-arp-assessment.vercel.app/report</strong></p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:4px">Set a <strong>unique password per batch</strong> — each client/brand gets their own password so they can only see their team's results.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Share the report page <strong>igi-arp-assessment.vercel.app/report</strong> along with the batch code and password for that batch.</p>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <input type="text" id="reportPassInput" placeholder="e.g. JEWLBX2026 — create a memorable password for this batch" autocomplete="off"
+        <div class="field" style="margin-bottom:0">
+          <label>Batch code (to attach password to)</label>
+          <input type="text" id="bpBatch" placeholder="e.g. MUM-POME-MAY26 — auto-fills when you generate a link" autocomplete="off"
+            style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);background:var(--white);outline:none">
+        </div>
+        <input type="text" id="bpPass" placeholder="e.g. POME2026 — unique to this client" autocomplete="off"
           style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:14px;color:var(--navy);background:var(--white);outline:none">
-        <button class="btn btn-primary" onclick="saveReportPass()" style="padding:11px 18px">Save Password</button>
+        <button class="btn btn-primary" onclick="saveBatchPass()" style="padding:11px 18px">Set Batch Password</button>
       </div>
-      <div id="reportPassMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:6px"></div>
+      <div id="bpMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:6px"></div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <a id="reportLink" href="/report" target="_blank" style="font-size:12px;color:var(--teal);text-decoration:none;padding:6px 12px;border:1px solid var(--teal);border-radius:6px">🔗 Open Report Page</a>
         <button onclick="copyReportLink()" style="font-size:12px;color:var(--navy);padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--off);cursor:pointer;font-family:'DM Sans',sans-serif">📋 Copy Report Link</button>
+      </div>
+      <div style="margin-top:10px;padding:10px 14px;background:var(--off);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">How it works</div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0">Each batch has its own password. POME uses <code style="font-size:11px">POME2026</code>, JEWELBOX uses <code style="font-size:11px">JEWLBX2026</code>. Changing one batch's password doesn't affect others. If you haven't set a batch password yet, the global password (if set) still works as a fallback.</p>
       </div>
     </div>
   </div>
@@ -411,6 +421,37 @@ function showScMsg(msg, ok){
   setTimeout(()=>{ el.style.display='none'; }, 3500);
 }
 
+function saveBatchPass(){
+  const batch = (document.getElementById('bpBatch').value||'').trim().toUpperCase();
+  const pass  = (document.getElementById('bpPass').value||'').trim().toUpperCase();
+  if(!batch){ showBpMsg('Please enter the batch code first.', false); return; }
+  if(!pass) { showBpMsg('Please enter a password for this batch.', false); return; }
+  document.getElementById('bpBatch').value = batch;
+  document.getElementById('bpPass').value  = pass;
+  fetch(GAS_URL+'?action=saveBatchPass&batch='+encodeURIComponent(batch)+'&pass='+encodeURIComponent(pass))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.status==='ok'){
+        showBpMsg('✓ Password set for batch '+batch+'. Updated '+d.updated+' row'+(d.updated!==1?'s':'')+'.',true);
+      } else if(d && d.reason==='headers_missing'){
+        showBpMsg('Sheet headers not set up yet. Run fixHeaders() in Apps Script first.', false);
+      } else {
+        showBpMsg('Error: '+(d&&d.reason||'unknown'), false);
+      }
+    })
+    .catch(()=>showBpMsg('Network error. Check your connection.', false));
+}
+
+function showBpMsg(msg, ok){
+  const el = document.getElementById('bpMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = ok ? '#E1F5EE' : '#FEF2F2';
+  el.style.color      = ok ? '#085041' : '#C94A4A';
+  el.style.border     = '1px solid '+(ok?'#1D9E75':'#C94A4A');
+  if(ok) setTimeout(()=>{ el.style.display='none'; }, 4000);
+}
+
 function saveReportPass(){
   const pass = (document.getElementById('reportPassInput').value||'').trim().toUpperCase();
   if(!pass){ showReportPassMsg('Please enter a password first.', false); return; }
@@ -502,6 +543,9 @@ function updateAll(){
   const url = buildURL();
   document.getElementById('urlOutput').style.display='block';
   document.getElementById('urlBox').textContent=url;
+  // Auto-fill batch password field with current batch code
+  const batch = document.getElementById('gBatch').value.trim().toUpperCase();
+  if(batch) document.getElementById('bpBatch').value = batch;
   updateWAMsg();
 }
 

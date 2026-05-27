@@ -216,6 +216,42 @@ function renderReport(rows, batch, client) {
       <div class="stat-box"><div class="val" style="color:var(--coral)">${knowledgeRisk.length}</div><div class="lbl">Knowledge Risk</div></div>
     </div>
 
+    <div class="card" style="margin-bottom:16px;border-left:4px solid var(--gold)">
+      <div class="section-tag">IGI Retail Sales Excellence Index — What the Score Means</div>
+      <h2 style="margin-bottom:14px">Benchmark Reference Guide</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="padding:14px;background:#F9F3E3;border-radius:10px;border-left:4px solid #C9A84C">
+          <div style="font-size:18px;font-weight:700;color:#C9A84C;font-family:'Playfair Display',serif">85 – 100</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Outstanding</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">Store-ready for high-value, complex sales independently. Minimal supervision needed. Can be considered for mentoring junior associates.</div>
+        </div>
+        <div style="padding:14px;background:#E8F5EE;border-radius:10px;border-left:4px solid #1D9E75">
+          <div style="font-size:18px;font-weight:700;color:#1D9E75;font-family:'Playfair Display',serif">70 – 84</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Proficient</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">Solid performer. Handles most floor situations well. Ready for next-level responsibility with light coaching on 1–2 specific gaps.</div>
+        </div>
+        <div style="padding:14px;background:#EEF4FB;border-radius:10px;border-left:4px solid #378ADD">
+          <div style="font-size:18px;font-weight:700;color:#378ADD;font-family:'Playfair Display',serif">55 – 69</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Developing</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">Foundational capability present. Needs structured coaching on specific gaps before independent high-value selling. Strong potential with investment.</div>
+        </div>
+        <div style="padding:14px;background:#FEF2F2;border-radius:10px;border-left:4px solid #C9613A">
+          <div style="font-size:18px;font-weight:700;color:#C9613A;font-family:'Playfair Display',serif">0 – 54</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy);margin:4px 0">Foundation</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">Significant gaps in knowledge or behavioral maturity. Training required before floor deployment on premium products. Prioritize 4Cs knowledge first.</div>
+        </div>
+      </div>
+      <div style="background:var(--off);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">How the Index is calculated</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--navy)"><strong style="color:var(--purple)">70 pts</strong> — Diamond Knowledge (4Cs score × 70%)</div>
+          <div style="font-size:12px;color:var(--navy)"><strong style="color:var(--gold)">15 pts</strong> — Communication Style clarity (C2S dominance)</div>
+          <div style="font-size:12px;color:var(--navy)"><strong style="color:var(--teal)">15 pts</strong> — Sales Persona maturity (RSP stage progression)</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">This batch average of <strong style="color:${avgRI>=70?'var(--teal)':avgRI>=55?'var(--blue)':'var(--coral)'}">${avgRI}/100</strong> places your team in the <strong>${avgRI>=85?'Outstanding':avgRI>=70?'Proficient':avgRI>=55?'Developing':'Foundation'}</strong> range. ${avgRI>=70?'Your team has a strong foundation for the IGI RSP program to accelerate further.':avgRI>=55?'Targeted RSP training will move most associates to Proficient within 4–6 weeks.':'Recommend prioritizing 4Cs knowledge training before behavioral skills development.'}</div>
+      </div>
+    </div>
+
     <div class="card" style="margin-bottom:16px">
       <div class="section-tag">Readiness Distribution</div>
       <h2 style="margin-bottom:14px">Team Readiness Breakdown</h2>

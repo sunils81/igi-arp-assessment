@@ -1543,6 +1543,26 @@ function submitAll(){
       <div class="ri-score-lockup"><span class="score">${readiness.total}</span><span class="max">/100</span></div>
       <div class="ri-band-text" style="color:${readinessBand.color}">${readinessBand.label}</div>
       <div class="ri-track-thick"><div class="ri-fill-thick" style="width:${readiness.total}%;background:${readinessBand.color}"></div></div>
+
+      <div style="margin:14px 0 18px;padding:12px 14px;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.1)">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">IGI Retail Sales Excellence Index — What this means</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${[
+            {range:'85–100',band:'Outstanding',desc:'Store-ready for high-value sales independently.',color:'#C9A84C'},
+            {range:'70–84', band:'Proficient',  desc:'Solid performer, light coaching to go further.',color:'#1D9E75'},
+            {range:'55–69', band:'Developing',  desc:'Foundational — structured coaching needed.',color:'#378ADD'},
+            {range:'0–54',  band:'Foundation',  desc:'Training required before premium deployment.',color:'#C9613A'}
+          ].map(b=>`
+            <div style="padding:8px 10px;border-radius:7px;background:${readinessBand.label===b.band?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${readinessBand.label===b.band?b.color+'60':'transparent'}">
+              <div style="font-size:11px;font-weight:700;color:${b.color}">${b.range}</div>
+              <div style="font-size:11px;font-weight:600;color:#fff;margin:1px 0">${b.band}${readinessBand.label===b.band?' ◀':''}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.55);line-height:1.4">${b.desc}</div>
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:rgba(255,255,255,0.55);line-height:1.5">
+          <strong style="color:rgba(255,255,255,0.75)">Index formula:</strong> Diamond Knowledge 70 pts + Communication Style clarity 15 pts + Sales Persona maturity 15 pts
+        </div>
+      </div>
       <div class="ri-panels">
         <div class="ri-panel">
           <div class="ri-panel-label" style="color:var(--purple)">Diamond Knowledge</div>

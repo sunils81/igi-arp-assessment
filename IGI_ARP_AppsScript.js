@@ -25,7 +25,7 @@ const HEADERS = [
   'RSP Product Pusher','RSP Relationship Builder','RSP Experience Creator','RSP Trusted Advisor',
   '4Cs Score','4Cs Percentage','4Cs Grade','4Cs Tag Scores (JSON)',
   'Readiness Total','Readiness Band','Knowledge Points','Behavioural Points',
-  'Combined Profile','Insight Title','PDF Link'
+  'Combined Profile','Insight Title','PDF Link','Batch Password'
 ];
 
 // Column index map (1-based) — keeps rebuild functions readable
@@ -313,6 +313,42 @@ function doGet(e){
   }
 
   try {
+    if (action === 'saveBatchPass') {
+      // Writes batch-scoped password into the Batch Password column for all rows with this batch code
+      const batchParam = (p.batch||'').trim().toUpperCase();
+      const passParam  = (p.pass ||'').trim().toUpperCase();
+      if (!batchParam || !passParam) return respond({status:'error', reason:'missing_params'});
+      const sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) return respond({status:'error', reason:'no_sheet'});
+      const data    = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const iBatch  = headers.indexOf('Batch Code');
+      const iPass   = headers.indexOf('Batch Password');
+      if (iBatch < 0 || iPass < 0) return respond({status:'error', reason:'headers_missing'});
+      let updated = 0;
+      data.slice(1).forEach(function(r, i) {
+        if ((r[iBatch]||'').toString().trim().toUpperCase() === batchParam) {
+          sheet.getRange(i + 2, iPass + 1).setValue(passParam);
+          updated++;
+        }
+      });
+      return respond({status:'ok', updated, batch: batchParam, pass: passParam});
+    }
+
+    if (action === 'checkBatchPass') {
+      // Returns whether a batch-scoped password is already set for this batch
+      const batchParam = (p.batch||'').trim().toUpperCase();
+      const sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) return respond({hasPass: false});
+      const data    = sheet.getDataRange().getValues();
+      const headers = data[0];
+      const iBatch  = headers.indexOf('Batch Code');
+      const iPass   = headers.indexOf('Batch Password');
+      const batchRows = data.slice(1).filter(r => (r[iBatch]||'').toString().trim().toUpperCase() === batchParam);
+      const hasPass = batchRows.length > 0 && iPass >= 0 && !!(batchRows[0][iPass]||'').toString().trim();
+      return respond({hasPass, batch: batchParam});
+    }
+
     if (action === 'checkMobile') {
       const mobile = (p.mobile||'').trim();
       const batch  = (p.batch ||'').trim().toUpperCase();
@@ -388,13 +424,35 @@ function doGet(e){
     if (action === 'getBatchReport') {
       const batchParam = (p.batch||'').trim().toUpperCase();
       const passParam  = (p.pass ||'').trim();
-      const storedPass = (getSetting('reportPassword')||'').trim();
-      if (!storedPass || passParam !== storedPass)
-        return respond({status:'error', reason:'wrong_password'});
+      if (!batchParam) return respond({status:'error', reason:'no_batch'});
+
       const sheet = ss.getSheetByName(SHEET_NAME);
       if (!sheet) return respond({status:'error', reason:'no_data'});
       const data    = sheet.getDataRange().getValues();
       const headers = data[0];
+      const iBatch  = headers.indexOf('Batch Code');
+      const iPass   = headers.indexOf('Batch Password');
+
+      // Strategy 1: batch-scoped password stored inline on the first matching row
+      // Strategy 2: fallback to global reportPassword setting
+      let authenticated = false;
+      const batchRows = data.slice(1).filter(r =>
+        (r[iBatch]||'').toString().trim().toUpperCase() === batchParam
+      );
+
+      if (batchRows.length && iPass >= 0) {
+        const storedBatchPass = (batchRows[0][iPass]||'').toString().trim();
+        if (storedBatchPass && passParam === storedBatchPass) authenticated = true;
+      }
+
+      if (!authenticated) {
+        // Fallback: global password
+        const globalPass = (getSetting('reportPassword')||'').trim();
+        if (globalPass && passParam === globalPass) authenticated = true;
+      }
+
+      if (!authenticated) return respond({status:'error', reason:'wrong_password'});
+
       const idx = {
         batch:    headers.indexOf('Batch Code'),
         name:     headers.indexOf('Name'),
@@ -407,13 +465,11 @@ function doGet(e){
         fcs:      headers.indexOf('4Cs Percentage'),
         client:   headers.indexOf('Client')
       };
-      const rows = data.slice(1)
-        .filter(r => (r[idx.batch]||'').toString().trim().toUpperCase() === batchParam)
-        .map(r => ({
-          name:r[idx.name]||'', desig:r[idx.desig]||'',
-          c2s:r[idx.c2s]||'', rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
-          ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||''
-        }));
+      const rows = batchRows.map(r => ({
+        name:r[idx.name]||'', desig:r[idx.desig]||'',
+        c2s:r[idx.c2s]||'', rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
+        ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||''
+      }));
       if (!rows.length) return respond({status:'error', reason:'no_data'});
       return respond({status:'ok', rows, client:rows[0].client||batchParam});
     }
