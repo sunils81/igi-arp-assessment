@@ -25,10 +25,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .field input::placeholder{color:#B0A898}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.02em;border-radius:var(--rm)}
 .btn-primary{background:#0D1B2E;color:#fff;border:none;width:100%;margin-top:8px}
-.btn-primary:hover{background:#178765}
+.btn-primary:hover{background:#1a2f50}
 .error-msg{font-size:12px;color:#C94A4A;padding:8px 12px;background:#FEF2F2;border-left:3px solid #C94A4A;margin-top:8px;display:none}
 /* ── MASTHEAD ── */
-.rpt-masthead{background:var(--navy);padding:36px 40px 28px;margin-bottom:0;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.rpt-masthead{background:var(--navy);padding:36px 40px 28px;margin-bottom:0;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;border-bottom:2px solid #C9A84C}
 .rpt-mh-left{flex:1;min-width:200px}
 .rpt-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:10px}
 .rpt-eyebrow::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.3)}
@@ -42,19 +42,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .mc{padding:22px 20px;border-right:1px solid var(--border);position:relative}
 .mc:last-child{border-right:none}
 .mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border)}
-.mc.mg::before{background:var(--gold)}
-.mc.mt::before{background:var(--teal)}
-.mc.mr::before{background:var(--coral)}
+.mc.mg::before{background:var(--gold)}.mc.mg{background:linear-gradient(to bottom,rgba(201,168,76,0.04),transparent)}
+.mc.mt::before{background:var(--teal)}.mc.mt{background:linear-gradient(to bottom,rgba(29,158,117,0.04),transparent)}
+.mc.mr::before{background:var(--coral)}.mc.mr{background:linear-gradient(to bottom,rgba(201,97,58,0.04),transparent)}
 .mv{font-family:"Playfair Display",serif;font-size:38px;font-weight:700;line-height:1;margin-bottom:6px;color:var(--navy)}
 .ml{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .ms{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
 /* ── SECTION HEAD ── */
 .sh{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--navy)}
-.sh-num{font-family:"DM Mono",monospace;font-size:11px;font-weight:500;color:var(--gold);letter-spacing:.06em;flex-shrink:0}
+.sh-num{font-family:"DM Mono",monospace;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.06em;flex-shrink:0}
 .sh-title{font-family:"Playfair Display",serif;font-size:18px;font-weight:600;color:var(--navy)}
 .sh-rule{flex:1;height:1px;background:var(--border)}
 /* ── PANEL ── */
-.panel{background:var(--white);border:1px solid var(--border);padding:28px 32px;margin-bottom:20px;box-shadow:var(--sh)}
+.panel{background:var(--white);border:1px solid var(--border);padding:36px 40px;margin-bottom:20px;box-shadow:var(--sh)}
 .pt{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 /* ── BAND TRACK ── */
 .band-track{height:6px;display:flex;overflow:hidden;margin:16px 0 12px;background:var(--border)}
@@ -77,16 +77,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .heatmap-wrap{overflow-x:auto;margin-bottom:4px}
 .heatmap{border-collapse:collapse;width:100%;font-size:11px}
 .heatmap thead tr{border-bottom:2px solid var(--navy)}
-.heatmap th{padding:8px 6px 8px 0;text-align:left;font-weight:600;color:var(--muted);font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.heatmap th.sc{max-width:90px;font-size:9px}
+.heatmap th{padding:6px 4px 6px 0;text-align:left;font-weight:600;color:var(--muted);font-size:8px;letter-spacing:.04em;text-transform:uppercase;white-space:normal;max-width:52px;line-height:1.3}
+.heatmap th.sc{max-width:52px;font-size:8px;word-wrap:break-word}
 .heatmap tbody tr{border-bottom:1px solid var(--border)}
 .heatmap tbody tr:hover{background:#FAFAF7}
 .heatmap td{padding:7px 6px 7px 0;vertical-align:middle}
 .heatmap td.an{font-weight:600;color:var(--navy);font-size:12px;white-space:nowrap;padding-right:12px}
 .heatmap td.ar{font-weight:700;font-size:13px;font-family:"Playfair Display",serif;text-align:center;padding-right:8px}
 .heatmap td.as{font-size:10px;font-weight:600;color:var(--muted);text-align:center;padding-right:8px;white-space:nowrap}
-.dc{text-align:center;padding:6px 3px}
-.dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:middle}
+.dc{text-align:center;padding:5px 2px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle}
 .d-g{background:var(--gap-fill)}
 .d-d{background:none;border:2px solid var(--dev-fill)}
 .d-s{background:var(--str-fill);opacity:.2}
@@ -110,7 +110,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .at td{padding:12px 12px 12px 0;vertical-align:top}
 .atn{font-weight:600;font-size:13px;color:var(--navy)}
 .atm{font-size:11px;color:var(--muted);margin-top:1px}
-.ats{font-family:"Playfair Display",serif;font-size:20px;font-weight:700;line-height:1}
+.ats{font-family:"Playfair Display",serif;font-size:20px;font-weight:700;line-height:1}.score-bar{width:44px;height:4px;background:#E2DDD6;border-radius:2px;margin-top:5px;overflow:hidden}.score-fill{height:100%;border-radius:2px;transition:width .6s}
 .atb{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
 .atst{font-size:11px;font-weight:600;color:var(--muted)}
 .atg{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
@@ -127,13 +127,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .cta-title{font-family:"Playfair Display",serif;font-size:24px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:10px}
 .cta-body{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.7}
 .cta-trl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:4px;margin-top:14px}
-.cta-trn{font-size:14px;font-weight:600;color:var(--gold-light)}
+.cta-trn{font-size:16px;font-weight:700;color:var(--gold-light);margin-top:2px}.cta-sep{width:40px;height:1px;background:rgba(201,168,76,0.3);margin:12px 0}
 .cta-act{flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .btn-print{background:transparent;color:var(--gold-light);border:1px solid rgba(201,168,76,0.4);padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;letter-spacing:.03em;border-radius:var(--rm);transition:all .18s}
 .btn-print:hover{background:rgba(201,168,76,0.1)}
 .conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
-@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{background:white!important}.metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}.rpt-masthead{background:#0D1B2E!important}.cta-block{background:#0D1B2E!important}}
+@page{margin:16mm 14mm;@bottom-center{content:"IGI ARP | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{background:#F7F5F0!important}.metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}.rpt-masthead{background:#0D1B2E!important}.cta-block{background:#0D1B2E!important}.mc.mg::before{background:#C9A84C!important;display:block!important}.mc.mt::before{background:#1D9E75!important;display:block!important}.mc.mr::before{background:#C9613A!important;display:block!important}.mc::before{display:block!important;-webkit-print-color-adjust:exact!important}.bs{-webkit-print-color-adjust:exact!important}.d-g{background:#C94A4A!important}.d-d{border-color:#B87A10!important}.atgt{background:#FEF2F2!important;color:#991B1B!important}.atdt{background:#FFF8E7!important;color:#7A5C00!important}.risk-block{background:#FEF9F7!important}.b-bar span{-webkit-print-color-adjust:exact!important}.bstr span{-webkit-print-color-adjust:exact!important}}
 </style>
 </head>
 <body>
@@ -358,7 +358,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <td colspan="3" style="text-align:left;font-size:10px;font-weight:600;color:var(--muted);padding-left:0">Team Gaps</td>
             ${origOrder.map(sg=>`
               <td style="color:${sg.gapCount>n*0.5?'var(--gap-fill)':sg.gapCount>n*0.25?'var(--dev-fill)':'var(--muted)'}">
-                ${sg.gapCount>0?sg.gapCount+'G':'—'}
+                ${sg.gapCount>0?'<b style="color:#C94A4A">'+sg.gapCount+'G</b>':'<span style="color:#1D9E75;font-size:8px">✓</span>'}
               </td>`).join('')}
           </tr>
         </tfoot>
@@ -379,7 +379,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <div class="pri-block">
         <div class="pri-num">0${i+1}</div>
         <div class="pri-skill">${g.skill}</div>
-        <div class="pri-stat">${g.gapCount} associate${g.gapCount!==1?'s':''} with a critical gap &nbsp;&bull;&nbsp; ${g.devCount} developing</div>
+        <div class="pri-stat">${g.gapCount>0?'<strong style="color:var(--coral);font-size:14px">'+(g.gapCount)+'</strong> critical gap'+(g.gapCount!==1?'s':'')+' &nbsp;&bull;&nbsp; ':''}${Math.round(((g.gapCount+g.devCount)/n)*100)}% of team needs development</div>
         <span class="pri-tag">IGI Retail Sales Excellence Program</span>
       </div>`).join('')}
     ${knowledgeRisk.length>0?`
@@ -423,6 +423,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <td style="text-align:center;vertical-align:middle">
               <div class="ats" style="color:${bc}">${a.ri}</div>
               <div class="atb" style="color:${bc}">${a.band}</div>
+              <div class="score-bar"><div class="score-fill" style="width:${a.ri}%;background:${bc}"></div></div>
             </td>
             <td style="vertical-align:middle">
               <div class="atst">${a.rspLabel||a.rspKey}</div>
@@ -452,7 +453,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
     </div>
   </div>
-  <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>`;
+  <div class="conf"><svg width="28" height="28" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:8px;opacity:.5"><circle cx="38" cy="38" r="36" fill="none" stroke="#6B6357" stroke-width="1.5"/><text x="38" y="34" text-anchor="middle" font-family="Georgia,serif" font-size="16" font-weight="700" fill="#6B6357" letter-spacing="2">IGI</text><line x1="18" y1="40" x2="58" y2="40" stroke="#6B6357" stroke-width="0.75" opacity=".5"/><text x="38" y="50" text-anchor="middle" font-family="Georgia,serif" font-size="5.5" fill="#6B6357" letter-spacing="1.5" opacity=".7">SCHOOL OF GEMOLOGY</text></svg>IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>`;
 
   document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + ctaHtml;
 }
