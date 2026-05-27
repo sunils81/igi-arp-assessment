@@ -12,20 +12,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .hidden{display:none!important}
 /* ── GATE ── */
 .gate-wrap{max-width:420px;margin:0 auto;padding:48px 0}
-.gate-logo{text-align:center;margin-bottom:32px}
-.gate-logo img{height:44px}
-.gate-card{background:var(--white);border:1px solid var(--border);border-top:3px solid var(--gold);padding:36px 32px;box-shadow:var(--sh)}
+.gate-logo{display:flex;align-items:center;justify-content:center;min-height:118px;margin:-12px -8px 26px;background:linear-gradient(135deg,#0D1B2E 0%,#123A44 56%,#1D9E75 160%);border-top:3px solid var(--gold);box-shadow:var(--sh)}
+.gate-logo img{width:250px;max-width:82%;height:auto;display:block}
+.gate-card{background:var(--navy);border:1px solid rgba(201,168,76,.28);padding:8px 32px 34px;box-shadow:0 10px 32px rgba(13,27,46,.18)}
 .gate-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.gate-card h2{font-family:"Playfair Display",serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;line-height:1.2}
-.gate-card p{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.gate-card h2{font-family:"Playfair Display",serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;line-height:1.2}
+.gate-card p{font-size:13px;color:rgba(255,255,255,.72);margin-bottom:24px;line-height:1.6}
 .field{margin-bottom:18px}
-.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-.field input{width:100%;padding:10px 0;border:none;border-bottom:2px solid var(--border);background:transparent;font-family:"DM Sans",sans-serif;font-size:15px;color:var(--navy);outline:none;transition:border-color .2s;border-radius:0}
+.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:7px}
+.field input{width:100%;padding:10px 0;border:none;border-bottom:2px solid rgba(255,255,255,.2);background:transparent;font-family:"DM Sans",sans-serif;font-size:15px;color:#fff;outline:none;transition:border-color .2s;border-radius:0}
 .field input:focus{border-bottom-color:var(--gold)}
-.field input::placeholder{color:#B0A898}
+.field input::placeholder{color:rgba(255,255,255,.38)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.02em;border-radius:var(--rm)}
-.btn-primary{background:var(--navy);color:var(--gold-light);border:none;width:100%;margin-top:8px}
-.btn-primary:hover{background:#1a2f50}
+.btn-primary{background:var(--teal);color:#fff;border:none;width:100%;margin-top:8px}
+.btn-primary:hover{background:#178765}
 .error-msg{font-size:12px;color:#C94A4A;padding:8px 12px;background:#FEF2F2;border-left:3px solid #C94A4A;margin-top:8px;display:none}
 /* ── MASTHEAD ── */
 .rpt-masthead{background:var(--navy);padding:36px 40px 28px;margin-bottom:0;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
@@ -142,14 +142,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   <div id="gateScreen">
     <div class="gate-wrap">
       <div class="gate-card">
-        <svg width="120" height="48" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="40" cy="40" r="36" fill="#0D1B2E" stroke="#C9A84C" stroke-width="1.5"/>
-          <text x="40" y="36" text-anchor="middle" font-family="Georgia,serif" font-size="15" font-weight="700" fill="#C9A84C" letter-spacing="3">IGI</text>
-          <line x1="20" y1="41" x2="60" y2="41" stroke="rgba(201,168,76,0.5)" stroke-width="0.75"/>
-          <text x="40" y="51" text-anchor="middle" font-family="Georgia,serif" font-size="5.5" fill="rgba(201,168,76,0.75)" letter-spacing="1.5">SCHOOL OF GEMOLOGY</text>
-          <text x="130" y="32" text-anchor="start" font-family="Georgia,serif" font-size="28" font-weight="700" fill="#0D1B2E" letter-spacing="2">IGI</text>
-          <text x="132" y="52" text-anchor="start" font-family="Georgia,sans-serif" font-size="9" fill="#6B6357" letter-spacing="2.5">SCHOOL OF GEMOLOGY</text>
-        </svg>
+        <div class="gate-logo">
+          <img src="assets/igi-school-of-gemology-white-logo.svg?v=2" alt="IGI School of Gemology">
         </div>
         <h2 style="margin-bottom:6px">Batch Report Access</h2>
         <p>Enter your batch code and the report password provided by your IGI trainer.</p>
