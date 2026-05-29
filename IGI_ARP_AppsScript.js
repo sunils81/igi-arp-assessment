@@ -455,6 +455,7 @@ function doGet(e){
 
       const idx = {
         batch:    headers.indexOf('Batch Code'),
+        mobile:   headers.indexOf('Mobile'),
         name:     headers.indexOf('Name'),
         desig:    headers.indexOf('Designation'),
         c2s:      headers.indexOf('C2S Classification'),
@@ -463,17 +464,42 @@ function doGet(e){
         ri:       headers.indexOf('Readiness Total'),
         band:     headers.indexOf('Readiness Band'),
         fcs:      headers.indexOf('4Cs Percentage'),
+        fcsTags:  headers.indexOf('4Cs Tag Scores (JSON)'),
         client:   headers.indexOf('Client'),
         trainer:  headers.indexOf('Trainer Name')
       };
       const rows = batchRows.map(r => ({
+        mobile:r[idx.mobile]||'',
         name:r[idx.name]||'', desig:r[idx.desig]||'',
         c2s:r[idx.c2s]||'', rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
-        ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||''
+        ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||'',
+        fcsTags:r[idx.fcsTags]||'{}'
       }));
       if (!rows.length) return respond({status:'error', reason:'no_data'});
       const trainerName = idx.trainer >= 0 ? String(batchRows[0][idx.trainer]||'') : '';
       return respond({status:'ok', rows, client:rows[0].client||batchParam, trainerName});
+    }
+
+    // ── getPostResults: return all post-test results for a batch (no extra auth needed) ──
+    if (action === 'getPostResults') {
+      const batchParam = (p.batch||'').trim().toUpperCase();
+      if (!batchParam) return respond({status:'ok', postRows:[]});
+      const postSheet = ss.getSheetByName('Post_Responses');
+      if (!postSheet || postSheet.getLastRow() < 2) return respond({status:'ok', postRows:[]});
+      const ph   = POST_HEADERS;
+      const data = postSheet.getRange(2,1,postSheet.getLastRow()-1,ph.length).getValues();
+      const postRows = data
+        .filter(r => String(r[ph.indexOf('Batch Code')]||'').trim().toUpperCase() === batchParam)
+        .map(r => ({
+          mobile:    String(r[ph.indexOf('Mobile')]     ||'').trim(),
+          postPct:   Number(r[ph.indexOf('Post Percentage')])||0,
+          prePct:    Number(r[ph.indexOf('Pre Percentage')] )||0,
+          deltaPct:  Number(r[ph.indexOf('Delta %')]        )||0,
+          postGrade: String(r[ph.indexOf('Post Grade')]  ||''),
+          postTags:  String(r[ph.indexOf('Post Tag Scores (JSON)')] ||'{}'),
+          preTags:   String(r[ph.indexOf('Pre Tag Scores (JSON)')]  ||'{}')
+        }));
+      return respond({status:'ok', postRows});
     }
 
     // ── checkPost: has this mobile already submitted a post-test for this batch? ──

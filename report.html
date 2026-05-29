@@ -213,13 +213,18 @@ function loadReport() {
       errEl.style.display='block'; return;
     }
     if(!d.rows||!d.rows.length){ errEl.textContent='No assessments found for batch: '+batch; errEl.style.display='block'; return; }
-    renderReport(d.rows, batch, d.client||batch, d.trainerName||'');
+    // Also fetch post-test results (no extra auth — batch already verified)
+    gasGet({action:'getPostResults', batch}, function(err2, d2) {
+      const postRows = (!err2 && d2 && d2.postRows) ? d2.postRows : [];
+      renderReport(d.rows, batch, d.client||batch, d.trainerName||'', postRows);
+    });
     document.getElementById('gateScreen').classList.add('hidden');
     document.getElementById('reportScreen').classList.remove('hidden');
   });
 }
 
-function renderReport(rows, batch, client, trainerName) {
+function renderReport(rows, batch, client, trainerName, postRows) {
+  postRows = postRows || [];
   const n = rows.length;
   const avgRI  = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
   const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
@@ -328,10 +333,10 @@ function renderReport(rows, batch, client, trainerName) {
   </div>
 `;
   document.getElementById('reportScreen').innerHTML = html;
-  renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor);
+  renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor, postRows);
 }
 
-function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor) {
+function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor, postRows) {
   const sorted = skillMatrix.sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0));
   const origOrder = skillGapCounts.sort((a,b)=>SKILLS.indexOf(a.skill)-SKILLS.indexOf(b.skill));
 
@@ -460,7 +465,171 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   </div>
   <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>`;
 
-  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + ctaHtml;
+
+  // ── 4Cs Knowledge Impact Section ─────────────────────────────────────────
+  const CATS = [
+    {key:'carat',   label:'Carat',   color:'#C9A84C'},
+    {key:'color',   label:'Color',   color:'#B87A10'},
+    {key:'clarity', label:'Clarity', color:'#185FA5'},
+    {key:'cut',     label:'Cut',     color:'#1a7a3c'}
+  ];
+
+  const totalAssociates = rows.length;
+  const completedPost   = postRows.length;
+
+  // Build lookup: mobile → post data
+  const postMap = {};
+  postRows.forEach(pr => { postMap[pr.mobile] = pr; });
+
+  // Completion counter bar
+  const pct       = totalAssociates > 0 ? Math.round((completedPost/totalAssociates)*100) : 0;
+  const ctrColor  = pct === 100 ? '#1D9E75' : pct >= 50 ? '#C9A84C' : '#C94A4A';
+
+  // Build per-associate comparison rows
+  const compRows = rows.map(r => {
+    const mob   = String(r.mobile||'').trim();
+    const pr    = postMap[mob];
+    const prePct  = Number(String(r.fcs||0).replace('%',''))||0;
+    let   preTags = {};
+    try { preTags = JSON.parse(r.fcsTags||'{}'); } catch(x) {}
+    if (pr) {
+      let postTags={}, preTags2={};
+      try{ postTags=JSON.parse(pr.postTags||'{}'); }catch(x){}
+      try{ preTags2=JSON.parse(pr.preTags||'{}'); }catch(x){}
+      const delta = Number(pr.deltaPct)||0;
+      return {
+        name:r.name||'', desig:r.desig||'',
+        prePct, postPct:Number(pr.postPct)||0,
+        delta, postGrade:pr.postGrade||'',
+        postTags, preTags: preTags2,
+        completed:true
+      };
+    }
+    return { name:r.name||'', desig:r.desig||'', prePct, postPct:null, delta:null, completed:false };
+  });
+
+  // Category averages (only completed)
+  const catAvg = {};
+  CATS.forEach(c => catAvg[c.key] = {preSum:0, postSum:0, n:0});
+  compRows.filter(r=>r.completed).forEach(r => {
+    CATS.forEach(c => {
+      const pre  = r.preTags[c.key];
+      const post = r.postTags[c.key];
+      const pp   = pre  && pre.total  > 0 ? Math.round((pre.correct /pre.total )*100) : r.prePct;
+      const qp   = post && post.total > 0 ? Math.round((post.correct/post.total)*100) : r.postPct;
+      catAvg[c.key].preSum  += pp;
+      catAvg[c.key].postSum += qp;
+      catAvg[c.key].n++;
+    });
+  });
+
+  // Overall averages
+  const completedRows  = compRows.filter(r=>r.completed);
+  const avgPreOverall  = completedRows.length ? Math.round(completedRows.reduce((s,r)=>s+r.prePct,0)/completedRows.length) : 0;
+  const avgPostOverall = completedRows.length ? Math.round(completedRows.reduce((s,r)=>s+r.postPct,0)/completedRows.length) : 0;
+  const avgDelta       = avgPostOverall - avgPreOverall;
+
+  const knowledgeHtml = `
+  <div class="sh"><span class="sh-num">05</span><span class="sh-title">4Cs Knowledge — Training Impact</span><span class="sh-rule"></span></div>
+  <div class="panel">
+
+    <!-- Completion counter -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:12px;font-weight:600;color:var(--navy)">Post-Training Test Completion</div>
+        <div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:${ctrColor}">${completedPost} of ${totalAssociates} associates</div>
+      </div>
+      <div style="height:8px;background:#F4F1EB;border-radius:4px;overflow:hidden">
+        <div style="height:8px;background:${ctrColor};border-radius:4px;width:${pct}%;transition:width 1s ease"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px">
+        ${pct===100 ? '✅ All associates have completed the post-training test.'
+          : completedPost===0 ? 'Post-training test not yet taken. Share the link: <strong>igi-arp-assessment.vercel.app/post-test</strong>'
+          : `${totalAssociates-completedPost} associate${totalAssociates-completedPost!==1?'s':''} yet to complete. Share: <strong>igi-arp-assessment.vercel.app/post-test</strong>`}
+      </div>
+    </div>
+
+    ${completedPost === 0 ? '<div style="text-align:center;padding:24px;font-size:13px;color:var(--muted)">Knowledge Impact Report will appear here once associates complete the post-training test.</div>' : `
+
+    <!-- Overall summary strip -->
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:100px;background:#F4F1EB;border-radius:8px;padding:12px 14px;text-align:center">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Avg Pre</div>
+        <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">${avgPreOverall}%</div>
+      </div>
+      <div style="flex:1;min-width:100px;background:#F4F1EB;border-radius:8px;padding:12px 14px;text-align:center">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Avg Post</div>
+        <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">${avgPostOverall}%</div>
+      </div>
+      <div style="flex:1;min-width:100px;background:${avgDelta>=10?'#E8F5EE':avgDelta>=0?'#F9F3E3':'#FEF2F2'};border-radius:8px;padding:12px 14px;text-align:center">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Avg Δ</div>
+        <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${avgDelta>=10?'#1a7a3c':avgDelta>=0?'#B87A10':'#C94A4A'}">${avgDelta>=0?'+':''}${avgDelta}%</div>
+      </div>
+    </div>
+
+    <!-- Category bar chart -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px">Team Average by Category</div>
+      <div style="display:flex;gap:8px;font-size:10px;color:var(--muted);margin-bottom:8px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8A8070;display:inline-block"></span>Pre-training</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--gold);display:inline-block"></span>Post-training</span>
+      </div>
+      ${CATS.map(c => {
+        const a    = catAvg[c.key];
+        const pp   = a.n > 0 ? Math.round(a.preSum /a.n) : 0;
+        const qp   = a.n > 0 ? Math.round(a.postSum/a.n) : 0;
+        const d    = qp - pp;
+        const dStr = (d>0?'+':'')+d+'%';
+        const dCol = d>=10?'#1a7a3c':d>=0?'#B87A10':'#C94A4A';
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;width:54px;flex-shrink:0">${c.label}</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+            <div style="height:9px;background:#F4F1EB;border-radius:3px;overflow:hidden"><div style="height:9px;background:#8A8070;border-radius:3px;width:${pp}%"></div></div>
+            <div style="height:9px;background:#F4F1EB;border-radius:3px;overflow:hidden"><div style="height:9px;background:var(--gold);border-radius:3px;width:${qp}%"></div></div>
+          </div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--navy);width:28px;text-align:right;flex-shrink:0">${qp}%</div>
+          <div style="font-size:11px;font-weight:700;color:${dCol};width:36px;flex-shrink:0">${dStr}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Per-associate table -->
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Associate Knowledge Comparison</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="border-bottom:2px solid #F4F1EB">
+          <th style="text-align:left;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Associate</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pre</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Post</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Δ Change</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${compRows.sort((a,b)=>(b.delta||0)-(a.delta||0)).map(r => {
+          if (!r.completed) return `<tr style="border-bottom:1px solid #F4F1EB">
+            <td style="padding:8px 8px"><div style="font-weight:600;color:var(--navy)">${r.name}</div><div style="font-size:10px;color:var(--muted)">${r.desig||''}</div></td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
+            <td style="text-align:center;color:var(--muted);font-size:11px" colspan="3">⏳ Pending</td>
+          </tr>`;
+          const d    = r.delta;
+          const bg   = d>=15?'#E8F5EE':d>=5?'#F0FAF5':d>=0?'#F9F3E3':'#FEF2F2';
+          const fc   = d>=15?'#1a7a3c':d>=5?'#1a7a3c':d>=0?'#B87A10':'#C94A4A';
+          const dStr = (d>0?'+':'')+d+'%';
+          const status = d>=15?'✅ Strong':d>=5?'↑ Good':d>=0?'→ Marginal':'⚠ Review';
+          return `<tr style="background:${bg};border-bottom:1px solid rgba(255,255,255,0.6)">
+            <td style="padding:8px 8px"><div style="font-weight:600;color:var(--navy)">${r.name}</div><div style="font-size:10px;color:var(--muted)">${r.desig||''}</div></td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:var(--navy)">${r.postPct}%</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${fc}">${dStr}</td>
+            <td style="text-align:center;font-size:11px;font-weight:600;color:${fc}">${status}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+
+  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + knowledgeHtml + ctaHtml;
 }
 </script>
 </body>
