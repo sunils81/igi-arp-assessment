@@ -341,6 +341,28 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJ_r4f_0DmhC9B-bRLanic
 const TOTAL_Q = 20;
 const TIME_SEC = 720; // 12 minutes
 
+// ── JSONP helper (GAS doGet doesn't support CORS, must use JSONP) ──
+function gasGet(params, callback) {
+  const qs     = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const cbName = '_gasCb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+  const script = document.createElement('script');
+  let done     = false;
+  window[cbName] = function(data) {
+    done = true;
+    delete window[cbName];
+    try { document.body.removeChild(script); } catch(x) {}
+    callback(null, data);
+  };
+  script.onerror = function() {
+    if (!done) { done=true; delete window[cbName]; try{document.body.removeChild(script);}catch(x){} callback(new Error('network'), null); }
+  };
+  script.src = GAS_URL + '?' + qs + '&callback=' + cbName;
+  document.body.appendChild(script);
+  setTimeout(function() {
+    if (!done) { done=true; delete window[cbName]; try{document.body.removeChild(script);}catch(x){} callback(new Error('timeout'), null); }
+  }, 10000);
+}
+
 // ══════════════════════════════════════════════════════════════
 //  POST-TRAINING QUESTIONS  — application level, 5 per category
 //  tag: cut | color | clarity | carat
@@ -597,7 +619,7 @@ function showScreen(id) {
 // ══════════════════════════════════════════════════════════════
 //  LOOKUP
 // ══════════════════════════════════════════════════════════════
-async function doLookup() {
+function doLookup() {
   const mobile = document.getElementById('lu-mobile').value.trim();
   const batch  = document.getElementById('lu-batch').value.trim().toUpperCase();
   const errEl  = document.getElementById('lu-err');
@@ -613,41 +635,35 @@ async function doLookup() {
   btn.textContent = 'Looking up…';
   btn.disabled = true;
 
-  try {
-    const url = `${GAS_URL}?action=lookupPre&mobile=${encodeURIComponent(mobile)}&batch=${encodeURIComponent(batch)}`;
-    const res = await fetch(url);
-    const d   = await res.json();
+  gasGet({ action:'lookupPre', mobile, batch }, function(err, d) {
+    btn.textContent = 'Look up my record →';
+    btn.disabled = false;
+
+    if (err || !d) {
+      errEl.textContent = 'Connection error. Please check your internet and try again.';
+      errEl.classList.add('show');
+      return;
+    }
 
     if (d.status === 'not_found') {
       errEl.textContent = 'No pre-training record found for this mobile number and batch code. Please check your details or speak to your trainer.';
       errEl.classList.add('show');
-      btn.textContent = 'Look up my record →';
-      btn.disabled = false;
       return;
     }
 
-    // Check post-test duplicate
-    const dupCheck = await fetch(`${GAS_URL}?action=submitPost&mobile=${encodeURIComponent(mobile)}&batch=${encodeURIComponent(batch)}&checkOnly=true`);
-    // We'll just proceed — server handles the duplicate on actual submit
-
-    preData = d;
-    preData.mobile = mobile;
+    preData            = d;
+    preData.mobile     = mobile;
     preData.batchInput = batch;
 
     // Fill confirm screen
     document.getElementById('cf-name').textContent = d.name || '—';
     document.getElementById('cf-meta').textContent =
       [d.designation, d.branch, d.client].filter(Boolean).join(' · ') || 'Associate';
-    document.getElementById('cf-pre-score').textContent = d.prePct + '%';
-    document.getElementById('cf-pre-date').textContent = d.preDate || '—';
+    document.getElementById('cf-pre-score').textContent = (d.prePct || 0) + '%';
+    document.getElementById('cf-pre-date').textContent  = d.preDate || '—';
 
     showScreen('s-confirm');
-  } catch(err) {
-    errEl.textContent = 'Connection error. Please check your internet and try again.';
-    errEl.classList.add('show');
-  }
-  btn.textContent = 'Look up my record →';
-  btn.disabled = false;
+  });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -943,7 +959,7 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
 //  SAVE TO GAS
 // ══════════════════════════════════════════════════════════════
 function saveResult(postScore, postPct, postGrade, delta, postTagScores) {
-  const params = new URLSearchParams({
+  gasGet({
     action:       'submitPost',
     mobile:       preData.mobile       || '',
     batch:        preData.batchInput   || preData.batch || '',
@@ -959,8 +975,7 @@ function saveResult(postScore, postPct, postGrade, delta, postTagScores) {
     prePct:       preData.prePct       || 0,
     preTagScores: JSON.stringify(preData.preTagScores || {}),
     deltaPct:     delta
-  });
-  fetch(`${GAS_URL}?${params.toString()}`).catch(()=>{});
+  }, function() {}); // fire and forget
 }
 </script>
 </body>

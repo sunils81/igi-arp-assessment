@@ -508,7 +508,7 @@ function doGet(e){
             client:       data[i][iClient]||'',
             batch:        data[i][iBatch] ||'',
             preScore:     Number(data[i][iFcsSc] )||0,
-            prePct:       Number(data[i][iFcsPct])||0,
+            prePct:       Number(String(data[i][iFcsPct]).replace('%',''))||0,
             preTagScores: tagScores,
             preDate:      data[i][iTS] ? new Date(data[i][iTS]).toLocaleDateString('en-IN') : ''
           });
