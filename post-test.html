@@ -201,6 +201,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
       <div class="section-tag">Identify yourself</div>
       <h2>Post-Training 4Cs Test</h2>
       <p class="sub">Enter your mobile number and batch code. We'll load your pre-training score and compare it with today's result.</p>
+      <div style="background:#F4F1EB;border-left:3px solid var(--gold);border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+        💡 Use the <strong>same mobile number and batch code</strong> you registered with during your pre-training ARP assessment. The batch code is not case-sensitive.
+      </div>
       <div class="field">
         <label>Mobile Number *</label>
         <input type="tel" id="lu-mobile" placeholder="10-digit mobile number" maxlength="15">
@@ -231,17 +234,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
         </div>
       </div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:18px">This is a <strong>20-question applied knowledge test</strong> — the same 4 categories as your pre-training test, but questions that test how you <em>use</em> the knowledge on the floor. You have <strong>12 minutes</strong>.</p>
-      <button class="btn btn-primary" onclick="startTest()">Start Post-Training Test →</button>
-      <button class="btn btn-primary" onclick="showScreen('s-lookup')" style="background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:8px">← That's not me</button>
+      <button class="btn btn-primary" onclick="startTest()">Yes, that's me — Start Test →</button>
+      <button class="btn btn-primary" onclick="showScreen('s-lookup')" style="background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:8px">← Not me, go back</button>
     </div>
   </div>
 
   <!-- ══ SCREEN: BLOCKED (already attempted) ══ -->
   <div id="s-blocked" class="screen">
-    <div class="card" style="text-align:center;padding:40px">
-      <div style="font-size:48px;margin-bottom:14px">🔒</div>
-      <h2>Already Completed</h2>
-      <p class="sub">You have already completed the post-training test for this batch. Please speak to your trainer if you believe this is an error.</p>
+    <div class="card" style="text-align:center;padding:40px 32px">
+      <div style="font-size:48px;margin-bottom:14px">✅</div>
+      <h2 style="margin-bottom:8px">Post-Test Already Submitted</h2>
+      <p class="sub" style="margin-bottom:20px">You have already completed the post-training 4Cs test for this batch. Each associate gets one attempt only.</p>
+      <div style="background:#F4F1EB;border-radius:8px;padding:14px 16px;font-size:12px;color:var(--muted);line-height:1.6;text-align:left">
+        <strong style="color:var(--navy)">Did your test not save correctly?</strong><br>
+        If you experienced a technical issue during the test, please speak to your trainer or IGI centre coordinator to request a reset.
+      </div>
+      <button class="btn btn-primary" onclick="showScreen('s-lookup')" style="margin-top:18px;background:transparent;border:1px solid var(--border);color:var(--muted)">← Try a different batch code</button>
     </div>
   </div>
 
@@ -636,33 +644,45 @@ function doLookup() {
   btn.disabled = true;
 
   gasGet({ action:'lookupPre', mobile, batch }, function(err, d) {
-    btn.textContent = 'Look up my record →';
-    btn.disabled = false;
-
     if (err || !d) {
+      btn.textContent = 'Look up my record →';
+      btn.disabled = false;
       errEl.textContent = 'Connection error. Please check your internet and try again.';
       errEl.classList.add('show');
       return;
     }
 
     if (d.status === 'not_found') {
+      btn.textContent = 'Look up my record →';
+      btn.disabled = false;
       errEl.textContent = 'No pre-training record found for this mobile number and batch code. Please check your details or speak to your trainer.';
       errEl.classList.add('show');
       return;
     }
 
-    preData            = d;
-    preData.mobile     = mobile;
-    preData.batchInput = batch;
+    // Pre-record found — now check if post-test already attempted
+    gasGet({ action:'checkPost', mobile, batch }, function(err2, d2) {
+      btn.textContent = 'Look up my record →';
+      btn.disabled = false;
 
-    // Fill confirm screen
-    document.getElementById('cf-name').textContent = d.name || '—';
-    document.getElementById('cf-meta').textContent =
-      [d.designation, d.branch, d.client].filter(Boolean).join(' · ') || 'Associate';
-    document.getElementById('cf-pre-score').textContent = (d.prePct || 0) + '%';
-    document.getElementById('cf-pre-date').textContent  = d.preDate || '—';
+      if (!err2 && d2 && d2.attempted) {
+        showScreen('s-blocked');
+        return;
+      }
 
-    showScreen('s-confirm');
+      preData            = d;
+      preData.mobile     = mobile;
+      preData.batchInput = batch;
+
+      // Fill confirm screen
+      document.getElementById('cf-name').textContent = d.name || '—';
+      document.getElementById('cf-meta').textContent =
+        [d.designation, d.branch, d.client].filter(Boolean).join(' · ') || 'Associate';
+      document.getElementById('cf-pre-score').textContent = (d.prePct || 0) + '%';
+      document.getElementById('cf-pre-date').textContent  = d.preDate || '—';
+
+      showScreen('s-confirm');
+    });
   });
 }
 

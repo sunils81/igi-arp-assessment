@@ -476,6 +476,22 @@ function doGet(e){
       return respond({status:'ok', rows, client:rows[0].client||batchParam, trainerName});
     }
 
+    // ── checkPost: has this mobile already submitted a post-test for this batch? ──
+    if (action === 'checkPost') {
+      const mobile     = (p.mobile||'').trim();
+      const batchParam = (p.batch ||'').trim().toUpperCase();
+      if (!mobile) return respond({attempted: false});
+      const postSheet = ss.getSheetByName('Post_Responses');
+      if (!postSheet || postSheet.getLastRow() < 2) return respond({attempted: false});
+      const rows = postSheet.getRange(2,1,postSheet.getLastRow()-1,2).getValues();
+      for (let i = 0; i < rows.length; i++) {
+        if (String(rows[i][0]).trim() === mobile &&
+            String(rows[i][1]).trim().toUpperCase() === batchParam)
+          return respond({attempted: true});
+      }
+      return respond({attempted: false});
+    }
+
     // ── lookupPre: fetch pre-test 4Cs data by mobile + batch ─────────────────
     if (action === 'lookupPre') {
       const mobile     = (p.mobile||'').trim();
