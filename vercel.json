@@ -1,7 +1,20 @@
 {
   "rewrites": [
-    { "source": "/instructor", "destination": "/instructor.html" },
-    { "source": "/report", "destination": "/report.html" },
-    { "source": "/", "destination": "/index.html" }
+    {
+      "source": "/instructor",
+      "destination": "/instructor.html"
+    },
+    {
+      "source": "/report",
+      "destination": "/report.html"
+    },
+    {
+      "source": "/post-test",
+      "destination": "/post-test.html"
+    },
+    {
+      "source": "/",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -476,12 +476,214 @@ function doGet(e){
       return respond({status:'ok', rows, client:rows[0].client||batchParam, trainerName});
     }
 
+    // ── lookupPre: fetch pre-test 4Cs data by mobile + batch ─────────────────
+    if (action === 'lookupPre') {
+      const mobile     = (p.mobile||'').trim();
+      const batchParam = (p.batch ||'').trim().toUpperCase();
+      if (!mobile) return respond({status:'error', reason:'missing_mobile'});
+      const sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet || sheet.getLastRow() < 2) return respond({status:'not_found'});
+      const data    = sheet.getRange(2,1,sheet.getLastRow()-1,HEADERS.length).getValues();
+      const iMob    = HEADERS.indexOf('Mobile');
+      const iBatch  = HEADERS.indexOf('Batch Code');
+      const iName   = HEADERS.indexOf('Name');
+      const iDesig  = HEADERS.indexOf('Designation');
+      const iBranch = HEADERS.indexOf('Store Branch');
+      const iClient = HEADERS.indexOf('Client');
+      const iFcsPct = HEADERS.indexOf('4Cs Percentage');
+      const iFcsSc  = HEADERS.indexOf('4Cs Score');
+      const iFcsTags= HEADERS.indexOf('4Cs Tag Scores (JSON)');
+      const iTS     = HEADERS.indexOf('Timestamp');
+      for (let i = 0; i < data.length; i++) {
+        const rowMob   = String(data[i][iMob]  ||'').trim();
+        const rowBatch = String(data[i][iBatch] ||'').trim().toUpperCase();
+        if (rowMob === mobile && (!batchParam || rowBatch === batchParam)) {
+          let tagScores = {};
+          try { tagScores = JSON.parse(data[i][iFcsTags]||'{}'); } catch(x){}
+          return respond({
+            status:       'found',
+            name:         data[i][iName]  ||'',
+            designation:  data[i][iDesig] ||'',
+            branch:       data[i][iBranch]||'',
+            client:       data[i][iClient]||'',
+            batch:        data[i][iBatch] ||'',
+            preScore:     Number(data[i][iFcsSc] )||0,
+            prePct:       Number(data[i][iFcsPct])||0,
+            preTagScores: tagScores,
+            preDate:      data[i][iTS] ? new Date(data[i][iTS]).toLocaleDateString('en-IN') : ''
+          });
+        }
+      }
+      return respond({status:'not_found'});
+    }
+
+    // ── submitPost: save post-training 4Cs result ─────────────────────────
+    if (action === 'submitPost') {
+      const mobile     = (p.mobile||'').trim();
+      const batchParam = (p.batch ||'').trim().toUpperCase();
+      if (!mobile || !batchParam) return respond({status:'error', reason:'missing_params'});
+      const postSheet = getOrCreateSheet(ss, 'Post_Responses');
+      ensurePostHeaders(postSheet);
+      if (postSheet.getLastRow() > 1) {
+        const existing = postSheet.getRange(2,1,postSheet.getLastRow()-1,2).getValues();
+        for (let i = 0; i < existing.length; i++) {
+          if (String(existing[i][0]).trim()===mobile &&
+              String(existing[i][1]).trim().toUpperCase()===batchParam)
+            return respond({status:'error', reason:'already_attempted'});
+        }
+      }
+      postSheet.appendRow([
+        mobile, batchParam,
+        p.name||'', p.designation||'', p.branch||'', p.client||'',
+        Number(p.postScore)||0, Number(p.postPct)||0, p.postGrade||'',
+        p.postTagScores||'{}',
+        Number(p.preScore)||0, Number(p.prePct)||0, p.preTagScores||'{}',
+        Number(p.deltaPct)||0,
+        new Date().toISOString()
+      ]);
+      const lr    = postSheet.getLastRow();
+      const delta = Number(p.deltaPct)||0;
+      const bg    = delta >= 15 ? '#E8F5EE' : delta >= 0 ? '#F9F3E3' : '#FEF2F2';
+      postSheet.getRange(lr,1,1,15).setBackground(bg);
+      postSheet.getRange(lr,8).setFontWeight('bold')
+        .setFontColor(delta>=10?'#1a7a3c':delta>=0?'#B87A10':'#C94A4A');
+      rebuildComparisonDashboard(ss);
+      return respond({status:'ok'});
+    }
+
     const sheet = ss.getSheetByName(SHEET_NAME);
     return respond({status:'ok', responses: sheet ? sheet.getLastRow()-1 : 0});
 
   } catch(err) {
     return respond({status:'error', message:err.toString()});
   }
+}
+
+
+// ═══ POST-TRAINING SHEET HELPERS ═════════════════════════════════════════════
+
+const POST_HEADERS = [
+  'Mobile','Batch Code',
+  'Name','Designation','Store Branch','Client',
+  'Post Score','Post Percentage','Post Grade','Post Tag Scores (JSON)',
+  'Pre Score','Pre Percentage','Pre Tag Scores (JSON)',
+  'Delta %','Submitted At'
+];
+
+function ensurePostHeaders(sheet) {
+  if (sheet.getLastRow() > 0 && sheet.getRange(1,1).getValue() !== '') return;
+  sheet.getRange(1,1,1,POST_HEADERS.length).setValues([POST_HEADERS])
+    .setFontWeight('bold').setBackground('#0D1B2E').setFontColor('#C9A84C')
+    .setFontFamily('Arial');
+  sheet.setFrozenRows(1);
+  [130,140,150,130,150,130,90,100,90,200,90,100,200,80,160]
+    .forEach((w,i)=>sheet.setColumnWidth(i+1,w));
+}
+
+
+// ═══ ANALYTICS: TRAINING IMPACT DASHBOARD ════════════════════════════════════
+
+function rebuildComparisonDashboard(ss) {
+  const src  = ss.getSheetByName('Post_Responses');
+  const dash = getOrCreateSheet(ss, 'Training Impact');
+  dash.clearContents();
+  dash.clearFormats();
+
+  const lastRow = src ? src.getLastRow() : 0;
+  if (lastRow < 2) { dash.getRange(1,1).setValue('No post-training assessments yet.'); return; }
+
+  const data = src.getRange(2,1,lastRow-1,POST_HEADERS.length).getValues();
+  const h    = POST_HEADERS;
+  const iMob     = h.indexOf('Mobile');
+  const iBatch   = h.indexOf('Batch Code');
+  const iName    = h.indexOf('Name');
+  const iDesig   = h.indexOf('Designation');
+  const iBranch  = h.indexOf('Store Branch');
+  const iClient  = h.indexOf('Client');
+  const iPostPct = h.indexOf('Post Percentage');
+  const iPrePct  = h.indexOf('Pre Percentage');
+  const iDelta   = h.indexOf('Delta %');
+  const iPostTags= h.indexOf('Post Tag Scores (JSON)');
+  const iPreTags = h.indexOf('Pre Tag Scores (JSON)');
+
+  const total    = data.length;
+  const avgPre   = Math.round(data.reduce((s,r)=>s+(Number(r[iPrePct])||0),0)/total);
+  const avgPost  = Math.round(data.reduce((s,r)=>s+(Number(r[iPostPct])||0),0)/total);
+  const avgDelta = Math.round(data.reduce((s,r)=>s+(Number(r[iDelta])||0),0)/total);
+  const improved = data.filter(r=>(Number(r[iDelta])||0)>0).length;
+
+  // Title
+  dash.getRange(1,1,1,8).merge()
+    .setValue('IGI 4Cs Knowledge — Training Impact Report')
+    .setFontWeight('bold').setFontSize(14)
+    .setBackground('#0D1B2E').setFontColor('#C9A84C')
+    .setHorizontalAlignment('center').setFontFamily('Arial');
+
+  dash.getRange(2,1,1,8).merge()
+    .setValue('Associates: '+total+'   |   Avg Pre: '+avgPre+'%   |   Avg Post: '+avgPost+'%   |   Avg Improvement: +'+avgDelta+'%   |   Improved: '+improved+'/'+total)
+    .setFontSize(11).setBackground('#F4F1EB').setHorizontalAlignment('center');
+
+  // Per-associate table
+  dash.getRange(4,1,1,8).setValues([['Name','Designation','Branch','Client','Batch','Pre %','Post %','Δ Change']])
+    .setFontWeight('bold').setBackground('#1A2F4E').setFontColor('#C9A84C').setFontFamily('Arial');
+  [150,130,150,130,140,70,70,80].forEach((w,i)=>dash.setColumnWidth(i+1,w));
+  dash.setFrozenRows(4);
+
+  data.sort((a,b)=>(Number(b[iDelta])||0)-(Number(a[iDelta])||0))
+    .forEach(function(r,i){
+      const delta    = Number(r[iDelta])||0;
+      const bg       = delta>=15?'#E8F5EE':delta>=0?'#F9F3E3':'#FEF2F2';
+      const fc       = delta>=15?'#1a7a3c':delta>=5?'#B87A10':'#C94A4A';
+      const deltaStr = (delta>0?'+':'')+delta+'%';
+      dash.getRange(5+i,1,1,8).setValues([[
+        r[iName]||'',r[iDesig]||'',r[iBranch]||'',r[iClient]||'',r[iBatch]||'',
+        (Number(r[iPrePct])||0)+'%',(Number(r[iPostPct])||0)+'%',deltaStr
+      ]]).setBackground(bg).setFontFamily('Arial');
+      dash.getRange(5+i,8).setFontWeight('bold').setFontColor(fc);
+    });
+
+  // Per-category aggregate
+  const CATS = ['cut','color','clarity','carat'];
+  const catAgg = {};
+  CATS.forEach(c=>catAgg[c]={preTot:0,preC:0,postTot:0,postC:0});
+
+  data.forEach(function(r){
+    let pre={},post={};
+    try{pre=JSON.parse(r[iPreTags]||'{}');}catch(x){}
+    try{post=JSON.parse(r[iPostTags]||'{}');}catch(x){}
+    CATS.forEach(function(c){
+      if(pre[c]&&post[c]){
+        catAgg[c].preTot  +=Number(pre[c].total)||0;
+        catAgg[c].preC    +=Number(pre[c].correct)||0;
+        catAgg[c].postTot +=Number(post[c].total)||0;
+        catAgg[c].postC   +=Number(post[c].correct)||0;
+      }
+    });
+  });
+
+  const catRow = 6+data.length;
+  dash.getRange(catRow,1,1,6).merge()
+    .setValue('Category-Level Impact')
+    .setFontWeight('bold').setFontSize(12).setBackground('#F4F1EB');
+  dash.getRange(catRow+1,1,1,5).setValues([['Category','Pre Avg %','Post Avg %','Δ Change','Status']])
+    .setFontWeight('bold').setBackground('#1A2F4E').setFontColor('#C9A84C').setFontFamily('Arial');
+
+  CATS.forEach(function(c,i){
+    const a      = catAgg[c];
+    const prePct  = a.preTot  >0 ? Math.round((a.preC /a.preTot )*100) : 0;
+    const postPct = a.postTot >0 ? Math.round((a.postC/a.postTot)*100) : 0;
+    const delta   = postPct - prePct;
+    const bg      = delta>=15?'#E8F5EE':delta>=0?'#F9F3E3':'#FEF2F2';
+    const fc      = delta>=15?'#1a7a3c':delta>=0?'#B87A10':'#C94A4A';
+    const status  = delta>=15?'✅ Strong improvement':delta>=5?'↑ Improving':delta>=0?'→ Marginal':'⚠ Needs review';
+    dash.getRange(catRow+2+i,1,1,5).setValues([[
+      c.charAt(0).toUpperCase()+c.slice(1),
+      prePct+'%', postPct+'%',
+      (delta>0?'+':'')+delta+'%', status
+    ]]).setBackground(bg).setFontFamily('Arial');
+    dash.getRange(catRow+2+i,4).setFontWeight('bold').setFontColor(fc);
+    dash.getRange(catRow+2+i,5).setFontColor(fc).setFontWeight('bold');
+  });
 }
 
 

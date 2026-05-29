@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGI 4Cs — Post-Training Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;
+  --navy:#0D1B2E;--white:#FDFCF9;--off:#F4F1EB;--muted:#8A8070;
+  --border:rgba(201,168,76,0.2);--teal:#1D9E75;--red:#C94A4A;
+  --radius:12px;--shadow:0 4px 24px rgba(13,27,46,0.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);min-height:100vh;font-size:15px;line-height:1.6}
+#app{max-width:700px;margin:0 auto;padding:20px 16px 60px}
+
+/* ── Header ── */
+.site-header{background:var(--navy);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
+.header-logo-band{padding:20px 24px 14px;display:flex;align-items:center;justify-content:center}
+.header-logo-band img{height:40px;width:auto}
+.header-divider{height:1px;background:rgba(201,168,76,0.3);margin:0 24px}
+.header-prog-band{padding:8px 24px 14px;text-align:center}
+.header-prog-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold)}
+.header-tagline{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.04em}
+
+/* ── Card ── */
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:26px;margin-bottom:18px;box-shadow:var(--shadow)}
+.section-tag{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.card h2{font-size:19px;font-weight:600;color:var(--navy);font-family:"Playfair Display",serif;margin-bottom:4px}
+.card .sub{font-size:13px;color:var(--muted);margin-top:6px;margin-bottom:20px}
+
+/* ── Field ── */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.02em}
+.field input,.field select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;background:var(--white);color:var(--navy);outline:none;transition:border-color 0.2s}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field input.auto-fill{background:var(--gold-pale);font-family:"DM Mono",monospace;font-size:13px;color:#6b5a2e}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;border:none}
+.btn-primary{background:var(--gold);color:var(--navy);width:100%;margin-top:6px}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-primary:disabled{opacity:0.55;cursor:not-allowed}
+
+/* ── Timer ── */
+.timer-bar{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.timer-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+.timer-value{font-size:22px;font-weight:600;font-family:"DM Mono",monospace;color:var(--navy)}
+.timer-bar.warn{border-color:#E8A020;background:#FFFBF0}
+.timer-bar.danger{border-color:var(--red);background:#FFF5F5}
+.timer-bar.danger .timer-value{color:var(--red)}
+.timer-bar.warn .timer-value{color:#B87A10}
+
+/* ── Progress ── */
+.prog-bar-outer{height:4px;background:var(--border);border-radius:2px;margin-bottom:20px;overflow:hidden}
+.prog-bar-fill{height:4px;background:var(--gold);border-radius:2px;transition:width 0.4s}
+
+/* ── Question ── */
+.q-num{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.q-cat-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;margin-bottom:10px;letter-spacing:0.04em}
+.q-cat-cut    {background:#E8F5EE;color:#1a7a3c}
+.q-cat-color  {background:#FFF8E7;color:#B87A10}
+.q-cat-clarity{background:#EEF4FB;color:#185FA5}
+.q-cat-carat  {background:#F9F3E3;color:#C9A84C}
+.q-text{font-size:17px;font-weight:600;color:var(--navy);line-height:1.4;font-family:"Playfair Display",serif;margin-bottom:20px}
+.q-context{font-size:13px;color:var(--muted);font-style:italic;background:var(--off);border-left:3px solid var(--gold);padding:9px 14px;border-radius:0 6px 6px 0;margin-bottom:16px;line-height:1.6}
+
+/* ── Options ── */
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;background:var(--white)}
+.opt:hover{border-color:var(--gold);background:var(--gold-pale)}
+.opt.selected{border-color:var(--gold);background:var(--gold-pale)}
+.opt-letter{width:26px;height:26px;border-radius:50%;background:var(--off);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;margin-top:1px;transition:all 0.15s}
+.opt.selected .opt-letter{background:var(--gold);color:var(--navy)}
+.opt-text{font-size:14px;color:var(--navy);line-height:1.5}
+
+/* ── Nav ── */
+.q-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px}
+.btn-nav{background:var(--white);border:1px solid var(--border);padding:10px 20px;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);transition:all 0.15s}
+.btn-nav:hover:not(:disabled){border-color:var(--gold);color:var(--navy)}
+.btn-nav:disabled{opacity:0.4;cursor:not-allowed}
+.btn-next{background:var(--gold);color:var(--navy);border:none;padding:10px 24px;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.btn-next:hover{background:var(--gold-light)}
+.btn-next:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ── Dot Nav ── */
+.dot-nav{display:flex;justify-content:center;gap:5px;margin-top:14px;flex-wrap:wrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.15s}
+.dot.answered{background:var(--gold)}
+.dot.current{background:var(--navy);transform:scale(1.3)}
+
+/* ── Result Card ── */
+.result-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);margin-bottom:18px}
+.result-header{background:var(--navy);padding:24px;text-align:center}
+.result-header img{height:36px;width:auto;display:block;margin:0 auto 14px}
+.result-header h1{font-family:"Playfair Display",serif;font-size:16px;color:var(--gold);font-weight:600;letter-spacing:0.04em}
+.result-header .result-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:0.04em}
+.result-name-row{font-size:13px;color:rgba(255,255,255,0.7);margin-top:10px}
+.result-name-row strong{color:#fff}
+.result-body{padding:24px}
+
+/* ── Score Hero ── */
+.score-hero{display:flex;align-items:center;justify-content:center;gap:32px;padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.score-block{text-align:center}
+.score-block .label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px}
+.score-block .val{font-size:32px;font-weight:700;font-family:"DM Mono",monospace;color:var(--navy);line-height:1}
+.score-block .pct{font-size:14px;color:var(--muted);margin-top:2px}
+.score-arrow{font-size:28px;color:var(--gold)}
+.score-block.delta .val{color:var(--teal)}
+.score-block.delta.neg .val{color:var(--red)}
+
+/* ── Comparison Table ── */
+.comp-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px}
+.comp-table th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);border-bottom:2px solid var(--border)}
+.comp-table th:not(:first-child){text-align:center}
+.comp-table td{padding:10px 12px;border-bottom:1px solid var(--off);vertical-align:middle}
+.comp-table td:not(:first-child){text-align:center;font-family:"DM Mono",monospace;font-weight:600}
+.comp-table tr.total-row td{font-weight:700;font-size:14px;border-top:2px solid var(--border);border-bottom:none}
+.comp-table .cat-label{font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.delta-cell.pos{color:var(--teal)}
+.delta-cell.neg{color:var(--red)}
+.delta-cell.zer{color:var(--muted)}
+
+/* ── Grade Badge ── */
+.grade-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:0.06em;margin:0 4px}
+.grade-excellent{background:#E8F5EE;color:#1a7a3c}
+.grade-good     {background:#F9F3E3;color:#B87A10}
+.grade-pass     {background:#EEF4FB;color:#185FA5}
+.grade-needs    {background:#FEF2F2;color:var(--red)}
+
+/* ── Bar chart ── */
+.bar-chart{margin-top:4px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.bar-cat{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;width:60px;flex-shrink:0}
+.bar-pair{flex:1;display:flex;flex-direction:column;gap:3px}
+.bar-outer{height:10px;background:var(--off);border-radius:3px;overflow:hidden}
+.bar-fill{height:10px;border-radius:3px;transition:width 1s ease}
+.bar-pre {background:#8A8070}
+.bar-post{background:var(--gold)}
+.bar-pct{font-size:11px;font-family:"DM Mono",monospace;color:var(--navy);width:34px;text-align:right;flex-shrink:0}
+
+/* ── Legend ── */
+.bar-legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-bottom:12px}
+.bar-legend span{display:flex;align-items:center;gap:5px}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ── Impact statement ── */
+.impact-box{border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.6;margin-top:16px}
+.impact-box.positive{background:#E8F5EE;border-left:3px solid var(--teal);color:#0f5132}
+.impact-box.marginal{background:#F9F3E3;border-left:3px solid var(--gold);color:#6b4c0f}
+.impact-box.negative{background:#FEF2F2;border-left:3px solid var(--red);color:#7a1f1f}
+
+/* ── Print ── */
+.print-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 18px;border-radius:7px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif;margin-top:12px;width:100%}
+.print-btn:hover{border-color:var(--gold);color:var(--navy)}
+@media print{
+  .btn-primary,.print-btn,.q-nav,.dot-nav,.timer-bar{display:none!important}
+  .result-wrap{box-shadow:none;border:1px solid #ccc}
+  .result-header{background:#0D1B2E!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* ── States ── */
+.screen{display:none}
+.screen.active{display:block}
+.loading-state{text-align:center;padding:40px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state p{font-size:13px;color:var(--muted)}
+.error-box{background:#FEF2F2;border:1px solid rgba(201,74,74,0.3);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--red);margin-top:12px;display:none}
+.error-box.show{display:block}
+
+@media(max-width:600px){
+  .score-hero{gap:16px}
+  .score-block .val{font-size:24px}
+  .q-text{font-size:15px}
+  .opt-text{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="site-header">
+    <div class="header-logo-band">
+      <img src="assets/igi-school-of-gemology-white-logo.svg" alt="IGI School of Gemology">
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-prog-band">
+      <div class="header-prog-label">Post-Training Assessment</div>
+      <div class="header-tagline">4Cs Diamond Knowledge — Knowledge Retention Check</div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: LOOKUP ══ -->
+  <div id="s-lookup" class="screen active">
+    <div class="card">
+      <div class="section-tag">Identify yourself</div>
+      <h2>Post-Training 4Cs Test</h2>
+      <p class="sub">Enter your mobile number and batch code. We'll load your pre-training score and compare it with today's result.</p>
+      <div class="field">
+        <label>Mobile Number *</label>
+        <input type="tel" id="lu-mobile" placeholder="10-digit mobile number" maxlength="15">
+      </div>
+      <div class="field">
+        <label>Batch Code *</label>
+        <input type="text" id="lu-batch" placeholder="e.g. MUM-POME-PRE-MAY26" style="text-transform:uppercase">
+      </div>
+      <button class="btn btn-primary" id="lu-btn" onclick="doLookup()">Look up my record →</button>
+      <div class="error-box" id="lu-err"></div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: CONFIRM ══ -->
+  <div id="s-confirm" class="screen">
+    <div class="card">
+      <div class="section-tag">Is this you?</div>
+      <h2 id="cf-name">—</h2>
+      <p class="sub" id="cf-meta">—</p>
+      <div style="background:var(--off);border-radius:8px;padding:14px 16px;font-size:13px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="color:var(--muted)">Pre-training score</span>
+          <span style="font-weight:700;font-family:'DM Mono',monospace" id="cf-pre-score">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Assessment date</span>
+          <span style="font-size:12px;color:var(--muted)" id="cf-pre-date">—</span>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px">This is a <strong>20-question applied knowledge test</strong> — the same 4 categories as your pre-training test, but questions that test how you <em>use</em> the knowledge on the floor. You have <strong>12 minutes</strong>.</p>
+      <button class="btn btn-primary" onclick="startTest()">Start Post-Training Test →</button>
+      <button class="btn btn-primary" onclick="showScreen('s-lookup')" style="background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:8px">← That's not me</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: BLOCKED (already attempted) ══ -->
+  <div id="s-blocked" class="screen">
+    <div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:14px">🔒</div>
+      <h2>Already Completed</h2>
+      <p class="sub">You have already completed the post-training test for this batch. Please speak to your trainer if you believe this is an error.</p>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: QUIZ ══ -->
+  <div id="s-quiz" class="screen">
+    <div class="timer-bar" id="timer-bar">
+      <span class="timer-label">⏱ Time remaining</span>
+      <span class="timer-value" id="timer-val">12:00</span>
+    </div>
+    <div class="prog-bar-outer"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="card" id="q-card"></div>
+    <div class="q-nav">
+      <button class="btn-nav" id="btn-back" onclick="goBack()" disabled>← Back</button>
+      <button class="btn-next" id="btn-next" onclick="goNext()" disabled>Next →</button>
+    </div>
+    <div class="dot-nav" id="dot-nav"></div>
+  </div>
+
+  <!-- ══ SCREEN: SUBMITTING ══ -->
+  <div id="s-submitting" class="screen">
+    <div class="card loading-state">
+      <div class="spinner"></div>
+      <p>Calculating your result…</p>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: RESULT ══ -->
+  <div id="s-result" class="screen">
+    <div class="result-wrap">
+      <div class="result-header">
+        <img src="assets/igi-school-of-gemology-white-logo.svg" alt="IGI School of Gemology">
+        <h1>4Cs Knowledge — Training Impact Report</h1>
+        <div class="result-sub">IGI School of Gemology &mdash; Retail Sales Excellence Program</div>
+        <div class="result-name-row" id="res-name-row">—</div>
+      </div>
+      <div class="result-body">
+
+        <!-- Score hero -->
+        <div class="score-hero">
+          <div class="score-block">
+            <div class="label">Pre-Training</div>
+            <div class="val" id="res-pre-pct">—</div>
+            <div class="pct" id="res-pre-grade">—</div>
+          </div>
+          <div class="score-arrow">→</div>
+          <div class="score-block">
+            <div class="label">Post-Training</div>
+            <div class="val" id="res-post-pct">—</div>
+            <div class="pct" id="res-post-grade">—</div>
+          </div>
+          <div class="score-arrow" id="res-delta-arrow">↑</div>
+          <div class="score-block delta" id="res-delta-block">
+            <div class="label">Improvement</div>
+            <div class="val" id="res-delta">—</div>
+            <div class="pct" id="res-delta-label">—</div>
+          </div>
+        </div>
+
+        <!-- Category comparison table -->
+        <table class="comp-table" id="comp-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Pre</th>
+              <th>Post</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody id="comp-tbody"></tbody>
+        </table>
+
+        <!-- Bar chart -->
+        <div style="margin-bottom:6px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">Category comparison</div>
+          <div class="bar-legend">
+            <span><div class="leg-dot" style="background:#8A8070"></div> Pre-training</span>
+            <span><div class="leg-dot" style="background:var(--gold)"></div> Post-training</span>
+          </div>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+
+        <!-- Impact statement -->
+        <div class="impact-box" id="impact-box"></div>
+
+        <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJ_r4f_0DmhC9B-bRLaniclGJBbnxy64dmYrpVdKq6Qj_5ITH1b5KBvSsxRl-6Tem6pw/exec';
+const TOTAL_Q = 20;
+const TIME_SEC = 720; // 12 minutes
+
+// ══════════════════════════════════════════════════════════════
+//  POST-TRAINING QUESTIONS  — application level, 5 per category
+//  tag: cut | color | clarity | carat
+// ══════════════════════════════════════════════════════════════
+const POST_QUESTIONS = [
+  // ── CARAT (5) ──────────────────────────────────────────────
+  {
+    tag:'carat', cat:'Carat',
+    context:'A customer is comparing two rings. Ring A is 0.95ct, Ring B is 1.05ct. Ring B costs significantly more.',
+    q:'How do you best explain the price jump to the customer?',
+    opts:[
+      {t:'The 1ct mark is a psychological milestone — diamonds at or above 1ct are priced at a premium because of high demand, not just weight.',c:true},
+      {t:'The heavier stone uses more rough material, so manufacturing cost is higher.',c:false},
+      {t:'The price difference is mainly because of the cut quality at that weight.',c:false},
+      {t:'There is no real difference — the retailer is just marking up the 1ct stone.',c:false}
+    ]
+  },
+  {
+    tag:'carat', cat:'Carat',
+    context:'',
+    q:'Two diamonds both weigh 1.00ct but look noticeably different in face-up size. What is the most likely reason?',
+    opts:[
+      {t:'One has a higher color grade.',c:false},
+      {t:'One has a shallower cut, spreading weight across a wider diameter.',c:true},
+      {t:'One is lab grown and lab grown stones always look larger.',c:false},
+      {t:'The clarity grade affects how large a stone appears.',c:false}
+    ]
+  },
+  {
+    tag:'carat', cat:'Carat',
+    context:'',
+    q:'A customer says "I want the biggest-looking diamond possible in my budget." Which combination do you recommend?',
+    opts:[
+      {t:'Highest carat weight with the best color.',c:false},
+      {t:'Slightly lower carat with a shallow cut for maximum spread.',c:false},
+      {t:'Best cut grade at a slightly lower carat weight — a well-cut stone faces up larger and brighter than a poorly cut heavier stone.',c:true},
+      {t:'A Flawless clarity stone always looks the biggest.',c:false}
+    ]
+  },
+  {
+    tag:'carat', cat:'Carat',
+    context:'',
+    q:'In diamond retail, "magic sizes" refer to:',
+    opts:[
+      {t:'Diamonds that have special optical properties.',c:false},
+      {t:'Weight thresholds (0.50, 0.75, 1.00ct, etc.) where price per carat jumps because of demand.',c:true},
+      {t:'The maximum size a diamond can reach before it loses clarity.',c:false},
+      {t:'Diamonds used exclusively for engagement rings.',c:false}
+    ]
+  },
+  {
+    tag:'carat', cat:'Carat',
+    context:'A customer is comparing a 1.00ct SI1/G stone and a 0.90ct VS1/F stone at the same price.',
+    q:'What do you tell the customer to help them decide?',
+    opts:[
+      {t:'Always choose the heavier stone — size is what people notice.',c:false},
+      {t:'Always choose the better clarity — VS1 is always worth paying for.',c:false},
+      {t:'It depends on what they value most — size on the finger vs. the cleaner grade. Neither is wrong.',c:true},
+      {t:'Both are exactly the same value since they are the same price.',c:false}
+    ]
+  },
+
+  // ── COLOR (5) ───────────────────────────────────────────────
+  {
+    tag:'color', cat:'Color',
+    context:'',
+    q:'A customer says they want "the whitest diamond possible" but has a limited budget. Which color grade offers the best value without visible warmth?',
+    opts:[
+      {t:'D — only the best is good enough.',c:false},
+      {t:'G or H — Near Colorless, face-up difference from D-F is invisible to most buyers, but significantly cheaper.',c:true},
+      {t:'K — the color is barely visible so the savings are huge.',c:false},
+      {t:'J — always a safe mid-point.',c:false}
+    ]
+  },
+  {
+    tag:'color', cat:'Color',
+    context:'A customer is choosing between a J color diamond set in yellow gold and an H color diamond set in white gold at the same price.',
+    q:'Which do you recommend and why?',
+    opts:[
+      {t:'Always recommend the higher color grade for resale value.',c:false},
+      {t:'The J in yellow gold — the warm tone of yellow gold masks lower color grades, so J looks white in that setting.',c:true},
+      {t:'The H in white gold — because white metal always shows color more clearly so H is safer.',c:false},
+      {t:'Color does not matter in yellow gold at all.',c:false}
+    ]
+  },
+  {
+    tag:'color', cat:'Color',
+    context:'',
+    q:'A customer is buying a princess-cut diamond. They ask if color matters more or less than in a round brilliant. What do you say?',
+    opts:[
+      {t:'Color matters less in princess cut because step cuts hide color better.',c:false},
+      {t:'Color shows more in fancy shapes like princess cuts — they retain more body color than round brilliants, so going one grade higher is advisable.',c:true},
+      {t:'Cut shape has no effect on how color appears.',c:false},
+      {t:'Princess cuts always look whiter than rounds at the same grade.',c:false}
+    ]
+  },
+  {
+    tag:'color', cat:'Color',
+    context:'',
+    q:'Why are fancy colored diamonds (pink, yellow, blue) graded on a different scale than white diamonds?',
+    opts:[
+      {t:'Because they are always lab grown and need a different system.',c:false},
+      {t:'Because in fancy colors, deeper saturation increases value — the grading rewards intensity rather than absence of color.',c:true},
+      {t:'Because they are harder to certify and IGI uses a simpler scale.',c:false},
+      {t:'Because the D-Z scale only applies to diamonds above 1ct.',c:false}
+    ]
+  },
+  {
+    tag:'color', cat:'Color',
+    context:'',
+    q:'A customer notices that two diamonds labelled "G color" look slightly different from each other. How do you explain this?',
+    opts:[
+      {t:'One of the certificates is fake.',c:false},
+      {t:'Color grades cover a range, not an exact point — two G stones can sit at different points within the G range and still both be correctly graded.',c:true},
+      {t:'Under different lighting conditions all diamonds look different — it has nothing to do with the grade.',c:false},
+      {t:'G grade diamonds are known to be inconsistent.',c:false}
+    ]
+  },
+
+  // ── CLARITY (5) ─────────────────────────────────────────────
+  {
+    tag:'clarity', cat:'Clarity',
+    context:'A customer is worried about buying an SI1 stone after reading online that "SI means included."',
+    q:'How do you respond?',
+    opts:[
+      {t:'Agree with them — SI stones are always visible to the naked eye.',c:false},
+      {t:'Explain that most SI1 stones are eye-clean — the inclusions exist under 10x magnification, but are typically invisible face-up without magnification.',c:true},
+      {t:'Tell them to ignore online reviews and trust the certificate.',c:false},
+      {t:'SI1 stones are risky purchases and they should upgrade to VS2 at minimum.',c:false}
+    ]
+  },
+  {
+    tag:'clarity', cat:'Clarity',
+    context:'',
+    q:'A "feather" inclusion in a diamond refers to:',
+    opts:[
+      {t:'A surface scratch from polishing.',c:false},
+      {t:'A small internal fracture or crack — if near the girdle, it could affect durability.',c:true},
+      {t:'A cloud of tiny pinpoints grouped together.',c:false},
+      {t:'A reflection artifact caused by the cut.',c:false}
+    ]
+  },
+  {
+    tag:'clarity', cat:'Clarity',
+    context:'A customer is choosing between a VS1 and an IF stone of similar carat and color. The IF is significantly more expensive.',
+    q:'What guidance do you give?',
+    opts:[
+      {t:'Always buy IF — the premium is worth it for the prestige.',c:false},
+      {t:'VS1 is an excellent choice — Internally Flawless is rare and commands a premium, but face-up the two stones are indistinguishable. The price difference rarely makes sense for a retail buyer.',c:true},
+      {t:'Buy the IF only if they plan to resell it.',c:false},
+      {t:'IF stones always have better cut grades so they look brighter.',c:false}
+    ]
+  },
+  {
+    tag:'clarity', cat:'Clarity',
+    context:'',
+    q:'Which clarity characteristic is most likely to affect a diamond\'s long-term durability?',
+    opts:[
+      {t:'A pinpoint cloud in the centre of the stone.',c:false},
+      {t:'A feather inclusion near the girdle or a large cavity on the surface.',c:true},
+      {t:'A natural — an unpolished area left on the girdle.',c:false},
+      {t:'Extra facets added by the cutter.',c:false}
+    ]
+  },
+  {
+    tag:'clarity', cat:'Clarity',
+    context:'',
+    q:'A customer asks: "If the diamond has inclusions, why does it still look clean to my eye?" What is the best explanation?',
+    opts:[
+      {t:'The inclusions are dyed to match the stone.',c:false},
+      {t:'The certificate is wrong.',c:false},
+      {t:'Grading is done under 10x magnification in controlled conditions — inclusions at SI1/VS grades are typically too small or too deep to catch light at normal viewing distance.',c:true},
+      {t:'Eye-clean is a marketing term with no real meaning.',c:false}
+    ]
+  },
+
+  // ── CUT (5) ──────────────────────────────────────────────────
+  {
+    tag:'cut', cat:'Cut',
+    context:'A customer notices that a diamond looks dull and lifeless despite having VS1 clarity and G color.',
+    q:'What is the most likely cause and what do you check?',
+    opts:[
+      {t:'The fluorescence is causing it to look milky — check the fluorescence grade.',c:false},
+      {t:'The cut grade is likely Poor or Fair — a badly cut stone leaks light rather than reflecting it back to the eye.',c:true},
+      {t:'The diamond has been cleaned with the wrong product.',c:false},
+      {t:'VS1 stones sometimes look duller because the inclusions scatter light.',c:false}
+    ]
+  },
+  {
+    tag:'cut', cat:'Cut',
+    context:'',
+    q:'The three visual qualities that a well-cut diamond is assessed on are:',
+    opts:[
+      {t:'Colour, Clarity, Carat',c:false},
+      {t:'Brilliance, Fire, Scintillation',c:true},
+      {t:'Polish, Symmetry, Fluorescence',c:false},
+      {t:'Depth, Table, Girdle',c:false}
+    ]
+  },
+  {
+    tag:'cut', cat:'Cut',
+    context:'',
+    q:'A customer asks why a "Very Good" cut stone is cheaper than an "Excellent" cut stone of the same weight and color. What do you say?',
+    opts:[
+      {t:'Excellent cut stones are more expensive to manufacture — the cutter has to sacrifice more rough material to achieve perfect proportions.',c:true},
+      {t:'Excellent is just a marketing grade — there is no real difference.',c:false},
+      {t:'Very Good cut stones always have lower clarity grades which brings the price down.',c:false},
+      {t:'Cut grade is set by the lab and does not affect actual light performance.',c:false}
+    ]
+  },
+  {
+    tag:'cut', cat:'Cut',
+    context:'',
+    q:'Polish and symmetry sub-grades appear on an IGI certificate. They describe:',
+    opts:[
+      {t:'How the diamond was mined and processed.',c:false},
+      {t:'The smoothness of each facet surface and the precision of facet alignment — both affect how cleanly the stone handles light.',c:true},
+      {t:'Whether the diamond has been treated or enhanced.',c:false},
+      {t:'The overall size and shape of the stone.',c:false}
+    ]
+  },
+  {
+    tag:'cut', cat:'Cut',
+    context:'',
+    q:'A customer is looking down at a diamond and sees a dark ring or shadow in the centre of the stone. What is this phenomenon called and what does it indicate?',
+    opts:[
+      {t:'Fire — it means the stone has exceptional dispersion.',c:false},
+      {t:'The "fisheye" effect — caused by an overly shallow cut where the girdle reflection shows as a dark ring, indicating poor light return.',c:true},
+      {t:'A natural inclusion at the culet of the stone.',c:false},
+      {t:'Fluorescence reacting to the store lighting.',c:false}
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let preData    = null;   // fetched from GAS
+let answers    = new Array(TOTAL_Q).fill(null);
+let shuffled   = [];     // shuffled question order
+let currentQ   = 0;
+let timeLeft   = TIME_SEC;
+let timerIv    = null;
+let submitted  = false;
+
+// ══════════════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LOOKUP
+// ══════════════════════════════════════════════════════════════
+async function doLookup() {
+  const mobile = document.getElementById('lu-mobile').value.trim();
+  const batch  = document.getElementById('lu-batch').value.trim().toUpperCase();
+  const errEl  = document.getElementById('lu-err');
+  const btn    = document.getElementById('lu-btn');
+  errEl.classList.remove('show');
+
+  if (!mobile || !batch) {
+    errEl.textContent = 'Please enter both your mobile number and batch code.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.textContent = 'Looking up…';
+  btn.disabled = true;
+
+  try {
+    const url = `${GAS_URL}?action=lookupPre&mobile=${encodeURIComponent(mobile)}&batch=${encodeURIComponent(batch)}`;
+    const res = await fetch(url);
+    const d   = await res.json();
+
+    if (d.status === 'not_found') {
+      errEl.textContent = 'No pre-training record found for this mobile number and batch code. Please check your details or speak to your trainer.';
+      errEl.classList.add('show');
+      btn.textContent = 'Look up my record →';
+      btn.disabled = false;
+      return;
+    }
+
+    // Check post-test duplicate
+    const dupCheck = await fetch(`${GAS_URL}?action=submitPost&mobile=${encodeURIComponent(mobile)}&batch=${encodeURIComponent(batch)}&checkOnly=true`);
+    // We'll just proceed — server handles the duplicate on actual submit
+
+    preData = d;
+    preData.mobile = mobile;
+    preData.batchInput = batch;
+
+    // Fill confirm screen
+    document.getElementById('cf-name').textContent = d.name || '—';
+    document.getElementById('cf-meta').textContent =
+      [d.designation, d.branch, d.client].filter(Boolean).join(' · ') || 'Associate';
+    document.getElementById('cf-pre-score').textContent = d.prePct + '%';
+    document.getElementById('cf-pre-date').textContent = d.preDate || '—';
+
+    showScreen('s-confirm');
+  } catch(err) {
+    errEl.textContent = 'Connection error. Please check your internet and try again.';
+    errEl.classList.add('show');
+  }
+  btn.textContent = 'Look up my record →';
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  START TEST
+// ══════════════════════════════════════════════════════════════
+function startTest() {
+  // Shuffle questions within each category to keep them grouped but varied
+  const cats = ['carat','color','clarity','cut'];
+  shuffled = [];
+  cats.forEach(function(cat) {
+    const catQs = POST_QUESTIONS.filter(q=>q.tag===cat);
+    const sh = [...catQs].sort(()=>Math.random()-0.5);
+    // Shuffle options within each question
+    sh.forEach(q => {
+      q._optsShuffled = [...q.opts].sort(()=>Math.random()-0.5);
+    });
+    shuffled = shuffled.concat(sh);
+  });
+
+  answers    = new Array(TOTAL_Q).fill(null);
+  currentQ   = 0;
+  timeLeft   = TIME_SEC;
+  submitted  = false;
+
+  showScreen('s-quiz');
+  renderQuestion(0);
+  buildDotNav();
+  startTimer();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════════════════════════
+function startTimer() {
+  const timerEl = document.getElementById('timer-val');
+  const barEl   = document.getElementById('timer-bar');
+  const endTime = Date.now() + TIME_SEC * 1000;
+
+  timerIv = setInterval(function() {
+    timeLeft = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    const m  = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+    const s  = (timeLeft % 60).toString().padStart(2,'0');
+    timerEl.textContent = m + ':' + s;
+    barEl.classList.toggle('warn',   timeLeft <= 180 && timeLeft > 60);
+    barEl.classList.toggle('danger', timeLeft <= 60);
+    if (timeLeft <= 0) { clearInterval(timerIv); autoSubmit(); }
+  }, 1000);
+}
+
+function autoSubmit() {
+  if (submitted) return;
+  // Fill unanswered with null — partial score is fine
+  calculate();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER QUESTION
+// ══════════════════════════════════════════════════════════════
+function renderQuestion(idx) {
+  const q    = shuffled[idx];
+  const opts = q._optsShuffled || q.opts;
+  const sel  = answers[idx];
+  const pct  = Math.round(((idx + 1) / TOTAL_Q) * 100);
+
+  document.getElementById('prog-fill').style.width = pct + '%';
+
+  const catClass = 'q-cat-' + q.tag;
+  const catLabel = q.cat;
+  const letters  = ['A','B','C','D'];
+
+  let contextHtml = q.context
+    ? `<div class="q-context">${escHtml(q.context)}</div>`
+    : '';
+
+  document.getElementById('q-card').innerHTML = `
+    <div class="q-num">Question ${idx + 1} of ${TOTAL_Q}</div>
+    <div class="q-cat-badge ${catClass}">${catLabel}</div>
+    ${contextHtml}
+    <div class="q-text">${escHtml(q.q)}</div>
+    <div class="opts" id="opts-wrap">
+      ${opts.map((o,i) => `
+        <div class="opt ${sel===i?'selected':''}" data-i="${i}" onclick="selectOpt(${i})">
+          <div class="opt-letter">${letters[i]}</div>
+          <div class="opt-text">${escHtml(o.t)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.getElementById('btn-back').disabled = (idx === 0);
+  document.getElementById('btn-next').disabled = (sel === null);
+  document.getElementById('btn-next').textContent =
+    idx === TOTAL_Q - 1 ? 'Submit ✓' : 'Next →';
+
+  updateDots(idx);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function selectOpt(i) {
+  answers[currentQ] = i;
+  renderQuestion(currentQ);
+}
+
+function goBack() {
+  if (currentQ > 0) { currentQ--; renderQuestion(currentQ); }
+}
+
+function goNext() {
+  if (currentQ < TOTAL_Q - 1) {
+    currentQ++;
+    renderQuestion(currentQ);
+  } else {
+    clearInterval(timerIv);
+    calculate();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DOT NAV
+// ══════════════════════════════════════════════════════════════
+function buildDotNav() {
+  const nav = document.getElementById('dot-nav');
+  nav.innerHTML = Array.from({length: TOTAL_Q}, (_,i) =>
+    `<div class="dot" id="dot-${i}" onclick="goToQ(${i})"></div>`
+  ).join('');
+}
+function updateDots(current) {
+  for (let i = 0; i < TOTAL_Q; i++) {
+    const d = document.getElementById('dot-'+i);
+    if (!d) continue;
+    d.className = 'dot' +
+      (i === current   ? ' current'  : '') +
+      (answers[i] !== null && i !== current ? ' answered' : '');
+  }
+}
+function goToQ(i) { currentQ = i; renderQuestion(i); }
+
+// ══════════════════════════════════════════════════════════════
+//  CALCULATE & SHOW RESULT
+// ══════════════════════════════════════════════════════════════
+function calculate() {
+  if (submitted) return;
+  submitted = true;
+  showScreen('s-submitting');
+
+  // Score per category
+  const tagAcc = {carat:{c:0,t:0},color:{c:0,t:0},clarity:{c:0,t:0},cut:{c:0,t:0}};
+  let totalCorrect = 0;
+
+  shuffled.forEach(function(q, i) {
+    const opts = q._optsShuffled || q.opts;
+    const ans  = answers[i];
+    tagAcc[q.tag].t++;
+    if (ans !== null && opts[ans].c) {
+      tagAcc[q.tag].c++;
+      totalCorrect++;
+    }
+  });
+
+  const postPct   = Math.round((totalCorrect / TOTAL_Q) * 100);
+  const prePct    = preData.prePct || 0;
+  const delta     = postPct - prePct;
+  const postGrade = gradeLabel(postPct);
+
+  // Build post tag scores JSON (matching pre-test format)
+  const postTagScores = {};
+  Object.keys(tagAcc).forEach(k => {
+    postTagScores[k] = {correct: tagAcc[k].c, total: tagAcc[k].t};
+  });
+
+  // Render result
+  renderResult({
+    prePct, postPct, delta, postGrade,
+    tagAcc, postTagScores,
+    preTagScores: preData.preTagScores || {}
+  });
+
+  // Save to GAS (fire and forget)
+  saveResult(totalCorrect, postPct, postGrade, delta, postTagScores);
+
+  setTimeout(() => showScreen('s-result'), 800);
+}
+
+function gradeLabel(pct) {
+  if (pct >= 80) return 'Excellent';
+  if (pct >= 65) return 'Good';
+  if (pct >= 50) return 'Pass';
+  return 'Needs Review';
+}
+
+function gradeClass(pct) {
+  if (pct >= 80) return 'grade-excellent';
+  if (pct >= 65) return 'grade-good';
+  if (pct >= 50) return 'grade-pass';
+  return 'grade-needs';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER RESULT CARD
+// ══════════════════════════════════════════════════════════════
+function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores, preTagScores}) {
+  // Name row
+  document.getElementById('res-name-row').innerHTML =
+    `<strong>${preData.name||'Associate'}</strong> &nbsp;·&nbsp; ${preData.branch||''} &nbsp;·&nbsp; ${preData.client||''} &nbsp;·&nbsp; Batch: ${preData.batch||preData.batchInput||''}`;
+
+  // Score hero
+  document.getElementById('res-pre-pct').textContent  = prePct  + '%';
+  document.getElementById('res-post-pct').textContent = postPct + '%';
+  document.getElementById('res-pre-grade').innerHTML  = `<span class="grade-badge ${gradeClass(prePct)}">${gradeLabel(prePct)}</span>`;
+  document.getElementById('res-post-grade').innerHTML = `<span class="grade-badge ${gradeClass(postPct)}">${postGrade}</span>`;
+
+  const deltaStr = (delta > 0 ? '+' : '') + delta + '%';
+  document.getElementById('res-delta').textContent     = deltaStr;
+  document.getElementById('res-delta-label').textContent = delta >= 10 ? 'Strong gain' : delta >= 0 ? 'Improvement' : 'Needs focus';
+  document.getElementById('res-delta-arrow').textContent = delta >= 0 ? '↑' : '↓';
+  if (delta < 0) document.getElementById('res-delta-block').classList.add('neg');
+
+  // Category comparison table
+  const CATS = [
+    {key:'carat',   label:'Carat',   color:'#C9A84C'},
+    {key:'color',   label:'Color',   color:'#B87A10'},
+    {key:'clarity', label:'Clarity', color:'#185FA5'},
+    {key:'cut',     label:'Cut',     color:'#1a7a3c'}
+  ];
+
+  let tbody = '';
+  CATS.forEach(function(cat) {
+    const pre  = preTagScores[cat.key];
+    const post = tagAcc[cat.key];
+    const prePctCat  = pre  && pre.total  > 0 ? Math.round((pre.correct /pre.total )*100) : prePct;
+    const postPctCat = post && post.t     > 0 ? Math.round((post.c      /post.t    )*100) : postPct;
+    const d    = postPctCat - prePctCat;
+    const dStr = (d>0?'+':'')+d+'%';
+    const dCls = d>0?'pos':d<0?'neg':'zer';
+    tbody += `<tr>
+      <td><span class="cat-label"><span class="cat-dot" style="background:${cat.color}"></span>${cat.label}</span></td>
+      <td>${prePctCat}%</td>
+      <td>${postPctCat}%</td>
+      <td class="delta-cell ${dCls}">${dStr}</td>
+    </tr>`;
+  });
+  tbody += `<tr class="total-row">
+    <td><span class="cat-label"><span class="cat-dot" style="background:var(--navy)"></span>Overall</span></td>
+    <td>${prePct}%</td>
+    <td>${postPct}%</td>
+    <td class="delta-cell ${delta>0?'pos':delta<0?'neg':'zer'}">${(delta>0?'+':'')+delta+'%'}</td>
+  </tr>`;
+  document.getElementById('comp-tbody').innerHTML = tbody;
+
+  // Bar chart
+  let bars = '';
+  CATS.forEach(function(cat) {
+    const pre  = preTagScores[cat.key];
+    const post = tagAcc[cat.key];
+    const pp   = pre  && pre.total >0 ? Math.round((pre.correct /pre.total )*100) : prePct;
+    const qp   = post && post.t    >0 ? Math.round((post.c      /post.t    )*100) : postPct;
+    bars += `<div class="bar-row">
+      <div class="bar-cat">${cat.label}</div>
+      <div class="bar-pair">
+        <div class="bar-outer"><div class="bar-fill bar-pre"  style="width:${pp}%"></div></div>
+        <div class="bar-outer"><div class="bar-fill bar-post" style="width:${qp}%"></div></div>
+      </div>
+      <div class="bar-pct">${qp}%</div>
+    </div>`;
+  });
+  document.getElementById('bar-chart').innerHTML = bars;
+
+  // Impact statement
+  const impactEl = document.getElementById('impact-box');
+  if (delta >= 15) {
+    impactEl.className = 'impact-box positive';
+    impactEl.innerHTML = `<strong>✅ Strong improvement — Training was highly effective.</strong><br>
+      ${preData.name||'You'} improved from ${prePct}% to ${postPct}% — a ${delta}-point gain. This is a clear demonstration that the knowledge from the training session has been retained and understood.`;
+  } else if (delta >= 5) {
+    impactEl.className = 'impact-box positive';
+    impactEl.innerHTML = `<strong>↑ Good progress.</strong><br>
+      ${delta}-point improvement from ${prePct}% to ${postPct}%. Solid retention with room to reinforce the weaker categories shown above.`;
+  } else if (delta >= 0) {
+    impactEl.className = 'impact-box marginal';
+    impactEl.innerHTML = `<strong>→ Marginal improvement.</strong><br>
+      Score moved from ${prePct}% to ${postPct}%. The training has had some effect but the weaker categories above need a focused refresher session.`;
+  } else {
+    impactEl.className = 'impact-box negative';
+    impactEl.innerHTML = `<strong>⚠ Score did not improve.</strong><br>
+      Post-training score (${postPct}%) is below the pre-training score (${prePct}%). Please discuss with your trainer — it is possible the test conditions affected the result.`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SAVE TO GAS
+// ══════════════════════════════════════════════════════════════
+function saveResult(postScore, postPct, postGrade, delta, postTagScores) {
+  const params = new URLSearchParams({
+    action:       'submitPost',
+    mobile:       preData.mobile       || '',
+    batch:        preData.batchInput   || preData.batch || '',
+    name:         preData.name         || '',
+    designation:  preData.designation  || '',
+    branch:       preData.branch       || '',
+    client:       preData.client       || '',
+    postScore:    postScore,
+    postPct:      postPct,
+    postGrade:    postGrade,
+    postTagScores:JSON.stringify(postTagScores),
+    preScore:     preData.preScore     || 0,
+    prePct:       preData.prePct       || 0,
+    preTagScores: JSON.stringify(preData.preTagScores || {}),
+    deltaPct:     delta
+  });
+  fetch(`${GAS_URL}?${params.toString()}`).catch(()=>{});
+}
+</script>
+</body>
+</html>
