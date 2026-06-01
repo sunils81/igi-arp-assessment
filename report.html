@@ -150,7 +150,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g22cFqEPsGNdQbV1Ko-idi3miM9A8ZswK2EFU5k6__fZe6Fg/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgOEE1ANt7dVynnOkeyMIuzwRgggFPrrngPMAOqXLkSBOM2udGN1rbtelWEDYFxGMI/exec';
 
 const SKILLS = ['Occasion-led discovery','Emotion-before-product sequencing','Diamond knowledge accuracy','Objection handling','Story-led selling','Confident single recommendation','Post-sale relationship building','Multi-stakeholder selling','Upsell and cross-sell instinct','Technical accuracy under pressure'];
 
@@ -199,7 +199,7 @@ function computeSkillGaps(c2sStyle, rspStageKey, fcsPct) {
 
 function loadReport() {
   const batch = (document.getElementById('rBatch').value||'').trim().toUpperCase();
-  const pass  = (document.getElementById('rPass').value||'').trim().toUpperCase();
+  const pass  = (document.getElementById('rPass').value||'').trim().toLowerCase();
   const errEl = document.getElementById('gateErr');
   const btn   = document.getElementById('gateBtn');
   const loading = document.getElementById('gateLoading');
