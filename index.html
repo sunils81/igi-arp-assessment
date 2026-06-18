@@ -1763,8 +1763,9 @@ function submitAll(){
         <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
       </div>
       <div style="margin-top:16px;text-align:center">
-        <a href="post-test.html" style="display:inline-block;background:var(--navy);color:var(--gold);padding:11px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;text-decoration:none;letter-spacing:0.02em">💎 Take Post-Training 4Cs Test →</a>
+        <a id="postTestLink" href="post-test.html" style="display:inline-block;background:var(--navy);color:var(--gold);padding:11px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;text-decoration:none;letter-spacing:0.02em">💎 Take Post-Training 4Cs Test →</a>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">Complete this after your IGI training session</div>
+        <script>(function(){var b=new URLSearchParams(window.location.search).get('batch');if(b){var a=document.getElementById('postTestLink');if(a)a.href='post-test.html?batch='+encodeURIComponent(b);}})();</script>
       </div>
     </div>
     <div class="footer-note">IGI School of Gemology &mdash; Retail Sales Excellence Program</div>`;

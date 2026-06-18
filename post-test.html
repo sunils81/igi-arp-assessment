@@ -349,6 +349,18 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g2
 const TOTAL_Q = 20;
 const TIME_SEC = 720; // 12 minutes
 
+// ── Auto-fill batch from URL param ──
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const b = p.get('batch');
+  if (b) {
+    window.addEventListener('DOMContentLoaded', function() {
+      const el = document.getElementById('lu-batch');
+      if (el) el.value = b.toUpperCase();
+    });
+  }
+})();
+
 // ── JSONP helper (GAS doGet doesn't support CORS, must use JSONP) ──
 function gasGet(params, callback) {
   const qs     = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
