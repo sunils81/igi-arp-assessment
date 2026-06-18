@@ -133,7 +133,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .btn-print:hover{background:rgba(201,168,76,0.1)}
 .conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
 @page{margin:16mm 14mm;@bottom-center{content:"IGI ARP | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
-@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{background:#F7F5F0!important}.metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}.rpt-masthead{background:#0D1B2E!important}.cta-block{background:#0D1B2E!important}.mc.mg::before{background:#C9A84C!important;display:block!important}.mc.mt::before{background:#1D9E75!important;display:block!important}.mc.mr::before{background:#C9613A!important;display:block!important}.mc::before{display:block!important;-webkit-print-color-adjust:exact!important}.bs{-webkit-print-color-adjust:exact!important}.d-g{background:#C94A4A!important}.d-d{border-color:#B87A10!important}.atgt{background:#FEF2F2!important;color:#991B1B!important}.atdt{background:#FFF8E7!important;color:#7A5C00!important}.risk-block{background:#FEF9F7!important}.b-bar span{-webkit-print-color-adjust:exact!important}.bstr span{-webkit-print-color-adjust:exact!important}}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{background:#F7F5F0!important}.metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}.rpt-masthead{background:#0D1B2E!important}.cta-block{background:#0D1B2E!important}.mc.mg::before{background:#C9A84C!important;display:block!important}.mc.mt::before{background:#1D9E75!important;display:block!important}.mc.mr::before{background:#C9613A!important;display:block!important}.mc::before{display:block!important;-webkit-print-color-adjust:exact!important}.bs{-webkit-print-color-adjust:exact!important}.d-g{background:#C94A4A!important}.d-d{border-color:#B87A10!important}.atgt{background:#FEF2F2!important;color:#991B1B!important}.atdt{background:#FFF8E7!important;color:#7A5C00!important}.risk-block{background:#FEF9F7!important}.b-bar span{-webkit-print-color-adjust:exact!important}.bstr span{-webkit-print-color-adjust:exact!important}
+  @page{size:A4 landscape;margin:10mm}
+  .heatmap-wrap{overflow:visible!important}
+  .heatmap{width:100%!important;font-size:7px!important;table-layout:fixed!important}
+  .heatmap th{font-size:6px!important;padding:3px 2px!important;max-width:none!important;word-break:break-word!important;line-height:1.2!important}
+  .heatmap th.sc{font-size:6px!important}
+  .heatmap td{padding:3px 2px!important;font-size:7px!important}
+  .heatmap td.an{font-size:7px!important;white-space:normal!important;word-break:break-word!important;padding-right:3px!important}
+  .heatmap td.ar{font-size:8px!important}
+  .dot{width:7px!important;height:7px!important}
+  .panel{page-break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -150,7 +160,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzgOEE1ANt7dVynnOkeyMIuzwRgggFPrrngPMAOqXLkSBOM2udGN1rbtelWEDYFxGMI/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g22cFqEPsGNdQbV1Ko-idi3miM9A8ZswK2EFU5k6__fZe6Fg/exec';
 
 const SKILLS = ['Occasion-led discovery','Emotion-before-product sequencing','Diamond knowledge accuracy','Objection handling','Story-led selling','Confident single recommendation','Post-sale relationship building','Multi-stakeholder selling','Upsell and cross-sell instinct','Technical accuracy under pressure'];
 
