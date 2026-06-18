@@ -209,7 +209,7 @@ function computeSkillGaps(c2sStyle, rspStageKey, fcsPct) {
 
 function loadReport() {
   const batch = (document.getElementById('rBatch').value||'').trim().toUpperCase();
-  const pass  = (document.getElementById('rPass').value||'').trim().toLowerCase();
+  const pass  = (document.getElementById('rPass').value||'').trim();
   const errEl = document.getElementById('gateErr');
   const btn   = document.getElementById('gateBtn');
   const loading = document.getElementById('gateLoading');
