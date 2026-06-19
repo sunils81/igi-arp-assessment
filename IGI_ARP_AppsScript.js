@@ -18,14 +18,18 @@ const HEADERS = [
   'Timestamp','Ref ID',
   'Trainer Name','Batch Code','IGI Centre','Client',
   'Name','Mobile','Store Branch','Designation','Experience','Country',
-  'City','Diamond Type','Time Taken',
+  // NOTE: 'Diamond Type' was originally at position 12 (col M).
+  // repairColumnShift() removed it from all existing data rows while fixing the City duplicate.
+  // It is now moved to the end so existing 41-col data rows align correctly with the headers.
+  'Time Taken',
   'C2S Primary','C2S Classification','C2S Label','C2S Scores (JSON)',
   'C2S Analytical','C2S Amiable','C2S Expressive','C2S Driver',
   'RSP Primary','RSP Classification','RSP Label','RSP Scores (JSON)',
   'RSP Product Pusher','RSP Relationship Builder','RSP Experience Creator','RSP Trusted Advisor',
   '4Cs Score','4Cs Percentage','4Cs Grade','4Cs Tag Scores (JSON)',
   'Readiness Total','Readiness Band','Knowledge Points','Behavioural Points',
-  'Combined Profile','Insight Title','PDF Link','Batch Password'
+  'Combined Profile','Insight Title','PDF Link','Batch Password',
+  'Diamond Type','City'  // appended; existing rows have blanks here, new submissions will populate
 ];
 
 // Column index map (1-based) — keeps rebuild functions readable
@@ -1155,6 +1159,108 @@ function fixHeaders(){
   sheet.getRange(1,1,1,clearCols).clearContent();
   ensureHeaders(sheet);
   SpreadsheetApp.getUi().alert('Headers fixed! '+HEADERS.length+' columns set in '+SHEET_NAME+'.');
+}
+
+// finalHeaderFix — Run this ONCE after updating HEADERS to move Diamond Type to the end.
+//
+// Why: repairColumnShift() deleted Diamond Type data from all rows while removing
+// duplicate City columns. HEADERS still had Diamond Type at position 12, so
+// Readiness Total was at header position 34 but data position 33 → avgRI = 0.
+//
+// This fix rewrites the header row to match the corrected HEADERS constant
+// (Diamond Type & City both appended at end), aligning all report fields correctly.
+//
+// Run ONCE from GAS Script Editor: Run → finalHeaderFix
+// Then redeploy the GAS and regenerate the batch report.
+function finalHeaderFix() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) { Logger.log('Sheet not found: ' + SHEET_NAME); return; }
+
+  // Read current data row count and col count for verification
+  const lastRow  = sheet.getLastRow();
+  const lastCol  = sheet.getLastColumn();
+  const dataRows = Math.max(lastRow - 1, 0);
+
+  // Wipe the header row and rewrite from HEADERS
+  const clearCols = Math.max(lastCol, HEADERS.length);
+  sheet.getRange(1, 1, 1, clearCols).clearContent();
+  ensureHeaders(sheet);
+
+  // Spot-check: log what's at the key report column positions
+  const verifyRow  = lastRow > 1 ? sheet.getRange(2, 1, 1, HEADERS.length).getValues()[0] : null;
+  const riIdx      = HEADERS.indexOf('Readiness Total');  // should be 33
+  const bandIdx    = HEADERS.indexOf('Readiness Band');   // should be 34
+  const fcsIdx     = HEADERS.indexOf('4Cs Percentage');   // should be 30
+
+  Logger.log('=== finalHeaderFix complete ===');
+  Logger.log('HEADERS.length = ' + HEADERS.length);
+  Logger.log('Data rows      = ' + dataRows);
+  Logger.log('Readiness Total at header index ' + riIdx   + ' (col ' + (riIdx+1)   + ')');
+  Logger.log('Readiness Band  at header index ' + bandIdx + ' (col ' + (bandIdx+1) + ')');
+  Logger.log('4Cs Percentage  at header index ' + fcsIdx  + ' (col ' + (fcsIdx+1)  + ')');
+  if (verifyRow) {
+    Logger.log('Row 2 sample — RI: ' + verifyRow[riIdx] + ', Band: ' + verifyRow[bandIdx] + ', 4Cs%: ' + verifyRow[fcsIdx]);
+  }
+  Logger.log('=== Redeploy GAS then regenerate the batch report ===');
+}
+
+// repairColumnShift — Run this to undo the damage from fixColumnShift().
+//
+// What happened:
+//   1. ensureHeaders() wrote "City" into col 13 of the header row.
+//   2. fixColumnShift() then inserted a BLANK column before col 13 in ALL rows,
+//      which shifted the header row too — leaving TWO "City" headers (cols M & N)
+//      and the data still misaligned.
+//
+// What this repair does:
+//   1. Finds all columns named "City" and deletes them (right-to-left to avoid
+//      re-indexing issues). This removes the duplicate City columns AND the
+//      blank that was inserted, restoring data rows to their original 42-column
+//      layout with Diamond Type, Readiness Total etc. at the correct positions.
+//   2. Calls ensureHeaders() with the updated HEADERS (City now at the END),
+//      which appends City as col 43 — safe because it doesn't displace anything.
+//
+// Run ONCE from the GAS Script Editor: Run → repairColumnShift
+// After this, redeploy the GAS and regenerate the batch report.
+function repairColumnShift() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) { SpreadsheetApp.getUi().alert('Sheet not found: ' + SHEET_NAME); return; }
+
+  const lastCol = sheet.getLastColumn();
+  const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  // Find all 1-indexed columns with header "City"
+  const cityCols = [];
+  headerRow.forEach(function(h, i) { if (String(h).trim() === 'City') cityCols.push(i + 1); });
+
+  if (cityCols.length === 0) {
+    SpreadsheetApp.getUi().alert('No "City" column found — nothing to repair.');
+    return;
+  }
+
+  // Delete from rightmost to leftmost to avoid index shifting mid-loop
+  cityCols.sort(function(a,b){return b-a;}).forEach(function(col) {
+    sheet.deleteColumns(col, 1);
+  });
+
+  // Rewrite header row from the updated HEADERS (City now at end)
+  const clearCols = Math.max(sheet.getLastColumn(), HEADERS.length);
+  sheet.getRange(1, 1, 1, clearCols).clearContent();
+  ensureHeaders(sheet);
+
+  SpreadsheetApp.getUi().alert(
+    'repairColumnShift complete!\n\n' +
+    '• Removed ' + cityCols.length + ' "City" column(s): at position(s) ' + cityCols.join(', ') + '\n' +
+    '• Header row rewritten with City safely at the END (col ' + HEADERS.length + ')\n' +
+    '• Data rows are now aligned to original column positions\n\n' +
+    'Verify in the sheet:\n' +
+    '  - Row 1 col 13 = "Diamond Type"\n' +
+    '  - Row 1 col 35 = "Readiness Total"\n' +
+    '  - Row 2 col 35 = a numeric RI value\n\n' +
+    'Then redeploy the GAS and regenerate the batch report.'
+  );
 }
 
 // fixColumnShift — ONE-TIME migration to fix City column insertion.
