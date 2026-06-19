@@ -102,14 +102,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .result-body{padding:24px}
 
 /* ── Score Hero ── */
-.score-hero{display:flex;align-items:center;justify-content:center;gap:32px;padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.score-hero{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.score-hero-main{text-align:center;margin-bottom:18px}
+.post-score-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px}
+.post-score-val{font-size:52px;font-weight:700;font-family:"DM Mono",monospace;color:var(--navy);line-height:1;margin-bottom:10px}
+.readiness-badge{display:inline-block;padding:5px 16px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:0.04em}
+.readiness-ready    {background:#E8F5EE;color:#1a7a3c}
+.readiness-developing{background:#F9F3E3;color:#B87A10}
+.readiness-support  {background:#EEF4FB;color:#185FA5}
+.readiness-review   {background:#FEF2F2;color:var(--red)}
+.baseline-note{font-size:11px;color:#B87A10;margin-top:8px;background:#FFF8E7;display:inline-block;padding:3px 10px;border-radius:6px}
+.score-secondary-row{display:flex;align-items:stretch;justify-content:center;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sec-block{flex:1;text-align:center;padding:12px 8px}
+.sec-divider{width:1px;background:var(--border);flex-shrink:0}
+.sec-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:4px}
+.sec-val{font-size:22px;font-weight:700;font-family:"DM Mono",monospace;color:var(--navy);line-height:1}
+.sec-sub{font-size:11px;color:var(--muted);margin-top:3px}
+/* legacy — kept for grade badge in category table */
 .score-block{text-align:center}
 .score-block .label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px}
 .score-block .val{font-size:32px;font-weight:700;font-family:"DM Mono",monospace;color:var(--navy);line-height:1}
 .score-block .pct{font-size:14px;color:var(--muted);margin-top:2px}
 .score-arrow{font-size:28px;color:var(--gold)}
-.score-block.delta .val{color:var(--teal)}
-.score-block.delta.neg .val{color:var(--red)}
 
 /* ── Comparison Table ── */
 .comp-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px}
@@ -287,26 +301,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
       </div>
       <div class="result-body">
 
-        <!-- Score hero -->
-        <div class="score-hero">
-          <div class="score-block">
-            <div class="label">Pre-Training</div>
-            <div class="val" id="res-pre-pct">—</div>
-            <div class="pct" id="res-pre-grade">—</div>
-          </div>
-          <div class="score-arrow">→</div>
-          <div class="score-block">
-            <div class="label">Post-Training</div>
-            <div class="val" id="res-post-pct">—</div>
-            <div class="pct" id="res-post-grade">—</div>
-          </div>
-          <div class="score-arrow" id="res-delta-arrow">↑</div>
-          <div class="score-block delta" id="res-delta-block">
-            <div class="label">Improvement</div>
-            <div class="val" id="res-delta">—</div>
-            <div class="pct" id="res-delta-label">—</div>
-          </div>
-        </div>
+        <!-- Score hero — built by renderResult() -->
+        <div class="score-hero" id="score-hero"></div>
 
         <!-- Category comparison table -->
         <table class="comp-table" id="comp-table">
@@ -896,6 +892,28 @@ function gradeClass(pct) {
   return 'grade-needs';
 }
 
+function readinessLabel(pct) {
+  if (pct >= 80) return 'Job Ready';
+  if (pct >= 65) return 'Developing';
+  if (pct >= 50) return 'Needs Support';
+  return 'Immediate Review';
+}
+
+function readinessClass(pct) {
+  if (pct >= 80) return 'ready';
+  if (pct >= 65) return 'developing';
+  if (pct >= 50) return 'support';
+  return 'review';
+}
+
+// Normalised gain: how much of the available improvement room was used
+// Formula: (Post − Pre) / (100 − Pre) × 100
+// Accounts for ceiling effect — high pre-scorers have less room to improve
+function normalisedGain(pre, post) {
+  if (pre >= 100) return null; // edge case: no room to improve
+  return Math.round((post - pre) / (100 - pre) * 100);
+}
+
 // ══════════════════════════════════════════════════════════════
 //  RENDER RESULT CARD
 // ══════════════════════════════════════════════════════════════
@@ -904,17 +922,54 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
   document.getElementById('res-name-row').innerHTML =
     `<strong>${preData.name||'Associate'}</strong> &nbsp;·&nbsp; ${preData.branch||''} &nbsp;·&nbsp; ${preData.client||''} &nbsp;·&nbsp; Batch: ${preData.batch||preData.batchInput||''}`;
 
-  // Score hero
-  document.getElementById('res-pre-pct').textContent  = prePct  + '%';
-  document.getElementById('res-post-pct').textContent = postPct + '%';
-  document.getElementById('res-pre-grade').innerHTML  = `<span class="grade-badge ${gradeClass(prePct)}">${gradeLabel(prePct)}</span>`;
-  document.getElementById('res-post-grade').innerHTML = `<span class="grade-badge ${gradeClass(postPct)}">${postGrade}</span>`;
+  // ── Derived metrics ──────────────────────────────────────────
+  const highBaseline = prePct >= 75;
+  const ng           = normalisedGain(prePct, postPct);       // normalised gain (null if pre=100)
+  const ngStr        = ng === null ? 'N/A' : (ng > 0 ? '+' : '') + ng + '%';
+  const ngLabel      = ng === null ? 'perfect pre-score'
+                     : ng >= 50  ? 'Excellent gain'
+                     : ng >= 20  ? 'Good gain'
+                     : ng >= 0   ? 'Marginal gain'
+                     : 'Score declined';
+  const ngColor      = ng === null ? 'var(--muted)' : ng >= 0 ? 'var(--teal)' : 'var(--red)';
 
-  const deltaStr = (delta > 0 ? '+' : '') + delta + '%';
-  document.getElementById('res-delta').textContent     = deltaStr;
-  document.getElementById('res-delta-label').textContent = delta >= 10 ? 'Strong gain' : delta >= 0 ? 'Improvement' : 'Needs focus';
-  document.getElementById('res-delta-arrow').textContent = delta >= 0 ? '↑' : '↓';
-  if (delta < 0) document.getElementById('res-delta-block').classList.add('neg');
+  const retained     = prePct > 0 ? Math.round((postPct / prePct) * 100) : null;
+  const retainedStr  = retained !== null ? retained + '%' : '—';
+  const retainedColor= retained === null ? 'var(--muted)'
+                     : retained >= 85 ? 'var(--teal)'
+                     : retained >= 65 ? '#B87A10' : 'var(--red)';
+
+  const rl = readinessLabel(postPct);
+  const rc = readinessClass(postPct);
+
+  // ── Score Hero (POST score is the star) ──────────────────────
+  document.getElementById('score-hero').innerHTML = `
+    <div class="score-hero-main">
+      <div class="post-score-label">Post-Training Score</div>
+      <div class="post-score-val">${postPct}%</div>
+      <span class="readiness-badge readiness-${rc}">${rl}</span>
+      ${highBaseline ? `<div class="baseline-note">⭐ High Baseline — pre-training score was ${prePct}%</div>` : ''}
+    </div>
+    <div class="score-secondary-row">
+      <div class="sec-block">
+        <div class="sec-label">Pre-Training</div>
+        <div class="sec-val">${prePct}%</div>
+        <div class="sec-sub">${gradeLabel(prePct)}</div>
+      </div>
+      <div class="sec-divider"></div>
+      <div class="sec-block">
+        <div class="sec-label">Normalised Gain</div>
+        <div class="sec-val" style="color:${ngColor}">${ngStr}</div>
+        <div class="sec-sub">${ngLabel}</div>
+      </div>
+      <div class="sec-divider"></div>
+      <div class="sec-block">
+        <div class="sec-label">Knowledge Retained</div>
+        <div class="sec-val" style="color:${retainedColor}">${retainedStr}</div>
+        <div class="sec-sub">vs pre-training</div>
+      </div>
+    </div>
+  `;
 
   // Category comparison table
   const CATS = [
@@ -966,24 +1021,32 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
   });
   document.getElementById('bar-chart').innerHTML = bars;
 
-  // Impact statement
+  // ── Impact Statement — based on post-score readiness, not raw delta ──
+  // Raw delta is misleading: a high-baseline scorer dropping 18pts may still be
+  // more capable than a low-baseline scorer gaining 5pts. We use post score
+  // as the primary signal and normalised gain as context.
   const impactEl = document.getElementById('impact-box');
-  if (delta >= 15) {
+  const name     = preData.name || 'This associate';
+  const baseCtx  = highBaseline
+    ? ` (Note: pre-training score was already ${prePct}% — a high baseline naturally limits the room for further gain.)`
+    : '';
+
+  if (postPct >= 80) {
     impactEl.className = 'impact-box positive';
-    impactEl.innerHTML = `<strong>✅ Strong improvement — Training was highly effective.</strong><br>
-      ${preData.name||'You'} improved from ${prePct}% to ${postPct}% — a ${delta}-point gain. This is a clear demonstration that the knowledge from the training session has been retained and understood.`;
-  } else if (delta >= 5) {
+    impactEl.innerHTML = `<strong>✅ Job Ready — Strong 4Cs knowledge demonstrated.</strong><br>
+      ${name} scored ${postPct}% on the post-training assessment. Training has been effective.${baseCtx}`;
+  } else if (postPct >= 65) {
     impactEl.className = 'impact-box positive';
-    impactEl.innerHTML = `<strong>↑ Good progress.</strong><br>
-      ${delta}-point improvement from ${prePct}% to ${postPct}%. Solid retention with room to reinforce the weaker categories shown above.`;
-  } else if (delta >= 0) {
+    impactEl.innerHTML = `<strong>↑ Developing — Good foundation, some areas need reinforcement.</strong><br>
+      ${name} scored ${postPct}%. The weaker categories above (below 60%) should be revisited with a focused refresher.${baseCtx}`;
+  } else if (postPct >= 50) {
     impactEl.className = 'impact-box marginal';
-    impactEl.innerHTML = `<strong>→ Marginal improvement.</strong><br>
-      Score moved from ${prePct}% to ${postPct}%. The training has had some effect but the weaker categories above need a focused refresher session.`;
+    impactEl.innerHTML = `<strong>→ Needs Support — Core concepts require consolidation.</strong><br>
+      ${name} scored ${postPct}%. A targeted review of the low-scoring categories is recommended before customer-facing deployment.${baseCtx}`;
   } else {
     impactEl.className = 'impact-box negative';
-    impactEl.innerHTML = `<strong>⚠ Score did not improve.</strong><br>
-      Post-training score (${postPct}%) is below the pre-training score (${prePct}%). Please discuss with your trainer — it is possible the test conditions affected the result.`;
+    impactEl.innerHTML = `<strong>⚠ Immediate Review Required.</strong><br>
+      ${name} scored ${postPct}%. Please schedule a one-on-one refresher session covering the categories highlighted above.${baseCtx}`;
   }
 }
 
