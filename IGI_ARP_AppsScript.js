@@ -18,7 +18,7 @@ const HEADERS = [
   'Timestamp','Ref ID',
   'Trainer Name','Batch Code','IGI Centre','Client',
   'Name','Mobile','Store Branch','Designation','Experience','Country',
-  'Diamond Type','Time Taken',
+  'City','Diamond Type','Time Taken',
   'C2S Primary','C2S Classification','C2S Label','C2S Scores (JSON)',
   'C2S Analytical','C2S Amiable','C2S Expressive','C2S Driver',
   'RSP Primary','RSP Classification','RSP Label','RSP Scores (JSON)',
@@ -260,7 +260,7 @@ function doPost(e){
       d.timestamp||new Date().toISOString(), d.refId||'',
       d.trainerName||'', d.batchCode||'', d.igiCentre||'', d.clientParam||'',
       d.name||'', d.mobile||'', d.branch||'', d.designation||'',
-      d.experience||'', d.country||'', d.diamondType||'', d.timeTaken||'',
+      d.experience||'', d.country||'', d.city||'', d.diamondType||'', d.timeTaken||'',
       d.c2sPrimary||'', d.c2sClassification||'', d.c2sLabel||'', d.c2sScores||'',
       c2s['1']||0, c2s['2']||0, c2s['3']||0, c2s['4']||0,
       rspPrimary, rspClassification, rspLabel, d.rspScores||'',
@@ -467,12 +467,13 @@ function doGet(e){
         fcsTags:  headers.indexOf('4Cs Tag Scores (JSON)'),
         client:   headers.indexOf('Client'),
         trainer:  headers.indexOf('Trainer Name'),
-        branch:   headers.indexOf('Store Branch')
+        branch:   headers.indexOf('Store Branch'),
+        city:     headers.indexOf('City')
       };
       const rows = batchRows.map(r => ({
         mobile:r[idx.mobile]||'',
         name:r[idx.name]||'', desig:r[idx.desig]||'',
-        branch:r[idx.branch]||'',
+        branch:r[idx.branch]||'', city:r[idx.city]||'',
         c2s:r[idx.c2s]||'', rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
         ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||'',
         fcsTags:r[idx.fcsTags]||'{}'

@@ -244,7 +244,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
   rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
   const skillMatrix = rows.map(r=>({
-    name:r.name, desig:r.desig, branch:r.branch||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
+    name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
     c2s:r.c2s, fcs:r.fcs, gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
   }));
   const skillGapCounts = SKILLS.map((_,si)=>({
@@ -467,6 +467,129 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     </table>
   </div>`;
 
+
+  const bandColors = {'Outstanding':'#C9A84C','Proficient':'#1D9E75','Developing':'#378ADD','Foundation':'#C9613A'};
+
+  // ── Section 05: City & Store Performance ─────────────────────────────────
+  // Group rows by city
+  const cityMap = {};
+  rows.forEach(r => {
+    const city = (r.city || r.branch || '—').trim() || '—';
+    if (!cityMap[city]) cityMap[city] = [];
+    cityMap[city].push(r);
+  });
+  const cityList = Object.keys(cityMap).sort();
+
+  // Group rows by store/branch
+  const storeMap = {};
+  rows.forEach(r => {
+    const store = (r.branch || '—').trim() || '—';
+    const city  = (r.city || '—').trim() || '—';
+    const key   = store;
+    if (!storeMap[key]) storeMap[key] = { store, city, associates: [] };
+    storeMap[key].associates.push(r);
+  });
+  const storeList = Object.keys(storeMap).sort();
+
+  function locStats(arr) {
+    const n = arr.length;
+    const avgRI  = n ? Math.round(arr.reduce((s,r)=>s+(parseFloat(r.ri)||0),0)/n) : 0;
+    const avgFcs = n ? Math.round(arr.reduce((s,r)=>s+(parseFloat(r.fcs)||0),0)/n) : 0;
+    const bands  = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
+    arr.forEach(r=>{ const b=r.band||'Foundation'; if(bands[b]!==undefined) bands[b]++; });
+    const topBand = ['Outstanding','Proficient','Developing','Foundation'].find(b=>bands[b]>0)||'Foundation';
+    return { n, avgRI, avgFcs, bands, topBand };
+  }
+
+  function bandBar(bands, n) {
+    if (!n) return '';
+    const order = ['Outstanding','Proficient','Developing','Foundation'];
+    const colors = {'Outstanding':'#C9A84C','Proficient':'#1D9E75','Developing':'#378ADD','Foundation':'#C9613A'};
+    return '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;width:80px;gap:1px">'
+      + order.map(b => {
+          const pct = Math.round((bands[b]||0)/n*100);
+          return pct>0 ? `<span style="flex:${pct};background:${colors[b]};display:block"></span>` : '';
+        }).join('') + '</div>';
+  }
+
+  const loc05Html = `
+  <div class="sh"><span class="sh-num">05</span><span class="sh-title">City &amp; Store Performance</span><span class="sh-rule"></span></div>
+
+  <!-- City Summary -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="pt">Performance by City</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--navy)">
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">City</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Associates</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Avg Readiness</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Avg 4Cs %</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Band Mix</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Top Band</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${cityList.map(city => {
+          const st = locStats(cityMap[city]);
+          const riColor = st.avgRI>=70?'var(--teal)':st.avgRI>=55?'#C9A84C':'var(--coral)';
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${city}</td>
+            <td style="text-align:center;padding:9px 10px;font-size:13px;font-weight:600">${st.n}</td>
+            <td style="text-align:center;padding:9px 10px">
+              <span style="font-size:15px;font-weight:700;color:${riColor};font-family:'DM Mono',monospace">${st.avgRI}</span>
+            </td>
+            <td style="text-align:center;padding:9px 10px;font-size:13px;font-weight:600;font-family:'DM Mono',monospace">${st.avgFcs}%</td>
+            <td style="padding:9px 10px">${bandBar(st.bands, st.n)}</td>
+            <td style="text-align:center;padding:9px 10px">
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${bandColors[st.topBand]+'22'};color:${bandColors[st.topBand]}">${st.topBand}</span>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Store Breakdown -->
+  <div class="panel">
+    <div class="pt">Performance by Store / Branch</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--navy)">
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Store / Branch</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">City</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Associates</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Avg RI</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Avg 4Cs</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Outstanding</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Proficient</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Developing</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Foundation</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Mix</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${storeList.map(key => {
+          const s = storeMap[key];
+          const st = locStats(s.associates);
+          const riColor = st.avgRI>=70?'var(--teal)':st.avgRI>=55?'#C9A84C':'var(--coral)';
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${s.store}</td>
+            <td style="padding:9px 10px;font-size:11px;color:var(--muted)">${s.city}</td>
+            <td style="text-align:center;padding:9px 10px;font-weight:600">${st.n}</td>
+            <td style="text-align:center;padding:9px 10px;font-size:14px;font-weight:700;color:${riColor};font-family:'DM Mono',monospace">${st.avgRI}</td>
+            <td style="text-align:center;padding:9px 10px;font-family:'DM Mono',monospace;font-weight:600">${st.avgFcs}%</td>
+            <td style="text-align:center;padding:9px 10px;color:#C9A84C;font-weight:700">${st.bands.Outstanding||0}</td>
+            <td style="text-align:center;padding:9px 10px;color:#1D9E75;font-weight:700">${st.bands.Proficient||0}</td>
+            <td style="text-align:center;padding:9px 10px;color:#378ADD;font-weight:700">${st.bands.Developing||0}</td>
+            <td style="text-align:center;padding:9px 10px;color:#C9613A;font-weight:700">${st.bands.Foundation||0}</td>
+            <td style="padding:9px 10px">${bandBar(st.bands, st.n)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
   const ctaHtml = `
   <div class="cta-block">
     <div>
@@ -514,14 +637,14 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       try{ preTags2=JSON.parse(pr.preTags||'{}'); }catch(x){}
       const delta = Number(pr.deltaPct)||0;
       return {
-        name:r.name||'', desig:r.desig||'', branch:r.branch||'',
+        name:r.name||'', desig:r.desig||'', branch:r.branch||'', city:r.city||'',
         prePct, postPct:Number(pr.postPct)||0,
         delta, postGrade:pr.postGrade||'',
         postTags, preTags: preTags2,
         completed:true
       };
     }
-    return { name:r.name||'', desig:r.desig||'', branch:r.branch||'', prePct, postPct:null, delta:null, completed:false };
+    return { name:r.name||'', desig:r.desig||'', branch:r.branch||'', city:r.city||'', prePct, postPct:null, delta:null, completed:false };
   });
 
   // Category averages (only completed)
@@ -615,6 +738,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <thead>
         <tr style="border-bottom:2px solid #F4F1EB">
           <th style="text-align:left;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Associate</th>
+          <th style="text-align:left;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Location</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pre</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Post</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Δ Change</th>
@@ -647,7 +771,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     </table>`}
   </div>`;
 
-  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + knowledgeHtml + ctaHtml;
+  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + loc05Html + knowledgeHtml + ctaHtml;
 }
 </script>
 </body>
