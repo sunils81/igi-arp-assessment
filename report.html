@@ -260,7 +260,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
       return c;
     })();
     const topRSP = Object.keys(rspDist).sort((a,b)=>rspDist[b]-rspDist[a])[0];
-    const rspLabels = {PP:'Product Pushers',TA:'Trusted Advisors',PS:'Problem Solvers',EA:'Experience Architects',TrA:'Training Advisors'};
+    const rspLabels = {PP:'Product Pushers',TA:'Trusted Advisors',PS:'Problem Solvers',EA:'Expert Advisors',TrA:'Training Advisors'};
     const bandDesc = {Outstanding:'exceptional readiness',Proficient:'strong readiness',Developing:'developing readiness',Foundation:'foundational stage'};
     const riColor  = avgRI >= 85 ? '#1D9E75' : avgRI >= 70 ? '#1a7a3c' : avgRI >= 55 ? '#C9A84C' : '#C9613A';
     const el = document.getElementById('execSummary');
@@ -663,7 +663,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           <tr><td style="padding:3px 0;width:36px;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PP</td><td style="padding:3px 8px;font-weight:600">Product Pusher</td><td style="padding:3px 0;color:var(--muted)">Feature-led; low emotional engagement</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PS</td><td style="padding:3px 8px;font-weight:600">Problem Solver</td><td style="padding:3px 0;color:var(--muted)">Needs-led; good listener, reactive style</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TA</td><td style="padding:3px 8px;font-weight:600">Trusted Advisor</td><td style="padding:3px 0;color:var(--muted)">Relationship-led; builds long-term trust</td></tr>
-          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">EA</td><td style="padding:3px 8px;font-weight:600">Experience Architect</td><td style="padding:3px 0;color:var(--muted)">Emotion-led; crafts memorable journeys</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">EA</td><td style="padding:3px 8px;font-weight:600">Expert Advisor</td><td style="padding:3px 0;color:var(--muted)">Emotion-led; crafts memorable journeys</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TrA</td><td style="padding:3px 8px;font-weight:600">Training Advisor</td><td style="padding:3px 0;color:var(--muted)">Coaching-ready; elevates team capability</td></tr>
         </table>
       </div>

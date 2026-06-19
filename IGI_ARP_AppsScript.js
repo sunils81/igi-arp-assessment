@@ -1157,6 +1157,76 @@ function fixHeaders(){
   SpreadsheetApp.getUi().alert('Headers fixed! '+HEADERS.length+' columns set in '+SHEET_NAME+'.');
 }
 
+// fixColumnShift — ONE-TIME migration to fix City column insertion.
+// Background: adding 'City' to HEADERS caused ensureHeaders() to rewrite the
+// sheet header row, inserting City at column 13. Existing data rows were NOT
+// physically shifted, so Diamond Type data landed at the City column position,
+// and Readiness Total / Band / 4Cs Percentage are all off-by-one.
+//
+// This function physically inserts a BLANK column at column 13 (City) in the
+// sheet, shifting all old data rows right by 1 so they realign with the
+// current header row. The City column will be blank for old rows (correct —
+// they were submitted before city was collected).
+//
+// Run ONCE from the GAS Script Editor (Run → fixColumnShift).
+// Safe to verify: after running, check that a data row has blank City,
+// correct Diamond Type in column 14, and correct Readiness Total in column 36.
+function fixColumnShift(){
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) { SpreadsheetApp.getUi().alert('Sheet not found: ' + SHEET_NAME); return; }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  // Verify: check if City column (col 13) header already matches — if the
+  // header says 'City' but data in row 2 col 13 is 'Lab Grown Diamonds',
+  // the shift is needed. If City is blank in data rows, the fix already ran.
+  if (lastRow < 2) {
+    SpreadsheetApp.getUi().alert('No data rows found — nothing to fix.');
+    return;
+  }
+
+  const cityHeader = sheet.getRange(1, 13).getValue();
+  const cityDataSample = sheet.getRange(2, 13).getValue();
+
+  if (cityHeader !== 'City') {
+    SpreadsheetApp.getUi().alert(
+      'Column 13 header is "' + cityHeader + '" — expected "City".\n' +
+      'The shift may not be needed or headers are in an unexpected state.\n' +
+      'Aborted — no changes made.'
+    );
+    return;
+  }
+
+  if (!cityDataSample || cityDataSample === '') {
+    SpreadsheetApp.getUi().alert(
+      'City column (col 13) is already blank in row 2.\n' +
+      'The fix appears to have already been applied. No changes made.'
+    );
+    return;
+  }
+
+  // Insert a blank column at position 13, pushing all data columns right by 1
+  sheet.insertColumnBefore(13);
+
+  // Re-write the City header (insertColumnBefore shifts headers too — the old
+  // header row values shift right, so col 13 is now blank)
+  sheet.getRange(1, 13).setValue('City');
+
+  SpreadsheetApp.getUi().alert(
+    'fixColumnShift complete!\n\n' +
+    '• Inserted blank City column at column 13\n' +
+    '• ' + (lastRow - 1) + ' data rows shifted right by 1\n' +
+    '• Readiness Total, Readiness Band, 4Cs % and all columns after Country are now realigned\n\n' +
+    'Verify: open the sheet and confirm:\n' +
+    '  - Column 13 header = City (blank data for old rows)\n' +
+    '  - Column 14 header = Diamond Type\n' +
+    '  - Column 36 header = Readiness Total (numeric data)\n\n' +
+    'You can now redeploy the GAS and re-run the batch report.'
+  );
+}
+
 // setupSheets — bootstraps ALL sheets and Settings keys at once.
 // Run once after deploying; safe to run multiple times.
 function setupSheets(){
