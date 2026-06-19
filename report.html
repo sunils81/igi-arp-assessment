@@ -143,7 +143,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   .heatmap td.an{font-size:7px!important;white-space:normal!important;word-break:break-word!important;padding-right:3px!important}
   .heatmap td.ar{font-size:8px!important}
   .dot{width:7px!important;height:7px!important}
-  .panel{page-break-inside:avoid}.sh{page-break-after:avoid;break-after:avoid}.sh+.panel,.sh+.heatmap-wrap{page-break-before:avoid;break-before:avoid}}
+  .panel{page-break-inside:avoid}.sh{page-break-after:avoid;break-after:avoid}.sh+.panel,.sh+.heatmap-wrap{page-break-before:avoid;break-before:avoid}
+  #execSummary{page-break-before:always!important;break-before:always!important;page-break-after:always!important;break-after:always!important}
+  #rsiGuide{page-break-before:always!important;break-before:always!important;page-break-after:always!important;break-after:always!important}}
 </style>
 </head>
 <body>
@@ -269,6 +271,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
   rows.forEach(r=>{ const b=r.band||'Foundation'; if(bands.hasOwnProperty(b)) bands[b]++; });
   const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
+  rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
   // ── D: Executive Summary ───────────────────────────────────────────────────
   (function(){
     const domBand = bands.Outstanding + bands.Proficient > 0 ? (
@@ -367,7 +370,6 @@ function renderReport(rows, batch, client, trainerName, postRows) {
 
     </div>`;
   })();
-  rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
   const skillMatrix = rows.map(r=>({
     name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
     c2s:r.c2s, fcs:r.fcs, fcsTagsRaw:r.fcsTags||'{}',
@@ -428,6 +430,180 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   </div>
 
   <div id="execSummary"></div>
+  <div id="rsiGuide" style="background:#fff;padding:32px 36px 28px;font-family:'Jost',sans-serif;color:#0D1B2E">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #C9A84C">
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#C9A84C;margin-bottom:6px">IGI Retail Sales Excellence Program</div>
+        <div style="font-size:22px;font-weight:700;color:#0D1B2E;line-height:1.2">How to Read This Report</div>
+        <div style="font-size:13px;color:#6B6357;margin-top:4px">A Manager's Guide to the Retail Sales Index</div>
+      </div>
+      <div style="background:#0D1B2E;color:#C9A84C;font-size:11px;font-weight:700;padding:8px 14px;letter-spacing:.06em;text-transform:uppercase;border-radius:3px">Reference</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+      <!-- LEFT COLUMN -->
+      <div>
+
+        <!-- What is RI -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:8px">What is the Retail Sales Index (RI)?</div>
+          <p style="font-size:12px;line-height:1.8;color:#3A3530;margin:0">The <strong>Retail Sales Index (RI)</strong> is a composite 0–100 score that measures how ready a retail associate is for the jewellery sales floor — before training begins. It draws from four inputs assessed through our diagnostic tool:</p>
+          <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#F7F5F0;padding:10px 12px;border-left:3px solid #C9A84C">
+              <div style="font-size:11px;font-weight:700;color:#0D1B2E">4Cs Product Knowledge</div>
+              <div style="font-size:10px;color:#6B6357;margin-top:2px">Accuracy on Cut, Colour, Clarity, Carat questions</div>
+            </div>
+            <div style="background:#F7F5F0;padding:10px 12px;border-left:3px solid #378ADD">
+              <div style="font-size:11px;font-weight:700;color:#0D1B2E">Retail Selling Profile</div>
+              <div style="font-size:10px;color:#6B6357;margin-top:2px">Behavioural type — advisory vs. product-push</div>
+            </div>
+            <div style="background:#F7F5F0;padding:10px 12px;border-left:3px solid #1D9E75">
+              <div style="font-size:11px;font-weight:700;color:#0D1B2E">Customer-to-Sale Stage</div>
+              <div style="font-size:10px;color:#6B6357;margin-top:2px">Where on the consultative journey they naturally operate</div>
+            </div>
+            <div style="background:#F7F5F0;padding:10px 12px;border-left:3px solid #9B59B6">
+              <div style="font-size:11px;font-weight:700;color:#0D1B2E">Pre-Training Score</div>
+              <div style="font-size:10px;color:#6B6357;margin-top:2px">Existing knowledge baseline before any IGI training</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RI Bands -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:8px">RI Bands — Pre-Training Readiness</div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr style="background:#F7F5F0">
+                <th style="padding:7px 10px;text-align:left;font-weight:700;color:#0D1B2E;border-bottom:1px solid #E2DDD8">Band</th>
+                <th style="padding:7px 10px;text-align:center;font-weight:700;color:#0D1B2E;border-bottom:1px solid #E2DDD8">RI Score</th>
+                <th style="padding:7px 10px;text-align:left;font-weight:700;color:#0D1B2E;border-bottom:1px solid #E2DDD8">What it means</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #F0ECE8">
+                <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#C9A84C;display:inline-block"></span><strong>Outstanding</strong></span></td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#C9A84C;font-weight:700">85 – 100</td>
+                <td style="padding:7px 10px;color:#3A3530">Exceptional foundation. Ready to perform; can mentor peers.</td>
+              </tr>
+              <tr style="border-bottom:1px solid #F0ECE8;background:#FAFAFA">
+                <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#1D9E75;display:inline-block"></span><strong>Proficient</strong></span></td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#1D9E75;font-weight:700">70 – 84</td>
+                <td style="padding:7px 10px;color:#3A3530">Strong baseline. Consistent performance expected post-training.</td>
+              </tr>
+              <tr style="border-bottom:1px solid #F0ECE8">
+                <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#378ADD;display:inline-block"></span><strong>Developing</strong></span></td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#378ADD;font-weight:700">55 – 69</td>
+                <td style="padding:7px 10px;color:#3A3530">Progressing. Structured coaching will unlock significant growth.</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#C9613A;display:inline-block"></span><strong>Foundation</strong></span></td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#C9613A;font-weight:700">0 – 54</td>
+                <td style="padding:7px 10px;color:#3A3530">Critical gaps. Immediate intervention needed before floor role.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Post-Training Readiness -->
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:8px">Post-Training Readiness Status</div>
+          <p style="font-size:11px;line-height:1.7;color:#3A3530;margin:0 0 8px">After IGI training, each associate's assessment score is classified into one of four readiness levels:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <tbody>
+              <tr style="border-bottom:1px solid #F0ECE8">
+                <td style="padding:6px 10px;font-weight:700;color:#1a7a3c">✅ Certified</td>
+                <td style="padding:6px 10px;text-align:center;color:#1a7a3c;font-family:'DM Mono',monospace">≥ 80%</td>
+                <td style="padding:6px 10px;color:#3A3530">Strong 4Cs mastery. Ready for independent sales.</td>
+              </tr>
+              <tr style="background:#FAFAFA;border-bottom:1px solid #F0ECE8">
+                <td style="padding:6px 10px;font-weight:700;color:#378ADD">📈 Progressing</td>
+                <td style="padding:6px 10px;text-align:center;color:#378ADD;font-family:'DM Mono',monospace">65 – 79%</td>
+                <td style="padding:6px 10px;color:#3A3530">Good progress. Supervised selling recommended.</td>
+              </tr>
+              <tr style="border-bottom:1px solid #F0ECE8">
+                <td style="padding:6px 10px;font-weight:700;color:#B87A10">⚠ Needs Support</td>
+                <td style="padding:6px 10px;text-align:center;color:#B87A10;font-family:'DM Mono',monospace">50 – 64%</td>
+                <td style="padding:6px 10px;color:#3A3530">Foundational knowledge present. Additional coaching needed.</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 10px;font-weight:700;color:#C94A4A">🔴 Priority Coaching</td>
+                <td style="padding:6px 10px;text-align:center;color:#C94A4A;font-family:'DM Mono',monospace">&lt; 50%</td>
+                <td style="padding:6px 10px;color:#3A3530">Significant gaps remain. Reassessment required.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- end left column -->
+
+      <!-- RIGHT COLUMN -->
+      <div>
+
+        <!-- Manager Action Guide -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:8px">Manager Action Guide — By RI Band</div>
+
+          <div style="background:#FEF9F2;border:1px solid #E8D89A;border-left:4px solid #C9A84C;padding:11px 14px;margin-bottom:8px;border-radius:0 3px 3px 0">
+            <div style="font-size:11px;font-weight:700;color:#7A5C00;margin-bottom:4px">⭐ Outstanding (85–100)</div>
+            <div style="font-size:11px;color:#3A3530;line-height:1.65">Assign as peer mentors. Include in advanced selling modules. Recognise publicly to motivate the team. Focus coaching on leadership communication, not product knowledge.</div>
+          </div>
+
+          <div style="background:#F0FBF6;border:1px solid #A3D9BF;border-left:4px solid #1D9E75;padding:11px 14px;margin-bottom:8px;border-radius:0 3px 3px 0">
+            <div style="font-size:11px;font-weight:700;color:#155C3E;margin-bottom:4px">✅ Proficient (70–84)</div>
+            <div style="font-size:11px;color:#3A3530;line-height:1.65">Schedule monthly performance check-ins. Assign upselling & luxury segment coaching. No urgent intervention — focus on consistency and floor confidence.</div>
+          </div>
+
+          <div style="background:#EFF6FF;border:1px solid #B3D4F5;border-left:4px solid #378ADD;padding:11px 14px;margin-bottom:8px;border-radius:0 3px 3px 0">
+            <div style="font-size:11px;font-weight:700;color:#1E4A8A;margin-bottom:4px">📈 Developing (55–69)</div>
+            <div style="font-size:11px;color:#3A3530;line-height:1.65">Pair with a Proficient or Outstanding mentor. Run bi-weekly coaching sessions targeting 4Cs gaps identified in the heatmap. Set a 30-day re-assessment date. Supervised floor time only.</div>
+          </div>
+
+          <div style="background:#FEF2F2;border:1px solid #FBBFBF;border-left:4px solid #C9613A;padding:11px 14px;border-radius:0 3px 3px 0">
+            <div style="font-size:11px;font-weight:700;color:#8B2500;margin-bottom:4px">🔴 Foundation (0–54)</div>
+            <div style="font-size:11px;color:#3A3530;line-height:1.65">Do not deploy independently on the sales floor. Enrol in full IGI remedial module. Address specific gaps from the Knowledge column (Section 07). Reassess within 2 weeks post-training completion.</div>
+          </div>
+        </div>
+
+        <!-- Key Metrics Explained -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:8px">Key Metrics to Watch</div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <tbody>
+              <tr style="border-bottom:1px solid #F0ECE8">
+                <td style="padding:7px 10px;font-weight:700;color:#0D1B2E;width:38%">4Cs Score (FCS)</td>
+                <td style="padding:7px 10px;color:#3A3530">Product knowledge accuracy. <strong style="color:#C94A4A">Below 56% = high risk.</strong> Directly impacts ability to describe diamond quality to customers.</td>
+              </tr>
+              <tr style="background:#FAFAFA;border-bottom:1px solid #F0ECE8">
+                <td style="padding:7px 10px;font-weight:700;color:#0D1B2E">Normalised Gain</td>
+                <td style="padding:7px 10px;color:#3A3530">Measures true improvement from training, adjusted for where the associate started. Associates starting at ≥75% are flagged as High Baseline — minor drops are normal and shown as "↓ slight".</td>
+              </tr>
+              <tr style="border-bottom:1px solid #F0ECE8">
+                <td style="padding:7px 10px;font-weight:700;color:#0D1B2E">RSP Type</td>
+                <td style="padding:7px 10px;color:#3A3530"><strong>TA</strong> (Trusted Advisor) &amp; <strong>EA</strong> (Expert Advisor) = ideal advisory styles. <strong>PP</strong> (Product Pusher) = needs consultative coaching. <strong>PS</strong> (Problem Solver) = good instinct, needs sequencing refinement.</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;font-weight:700;color:#0D1B2E">Heatmap Colours</td>
+                <td style="padding:7px 10px;color:#3A3530"><span style="color:#C94A4A;font-weight:700">■ Red</span> = critical gap (prioritise). <span style="color:#B87A10;font-weight:700">■ Amber</span> = developing. <span style="color:#1D9E75;font-weight:700">■ Green</span> = strong. Each cell shows the skill x associate intersection.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Signoff -->
+        <div style="background:#0D1B2E;color:#C9A84C;padding:14px 18px;margin-top:auto">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">IGI School of Gemology &mdash; India</div>
+          <div style="font-size:12px;color:#fff;line-height:1.6">For questions about this report or to request a coaching plan, contact your IGI Retail Training Partner. This report is confidential and intended solely for the assessor and store management.</div>
+          <div style="margin-top:10px;font-size:11px;color:#C9A84C;font-weight:600">Sunil Sharma &mdash; Head of IGI School of Gemology, India</div>
+        </div>
+
+      </div><!-- end right column -->
+
+    </div><!-- end grid -->
+  </div><!-- end rsiGuide -->
+
   <div class="sh"><span class="sh-num">01</span><span class="sh-title">Readiness Distribution</span><span class="sh-rule"></span></div>
   <div class="panel">
     <div class="pt">Team Band Breakdown — ${n} Associates</div>
