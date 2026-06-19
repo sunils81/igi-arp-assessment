@@ -233,7 +233,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
           <span style="font-size:12px;color:var(--muted)" id="cf-pre-date">—</span>
         </div>
       </div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:18px">This is a <strong>20-question knowledge test</strong> — covering the 4Cs (Cut, Color, Clarity, Carat) from your training. You have <strong>20 minutes</strong> to complete it.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px">This is a <strong>20-question knowledge test</strong> — covering the 4Cs (Cut, Color, Clarity, Carat) from your training. You have <strong>30 minutes</strong> to complete it.</p>
       <button class="btn btn-primary" onclick="startTest()">Yes, that's me — Start Test →</button>
       <button class="btn btn-primary" onclick="showScreen('s-lookup')" style="background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:8px">← Not me, go back</button>
     </div>
@@ -257,7 +257,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   <div id="s-quiz" class="screen">
     <div class="timer-bar" id="timer-bar">
       <span class="timer-label">⏱ Time remaining</span>
-      <span class="timer-value" id="timer-val">20:00</span>
+      <span class="timer-value" id="timer-val">30:00</span>
     </div>
     <div class="prog-bar-outer"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
     <div class="card" id="q-card"></div>
@@ -347,7 +347,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 // ══════════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g22cFqEPsGNdQbV1Ko-idi3miM9A8ZswK2EFU5k6__fZe6Fg/exec';
 const TOTAL_Q = 20;
-const TIME_SEC = 1200; // 20 minutes
+const TIME_SEC = 1800; // 30 minutes
 
 // ── Auto-fill batch from URL param ──
 (function() {
