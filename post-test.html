@@ -384,136 +384,136 @@ function gasGet(params, callback) {
 //  tag: cut | color | clarity | carat
 // ══════════════════════════════════════════════════════════════
 const POST_QUESTIONS = [
-  // ── CARAT (5) ──────────────────────────────────────────────
+  // ── CARAT (5) ──────────────────────────────────────────────────
   {
     tag:'carat', cat:'Carat',
-    context:'A customer knows that 1 carat equals 0.2 grams. They are comparing a 0.95ct ring and a 1.05ct ring.',
-    q:'Why does the price jump significantly at the 1ct mark even though the weight difference is tiny?',
+    context:'',
+    q:'Why does a 1-carat diamond cost much more than a 0.95ct one?',
     opts:[
-      {t:'The 1ct milestone is highly sought after — demand at this threshold pushes the price per carat higher. This is known as a "magic size" premium.',c:true},
-      {t:'The 1ct stone is cut differently and always has a better cut grade.',c:false},
-      {t:'Heavier stones are always more expensive because shipping costs more.',c:false},
-      {t:'There is no real difference — both stones should cost the same.',c:false}
+      {t:'Customers want round numbers — 1ct has higher demand.',c:true},
+      {t:'1ct stones are always cut better.',c:false},
+      {t:'Heavier stones cost more to ship.',c:false},
+      {t:'There is no real price difference.',c:false}
     ]
   },
   {
     tag:'carat', cat:'Carat',
-    context:'A customer is surprised: two diamonds that both weigh exactly 1.00ct look very different in size when viewed from the top.',
-    q:'What is the most likely reason one diamond appears larger face-up?',
+    context:'Two diamonds weigh exactly 1ct but look different sizes from the top.',
+    q:'Why does one diamond look bigger face-up?',
     opts:[
-      {t:'It has a higher color grade.',c:false},
-      {t:'It has a shallower cut, which spreads the weight across a wider diameter — making it look bigger from above.',c:true},
-      {t:'It was polished more, which removes material and enlarges it.',c:false},
-      {t:'It is a lab-grown diamond and lab-grown always look bigger.',c:false}
+      {t:'It has a better color grade.',c:false},
+      {t:'It is shallower — so the width is greater.',c:true},
+      {t:'Polishing removes material and makes it larger.',c:false},
+      {t:'Lab-grown diamonds always look bigger.',c:false}
     ]
   },
   {
     tag:'carat', cat:'Carat',
     context:'',
-    q:'A customer wants the biggest-looking diamond for their budget. Your training taught you that the cut quality directly affects how large and bright a diamond appears. What do you recommend?',
+    q:'What gives the biggest-looking diamond on a budget?',
     opts:[
-      {t:'Buy the highest carat weight available — more weight always means a bigger look.',c:false},
-      {t:'Choose the best cut grade possible, even at a slightly lower carat — a well-cut stone faces up larger and brighter than a poorly cut heavier stone.',c:true},
-      {t:'Choose the best clarity — Flawless stones always appear larger.',c:false},
-      {t:'Choose the lowest color grade to save money for more carat weight.',c:false}
+      {t:'Buy the highest carat weight available.',c:false},
+      {t:'Buy the best cut — a well-cut stone looks larger.',c:true},
+      {t:'Buy the best clarity grade.',c:false},
+      {t:'Buy the lowest color grade.',c:false}
     ]
   },
   {
     tag:'carat', cat:'Carat',
     context:'',
-    q:'In diamond retail, the term "magic sizes" refers to:',
+    q:'In diamonds, what does "magic size" mean?',
     opts:[
-      {t:'Diamonds with special optical illusion properties.',c:false},
-      {t:'Common weight thresholds like 0.50ct, 0.75ct and 1.00ct — where the price per carat increases because of high customer demand at those marks.',c:true},
-      {t:'The largest diamonds in a jeweller\'s collection.',c:false},
-      {t:'Diamonds that are specially cut to look bigger than their actual weight.',c:false}
+      {t:'Stones with special optical illusions.',c:false},
+      {t:'Popular weights like 0.50ct or 1ct where price jumps.',c:true},
+      {t:'The largest diamonds in a store.',c:false},
+      {t:'Stones cut to look bigger than their weight.',c:false}
     ]
   },
   {
     tag:'carat', cat:'Carat',
     context:'',
-    q:'A customer asks: "Does carat weight tell me exactly how big the diamond will look on my finger?" What is the correct answer?',
+    q:'Does carat weight tell you how big a diamond will look?',
     opts:[
-      {t:'Yes — carat weight directly tells you the face-up size.',c:false},
-      {t:'No — carat is weight, not size. How a diamond looks on the finger also depends on its cut proportions and shape.',c:true},
-      {t:'Yes — the heavier the stone, the larger it will always appear.',c:false},
-      {t:'No — the color grade determines the apparent size.',c:false}
+      {t:'Yes — carat shows the exact face-up size.',c:false},
+      {t:'No — carat is weight. Cut and shape also affect size.',c:true},
+      {t:'Yes — heavier always looks bigger.',c:false},
+      {t:'No — color grade decides the size.',c:false}
     ]
   },
 
-  // ── COLOR (5) ───────────────────────────────────────────────
+  // ── COLOR (5) ──────────────────────────────────────────────────
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'A customer wants the best value for money on color — they want the stone to look white but do not want to overpay. Which color range should you recommend?',
+    q:'Which color grade looks white but costs less?',
     opts:[
-      {t:'D–F (Colorless) — only the absolute best is worth buying.',c:false},
-      {t:'G–H (Near Colorless) — these look white to the naked eye and are significantly more affordable than D–F.',c:true},
-      {t:'K–M (Faint Color) — the savings are huge and color is barely noticeable.',c:false},
-      {t:'J — always the best middle-ground regardless of setting.',c:false}
+      {t:'D–F — only the absolute best is worth buying.',c:false},
+      {t:'G–H — white to the naked eye, much more affordable.',c:true},
+      {t:'K–M — savings are huge.',c:false},
+      {t:'J — always the best middle-ground.',c:false}
     ]
   },
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'Your training explained that the metal setting affects how diamond color is perceived. A customer is choosing between yellow gold and white gold settings. Which statement is correct?',
+    q:'A J-color diamond in a yellow gold ring will look:',
     opts:[
-      {t:'Color never matters in yellow gold.',c:false},
-      {t:'White gold makes all color grades look the same.',c:false},
-      {t:'Yellow gold masks warmer color grades — a J or K color diamond can look white in a yellow gold setting.',c:true},
-      {t:'Yellow gold always makes diamonds look more yellow, regardless of grade.',c:false}
+      {t:'Very yellow — gold makes warm tones worse.',c:false},
+      {t:'White — yellow gold hides warm color tones.',c:true},
+      {t:'Exactly the same as in white gold.',c:false},
+      {t:'More valuable than in white gold.',c:false}
     ]
   },
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'The GIA / IGI color scale for white diamonds runs from D to Z. What does "D" represent?',
+    q:'On the IGI color scale, what does "D" mean?',
     opts:[
-      {t:'The darkest, most included diamond.',c:false},
-      {t:'Totally colorless — the highest color grade, with no yellow or brown tint at all.',c:true},
-      {t:'A diamond with a deep, desirable yellow color.',c:false},
-      {t:'D grade only applies to lab-grown diamonds.',c:false}
+      {t:'The darkest, most included stone.',c:false},
+      {t:'Totally colorless — no yellow or brown tint at all.',c:true},
+      {t:'A desirable vivid yellow color.',c:false},
+      {t:'D grade is only for lab-grown stones.',c:false}
     ]
   },
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'Fancy colored diamonds — such as pink, blue, or yellow — are more valuable when their color is:',
+    q:'For fancy colored diamonds, what makes them more valuable?',
     opts:[
-      {t:'As light and faint as possible.',c:false},
-      {t:'Completely absent — colorless is always best.',c:false},
-      {t:'Deep, vivid, and saturated — in fancy colors, intensity of color increases value.',c:true},
+      {t:'Color as light and faint as possible.',c:false},
+      {t:'Being completely colorless.',c:false},
+      {t:'Deep and vivid color — stronger color, higher value.',c:true},
       {t:'A pale pastel shade only.',c:false}
     ]
   },
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'A customer asks why their G-color diamond looks slightly different from their friend\'s G-color diamond. What do you explain?',
+    q:'Two G-color diamonds look slightly different. Is this normal?',
     opts:[
-      {t:'G color stones are known to be unreliable.',c:false},
-      {t:'One certificate must be incorrect.',c:false},
-      {t:'Each color grade covers a range — two diamonds can both be correctly graded G while sitting at different points within that range.',c:true},
-      {t:'Color differences are only caused by fluorescence.',c:false}
+      {t:'No — same grade means identical appearance.',c:false},
+      {t:'Yes — G covers a range; both can look slightly different.',c:true},
+      {t:'One certificate must be wrong.',c:false},
+      {t:'Only fluorescence causes color differences.',c:false}
     ]
   },
 
-  // ── CLARITY (5) ─────────────────────────────────────────────
+  // ── CLARITY (5) ────────────────────────────────────────────────
   {
     tag:'clarity', cat:'Clarity',
-    context:'A customer has been told that SI1 means the diamond has inclusions and they are worried it will look "dirty."',
-    q:'How do you reassure them using your training knowledge?',
+    context:'A customer is worried an SI1 diamond will look dirty.',
+    q:'What do you tell them?',
     opts:[
-      {t:'Agree with them and suggest they upgrade to VS2 or higher.',c:false},
-      {t:'Most SI1 diamonds are eye-clean — inclusions exist but are only visible under 10x magnification, not to the naked eye.',c:true},
-      {t:'SI1 means the inclusions are on the surface, not inside.',c:false},
-      {t:'Tell them to ignore online information — all diamonds look the same.',c:false}
+      {t:'Agree — they should buy VS2 or better.',c:false},
+      {t:'SI1 inclusions are invisible to the naked eye.',c:true},
+      {t:'SI1 inclusions sit on the surface.',c:false},
+      {t:'All diamonds look the same — do not worry.',c:false}
     ]
   },
   {
     tag:'clarity', cat:'Clarity',
     context:'',
-    q:'The clarity grading scale from highest to lowest is:',
+    q:'Which order shows clarity grades from best to worst?',
     opts:[
       {t:'FL → VVS → VS → SI → I',c:true},
       {t:'I → SI → VS → VVS → FL',c:false},
@@ -524,91 +524,91 @@ const POST_QUESTIONS = [
   {
     tag:'clarity', cat:'Clarity',
     context:'',
-    q:'Clarity grading is done under 10x magnification. What does this mean for a customer looking at an SI1 diamond with the naked eye?',
+    q:'Clarity is graded at 10x magnification. What does this mean for buyers?',
     opts:[
-      {t:'They will clearly see all the inclusions.',c:false},
-      {t:'The inclusions will look very large and distracting.',c:false},
-      {t:'In most cases they will see a clean-looking stone — the inclusions are too small to be visible without a loupe.',c:true},
-      {t:'They will need a microscope to see any inclusions even in an I1 stone.',c:false}
+      {t:'Customers will easily see all inclusions.',c:false},
+      {t:'Inclusions look very large in-store.',c:false},
+      {t:'Most SI diamonds look clean to the naked eye.',c:true},
+      {t:'You need a microscope even for I1 stones.',c:false}
     ]
   },
   {
     tag:'clarity', cat:'Clarity',
     context:'',
-    q:'A "feather" is a type of clarity characteristic found in diamonds. What is it?',
+    q:'In diamond grading, what is a "feather"?',
     opts:[
-      {t:'A surface scratch left by polishing tools.',c:false},
-      {t:'A small internal fracture or crack inside the diamond.',c:true},
-      {t:'A group of tiny crystal inclusions clustered together.',c:false},
+      {t:'A surface scratch from polishing.',c:false},
+      {t:'A small internal crack inside the diamond.',c:true},
+      {t:'A cluster of tiny crystals.',c:false},
       {t:'A white cloud of microscopic pinpoints.',c:false}
     ]
   },
   {
     tag:'clarity', cat:'Clarity',
-    context:'A customer is choosing between a VS1 and an IF (Internally Flawless) diamond. Both look identical face-up. The IF is ₹50,000 more expensive.',
-    q:'What advice do you give?',
+    context:'VS1 and IF look identical. The IF costs ₹50,000 more.',
+    q:'What do you recommend?',
     opts:[
-      {t:'Always buy IF — it is the highest clarity and always worth the premium.',c:false},
-      {t:'VS1 is an excellent choice — both stones look identical to the naked eye, and the IF premium is mainly for rarity. The extra cost may not add visible value.',c:true},
-      {t:'Buy IF only if you plan to resell the diamond.',c:false},
-      {t:'There is no difference between VS1 and IF so choose based on price alone.',c:false}
+      {t:'Always buy IF — highest clarity, always worth it.',c:false},
+      {t:'VS1 is great — the IF premium is for rarity, not appearance.',c:true},
+      {t:'Buy IF only if you plan to resell it.',c:false},
+      {t:'No difference — just pick the cheaper one.',c:false}
     ]
   },
 
-  // ── CUT (5) ──────────────────────────────────────────────────
+  // ── CUT (5) ────────────────────────────────────────────────────
   {
     tag:'cut', cat:'Cut',
-    context:'A diamond has VS1 clarity and G color — both excellent grades. But the customer says it looks dull and lacks sparkle.',
-    q:'What is the most likely cause?',
+    context:'A VS1 G-color diamond looks dull and has no sparkle.',
+    q:'What is the most likely reason?',
     opts:[
       {t:'The fluorescence grade is too high.',c:false},
-      {t:'The cut quality is poor — a badly cut diamond leaks light out of the sides and bottom instead of reflecting it back to the eye.',c:true},
-      {t:'VS1 clarity stones are known to look dull in certain lighting.',c:false},
-      {t:'The diamond has not been cleaned recently.',c:false}
+      {t:'Poor cut — light leaks out instead of reflecting back.',c:true},
+      {t:'VS1 stones look dull in some lighting.',c:false},
+      {t:'The diamond has not been cleaned.',c:false}
     ]
   },
   {
     tag:'cut', cat:'Cut',
     context:'',
-    q:'Cut is considered the most important of the 4Cs for a diamond\'s appearance. The three visual effects produced by an excellent cut are:',
+    q:'An excellent cut produces which three visual effects?',
     opts:[
-      {t:'Color, Clarity, Carat',c:false},
-      {t:'Brilliance (white light return), Fire (rainbow flashes), Scintillation (sparkle when moving)',c:true},
-      {t:'Polish, Symmetry, Fluorescence',c:false},
-      {t:'Depth percentage, Table size, Girdle thickness',c:false}
+      {t:'Color, Clarity, Carat.',c:false},
+      {t:'Brilliance (white light), Fire (rainbow), Scintillation (sparkle).',c:true},
+      {t:'Polish, Symmetry, Fluorescence.',c:false},
+      {t:'Depth, Table size, Girdle thickness.',c:false}
     ]
   },
   {
     tag:'cut', cat:'Cut',
     context:'',
-    q:'IGI grades cut quality as Excellent, Very Good, Good, Fair, or Poor. Which statement best explains why "Excellent" costs more?',
+    q:'Why does an Excellent-cut diamond cost more than Good-cut?',
     opts:[
-      {t:'Excellent-cut stones are heavier than Very Good stones of the same certified carat weight.',c:false},
-      {t:'Achieving perfect proportions requires the cutter to remove more rough material — this sacrifice in yield makes Excellent-cut stones more expensive to produce.',c:true},
-      {t:'Excellent is a marketing label — there is no real difference in light performance.',c:false},
-      {t:'Lab-grading fees are higher for Excellent-grade submissions.',c:false}
+      {t:'It is heavier for the same carat weight.',c:false},
+      {t:'Perfect proportions use up more of the rough stone.',c:true},
+      {t:'Excellent is just a marketing label.',c:false},
+      {t:'Lab fees are higher for Excellent submissions.',c:false}
     ]
   },
   {
     tag:'cut', cat:'Cut',
     context:'',
-    q:'On an IGI grading report, you will see separate grades for "Polish" and "Symmetry." These describe:',
+    q:'On an IGI report, what do "Polish" and "Symmetry" describe?',
     opts:[
-      {t:'The country of origin and the mining method used.',c:false},
-      {t:'Whether the diamond has been laser-drilled or fracture-filled.',c:false},
-      {t:'Polish = smoothness of each facet surface; Symmetry = precision of facet alignment. Both affect how cleanly the stone handles light.',c:true},
-      {t:'The overall carat weight and the shape of the diamond.',c:false}
+      {t:'Country of origin and mining method.',c:false},
+      {t:'Whether the diamond has been treated.',c:false},
+      {t:'Polish = facet smoothness; Symmetry = facet alignment.',c:true},
+      {t:'Overall carat weight and diamond shape.',c:false}
     ]
   },
   {
     tag:'cut', cat:'Cut',
     context:'',
-    q:'A customer asks what "brilliance" means when talking about a diamond\'s cut. How do you explain it?',
+    q:'A customer asks: what does "brilliance" mean?',
     opts:[
-      {t:'Brilliance refers to the rainbow colors seen when the diamond moves.',c:false},
-      {t:'Brilliance is the white light that reflects back to your eye from inside the diamond — a sign of excellent light return from a well-cut stone.',c:true},
-      {t:'Brilliance is a marketing term for any diamond above 1ct.',c:false},
-      {t:'Brilliance describes how clear and inclusion-free the diamond is.',c:false}
+      {t:'The rainbow colors when a diamond moves.',c:false},
+      {t:'White light bouncing back to your eye from a well-cut stone.',c:true},
+      {t:'A marketing term for diamonds over 1ct.',c:false},
+      {t:'How clear and inclusion-free the stone is.',c:false}
     ]
   }
 ];

@@ -186,6 +186,13 @@ function gasGet(params, cb) {
   setTimeout(()=>{ if(!done){done=true;delete window[cbName];try{document.body.removeChild(s);}catch(x){} cb(new Error('timeout'),null);} }, 10000);
 }
 
+// Safe JSON parse — handles already-parsed objects, empty strings, bad JSON
+function safeJson(s) {
+  if (!s) return {};
+  if (typeof s === 'object') return s;
+  try { return JSON.parse(s); } catch(x) { return {}; }
+}
+
 function computeSkillGaps(c2sStyle, rspStageKey, fcsPct) {
   const analytical=c2sStyle==='Analytical', amiable=c2sStyle==='Amiable';
   const expressive=c2sStyle==='Expressive', driver=c2sStyle==='Driver';
@@ -253,8 +260,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     const riskCount = (() => {
       let c = 0;
       rows.forEach(r => {
-        let tags = {};
-        try { tags = JSON.parse(r.fcsTags||'{}'); } catch(x){}
+        const tags = safeJson(r.fcsTags);
         Object.values(tags).forEach(t => { if (t && t.total > 0 && (t.correct/t.total) < 0.5) c++; });
       });
       return c;
@@ -263,29 +269,89 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     const rspLabels = {PP:'Product Pushers',TA:'Trusted Advisors',PS:'Problem Solvers',EA:'Expert Advisors',TrA:'Training Advisors'};
     const bandDesc = {Outstanding:'exceptional readiness',Proficient:'strong readiness',Developing:'developing readiness',Foundation:'foundational stage'};
     const riColor  = avgRI >= 85 ? '#1D9E75' : avgRI >= 70 ? '#1a7a3c' : avgRI >= 55 ? '#C9A84C' : '#C9613A';
+    const topPerformers = [...rows].sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).slice(0,5);
+    const lowestRisk = rows.filter(r=>(parseFloat(r.fcs)||0)<56).sort((a,b)=>(parseFloat(a.fcs)||0)-(parseFloat(b.fcs)||0)).slice(0,5);
+    const recActions = [];
+    if (avgRI < 55) recActions.push('Immediate re-training recommended before floor deployment.');
+    else if (avgRI < 70) recActions.push('Schedule structured coaching sessions for Foundation & Developing associates.');
+    if (riskCount > 0) recActions.push(`Address ${riskCount} 4Cs knowledge gap${riskCount!==1?'s':''} with targeted product knowledge sessions.`);
+    if (avgRI >= 70 && bands.Outstanding > 0) recActions.push('Deploy Outstanding performers as peer mentors to elevate the team.');
+    if (topRSP === 'PP') recActions.push('Run consultative selling workshop — team skews product-push, not advisory.');
+    if (recActions.length === 0) recActions.push('Team readiness is solid. Focus on maintaining performance with monthly refreshers.');
+
     const el = document.getElementById('execSummary');
     if (el) el.innerHTML = `
-    <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);padding:22px 28px;margin-bottom:20px;box-shadow:var(--sh)">
-      <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Executive Summary</div>
-      <p style="font-size:13px;line-height:1.8;color:var(--navy)">
+    <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);padding:24px 28px 20px;margin-bottom:20px;box-shadow:var(--sh)">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px">Executive Summary</div>
+
+      <!-- Narrative -->
+      <p style="font-size:13px;line-height:1.85;color:var(--navy);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
         This batch of <strong>${n} associates</strong> achieved a team average Readiness Index of
-        <strong style="color:${riColor}">${avgRI}</strong>, placing the group in the
-        <strong>${topBand}</strong> band — indicating <em>${bandDesc[topBand]||'mixed readiness'}</em> for jewellery retail sales.
-        The majority profile type is <strong>${rspLabels[topRSP]||topRSP}</strong>, suggesting the team
-        ${topRSP==='PP' ? 'is product-focused and would benefit from consultative selling training' :
-          topRSP==='TA' ? 'shows strong advisory instincts and is ready for advanced coaching' :
-          topRSP==='PS' ? 'leads with problem-solving and needs Emotion Sequencing refinement' :
-          topRSP==='EA' ? 'excels at experiential selling and can mentor peers' :
-          'is in active development and benefits from structured coaching'}.
-        ${riskCount > 0 ? `<strong>${riskCount} knowledge risk${riskCount!==1?'s':''}</strong> were identified — areas where team-wide scores fall below 50% and require immediate training focus.` : 'No critical knowledge risks were identified across the team.'}
-        ${postRows.length > 0 ? `Post-training data is available for <strong>${postRows.length} of ${n}</strong> associates, enabling direct measurement of training impact.` : ''}
+        <strong style="color:${riColor}">${avgRI}/100</strong>, placing the group in the
+        <strong>${topBand}</strong> band. Dominant selling profile: <strong>${rspLabels[topRSP]||topRSP}</strong>
+        — ${topRSP==='PP' ? 'product-focused; consultative selling coaching needed' :
+           topRSP==='TA' ? 'strong advisory instincts; ready for advanced coaching' :
+           topRSP==='PS' ? 'problem-solving led; needs Emotion Sequencing refinement' :
+           topRSP==='EA' ? 'experiential selling experts; can mentor peers' :
+           'actively developing; benefits from structured coaching'}.
+        ${riskCount > 0 ? `<strong style="color:#C94A4A">${riskCount} knowledge risk${riskCount!==1?'s':''}</strong> identified below 50% threshold.` : ''}
+        ${postRows.length > 0 ? `Post-training results in for <strong>${postRows.length} of ${n}</strong> associates.` : ''}
       </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+
+        <!-- Top Performers -->
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">⭐ Top Performers</div>
+          ${topPerformers.map((r,i)=>`
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <span style="font-size:11px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;width:14px">${i+1}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
+              <div style="font-size:10px;color:var(--muted)">${r.branch||'—'} · RI ${r.ri}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+
+        <!-- Knowledge Risk -->
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">⚠ 4Cs Knowledge Risk</div>
+          ${lowestRisk.length === 0
+            ? '<div style="font-size:12px;color:var(--teal)">✅ No associates below 56% threshold</div>'
+            : lowestRisk.map(r=>`
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <span style="font-size:11px;font-weight:700;color:#C94A4A;font-family:'DM Mono',monospace;width:32px">${parseFloat(r.fcs)||0}%</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
+              <div style="font-size:10px;color:var(--muted)">${r.branch||'—'}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+
+        <!-- Recommended Actions -->
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">✅ Recommended Actions</div>
+          ${recActions.map(a=>`<div style="font-size:12px;color:var(--navy);margin-bottom:7px;padding-left:10px;border-left:2px solid var(--gold);line-height:1.5">${a}</div>`).join('')}
+        </div>
+
+      </div>
+
+      <!-- Band distribution summary -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--border)">
+        ${Object.entries(bands).filter(([,v])=>v>0).map(([band,count])=>`
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${{Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'}[band]};display:inline-block"></span>
+          <span style="font-size:12px;color:var(--navy)"><strong>${count}</strong> ${band}</span>
+        </div>`).join('')}
+      </div>
+
     </div>`;
   })();
   rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
   const skillMatrix = rows.map(r=>({
     name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
-    c2s:r.c2s, fcs:r.fcs, gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
+    c2s:r.c2s, fcs:r.fcs, fcsTagsRaw:r.fcsTags||'{}',
+    gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
   }));
   const skillGapCounts = SKILLS.map((_,si)=>({
     skill:SKILLS[si], short:SKILL_SHORT[si],
@@ -478,6 +544,14 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           const bc = bandColors[a.band]||'#8A8070';
           const gapSkills = SKILLS.filter((_,i)=>a.gaps[i]==='gap');
           const devSkills = SKILLS.filter((_,i)=>a.gaps[i]==='developing');
+          // 4Cs knowledge weakness from tag scores
+          const aTags = safeJson(a.fcsTagsRaw);
+          const weakCat = (() => {
+            const cats = Object.entries(aTags).filter(([,v])=>v&&v.total>0)
+              .map(([k,v])=>({k, pct:Math.round((v.correct/v.total)*100)}))
+              .sort((a,b)=>a.pct-b.pct);
+            return cats.length ? cats[0] : null;
+          })();
           return `<tr>
             <td class="bstr"><span style="background:${bc}"></span></td>
             <td>
@@ -500,6 +574,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
               <div class="atg">
                 ${gapSkills.map(s=>`<span class="atgt">${s}</span>`).join('')}
                 ${devSkills.map(s=>`<span class="atdt">${s}</span>`).join('')}
+                ${weakCat && weakCat.pct < 70 ? `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;background:#F9F3E3;color:#B87A10;margin-top:3px">📚 ${weakCat.k.charAt(0).toUpperCase()+weakCat.k.slice(1)} ${weakCat.pct}%</span>` : ''}
               </div>
             </td>
           </tr>`;
@@ -767,12 +842,10 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     const mob   = String(r.mobile||'').trim();
     const pr    = postMap[mob];
     const prePct  = Number(String(r.fcs||0).replace('%',''))||0;
-    let   preTags = {};
-    try { preTags = JSON.parse(r.fcsTags||'{}'); } catch(x) {}
+    const preTags = safeJson(r.fcsTags);
     if (pr) {
-      let postTags={}, preTags2={};
-      try{ postTags=JSON.parse(pr.postTags||'{}'); }catch(x){}
-      try{ preTags2=JSON.parse(pr.preTags||'{}'); }catch(x){}
+      const postTags=safeJson(pr.postTags);
+      const preTags2=safeJson(pr.preTags);
       const delta = Number(pr.deltaPct)||0;
       return {
         name:r.name||'', desig:r.desig||'', branch:r.branch||'', city:r.city||'',
@@ -784,6 +857,21 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     }
     return { name:r.name||'', desig:r.desig||'', branch:r.branch||'', city:r.city||'', prePct, postPct:null, delta:null, completed:false };
   });
+
+  // Normalised gain helper
+  function normGain(pre, post) {
+    if (pre >= 100) return null;
+    return Math.round((post - pre) / (100 - pre) * 100);
+  }
+  function readyLabel(pct) {
+    return pct >= 80 ? 'Job Ready' : pct >= 65 ? 'Developing' : pct >= 50 ? 'Needs Support' : 'Review Now';
+  }
+  function readyColor(pct) {
+    return pct >= 80 ? '#1a7a3c' : pct >= 65 ? '#B87A10' : pct >= 50 ? '#185FA5' : '#C94A4A';
+  }
+  function readyBg(pct) {
+    return pct >= 80 ? '#E8F5EE' : pct >= 65 ? '#F9F3E3' : pct >= 50 ? '#EEF4FB' : '#FEF2F2';
+  }
 
   // Category averages (only completed)
   const catAvg = {};
@@ -838,9 +926,10 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Avg Post</div>
         <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">${avgPostOverall}%</div>
       </div>
-      <div style="flex:1;min-width:100px;background:${avgDelta>=10?'#E8F5EE':avgDelta>=0?'#F9F3E3':'#FEF2F2'};border-radius:8px;padding:12px 14px;text-align:center">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Avg Δ</div>
-        <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${avgDelta>=10?'#1a7a3c':avgDelta>=0?'#B87A10':'#C94A4A'}">${avgDelta>=0?'+':''}${avgDelta}%</div>
+      <div style="flex:1;min-width:100px;background:${readyBg(avgPostOverall)};border-radius:8px;padding:12px 14px;text-align:center">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Team Readiness</div>
+        <div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:${readyColor(avgPostOverall)}">${readyLabel(avgPostOverall)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Avg Post: ${avgPostOverall}%</div>
       </div>
     </div>
 
@@ -879,30 +968,37 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           <th style="text-align:left;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Location</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pre</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Post</th>
-          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Δ Change</th>
-          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Status</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Norm. Gain</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Readiness</th>
         </tr>
       </thead>
       <tbody>
-        ${compRows.sort((a,b)=>(b.delta||0)-(a.delta||0)).map(r => {
+        ${compRows.sort((a,b)=>(b.postPct||0)-(a.postPct||0)).map(r => {
           if (!r.completed) return `<tr style="border-bottom:1px dotted #EDE9E2">
             <td style="padding:3px 8px"><span style="font-size:11px;font-weight:600;color:var(--navy)">${r.name}</span></td>
             <td style="padding:3px 8px;font-size:10px;color:var(--muted)">${r.branch||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px">${r.prePct}%</td>
             <td colspan="3" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Pending</td>
           </tr>`;
-          const d    = r.delta;
-          const bg   = d>=15?'#E8F5EE':d>=5?'#F0FAF5':d>=0?'#F9F3E3':'#FEF2F2';
-          const fc   = d>=15?'#1a7a3c':d>=5?'#1a7a3c':d>=0?'#B87A10':'#C94A4A';
-          const dStr = (d>0?'+':'')+d+'%';
-          const status = d>=15?'✅ Strong':d>=5?'↑ Good':d>=0?'→ Marginal':'⚠ Review';
+          const ng     = normGain(r.prePct, r.postPct);
+          const ngStr  = ng === null ? '—' : (ng > 0 ? '+' : '') + ng + '%';
+          const ngColor= ng === null ? 'var(--muted)' : ng >= 0 ? '#1a7a3c' : '#C94A4A';
+          const highBase = r.prePct >= 75;
+          const bg     = readyBg(r.postPct);
+          const rl     = readyLabel(r.postPct);
+          const rc     = readyColor(r.postPct);
           return `<tr style="background:${bg};border-bottom:1px solid rgba(255,255,255,0.6)">
-            <td style="padding:8px 8px"><div style="font-weight:600;color:var(--navy)">${r.name}</div><div style="font-size:10px;color:var(--muted)">${r.desig||''}</div></td>
+            <td style="padding:8px 8px">
+              <div style="font-weight:600;color:var(--navy)">${r.name}</div>
+              <div style="font-size:10px;color:var(--muted)">${r.desig||''}${highBase?' · <span style="color:#B87A10">⭐ High Baseline</span>':''}</div>
+            </td>
             <td style="padding:8px 8px;font-size:12px;color:var(--muted)">${r.branch||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
-            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:var(--navy)">${r.postPct}%</td>
-            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${fc}">${dStr}</td>
-            <td style="text-align:center;font-size:11px;font-weight:600;color:${fc}">${status}</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${rc}">${r.postPct}%</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${ngColor}">${ngStr}</td>
+            <td style="text-align:center">
+              <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${bg};color:${rc};border:1px solid ${rc}">${rl}</span>
+            </td>
           </tr>`;
         }).join('')}
       </tbody>
