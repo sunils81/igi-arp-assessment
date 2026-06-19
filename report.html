@@ -319,6 +319,19 @@ function renderReport(rows, batch, client, trainerName, postRows) {
            'actively developing; benefits from structured coaching'}.
         ${riskCount > 0 ? `<strong style="color:#C94A4A">${riskCount} knowledge risk${riskCount!==1?'s':''}</strong> identified below 50% threshold.` : ''}
         ${postRows.length > 0 ? `Post-training results in for <strong>${postRows.length} of ${n}</strong> associates.` : ''}
+        ${(()=>{
+          const crsVals = rows.map(r=>{
+            const pr = postRows.find(p=>p.mobile===r.mobile||p.name===r.name);
+            if (!pr) return null;
+            const ri4 = parseFloat(r.ri)||0;
+            const post4 = Number(pr.postPct)||0;
+            return ri4>0 ? Math.round(ri4*0.4 + post4*0.6) : null;
+          }).filter(v=>v!==null);
+          if (crsVals.length===0) return '';
+          const avgCRS = Math.round(crsVals.reduce((a,b)=>a+b,0)/crsVals.length);
+          const crsCol = avgCRS>=80?'#1a7a3c':avgCRS>=65?'#378ADD':avgCRS>=50?'#C9A84C':'#C94A4A';
+          return `Composite Readiness Score (RI + Training): <strong style="color:\${crsCol}">\${avgCRS}/100</strong> across \${crsVals.length} assessed associates.`;
+        })()}
       </p>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
@@ -870,7 +883,6 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <thead>
         <tr style="border-bottom:2px solid var(--navy)">
           <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Store / Branch</th>
-          <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">City</th>
           <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Associates</th>
           <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Avg RI</th>
           <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Avg 4Cs</th>
@@ -888,7 +900,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           const riColor = st.avgRI>=70?'var(--teal)':st.avgRI>=55?'#C9A84C':'var(--coral)';
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${s.store}</td>
-            <td style="padding:9px 10px;font-size:11px;color:var(--muted)">${s.city}</td>
+            
             <td style="text-align:center;padding:9px 10px;font-weight:600">${st.n}</td>
             <td style="text-align:center;padding:9px 10px;font-size:14px;font-weight:700;color:${riColor};font-family:'DM Mono',monospace">${st.avgRI}</td>
             <td style="text-align:center;padding:9px 10px;font-family:'DM Mono',monospace;font-weight:600">${st.avgFcs}%</td>
@@ -1176,6 +1188,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pre</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Post</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Norm. Gain</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">CRS</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Readiness</th>
         </tr>
       </thead>
@@ -1185,10 +1198,14 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <td style="padding:3px 8px"><span style="font-size:11px;font-weight:600;color:var(--navy)">${r.name}</span></td>
             <td style="padding:3px 8px;font-size:10px;color:var(--muted)">${r.branch||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px">${r.prePct}%</td>
-            <td colspan="3" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Pending</td>
+            <td colspan="4" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Pending</td>
           </tr>`;
           const ng     = normGain(r.prePct, r.postPct);
           const highBase = r.prePct >= 75;
+          const ri4 = parseFloat(rows.find(rw=>rw.name===r.name)?.ri)||0;
+          const crs = ri4 > 0 ? Math.round(ri4 * 0.4 + r.postPct * 0.6) : null;
+          const crsStr  = crs !== null ? crs + '' : '—';
+          const crsColor= crs === null ? 'var(--muted)' : crs >= 80 ? '#1a7a3c' : crs >= 65 ? '#378ADD' : crs >= 50 ? '#C9A84C' : '#C94A4A';
           // For high-baseline associates with alarming negative norm gain, show softer label
           const ngStr  = ng === null ? (r.prePct >= 100 ? 'Max Pre' : '—') :
                          (highBase && ng < -20) ? '↓ slight' :
@@ -1208,6 +1225,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${rc}">${r.postPct}%</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${ngColor}">${ngStr}</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${crsColor}">${crsStr}</td>
             <td style="text-align:center">
               <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${bg};color:${rc};border:1px solid ${rc}">${rl}</span>
             </td>
