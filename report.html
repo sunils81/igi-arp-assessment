@@ -143,7 +143,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   .heatmap td.an{font-size:7px!important;white-space:normal!important;word-break:break-word!important;padding-right:3px!important}
   .heatmap td.ar{font-size:8px!important}
   .dot{width:7px!important;height:7px!important}
-  .panel{page-break-inside:avoid}}
+  .panel{page-break-inside:avoid}.sh{page-break-after:avoid;break-after:avoid}.sh+.panel,.sh+.heatmap-wrap{page-break-before:avoid;break-before:avoid}}
 </style>
 </head>
 <body>
@@ -156,6 +156,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 
   <!-- REPORT CONTENT -->
+  <div id="execSummary"></div>
   <div id="reportScreen" class="hidden"></div>
 </div>
 
@@ -242,6 +243,46 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
   rows.forEach(r=>{ const b=r.band||'Foundation'; bands[b]=(bands[b]||0)+1; });
   const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
+  // ── D: Executive Summary ───────────────────────────────────────────────────
+  (function(){
+    const domBand = bands.Outstanding + bands.Proficient > 0 ? (
+      bands.Outstanding > bands.Proficient ? 'Outstanding' :
+      bands.Proficient  > bands.Developing ? 'Proficient'  :
+      bands.Developing  > bands.Foundation ? 'Developing'  : 'Foundation'
+    ) : 'Foundation';
+    const topBand   = Object.keys(bands).sort((a,b)=>bands[b]-bands[a])[0];
+    const riskCount = (() => {
+      let c = 0;
+      rows.forEach(r => {
+        let tags = {};
+        try { tags = JSON.parse(r.fcsTags||'{}'); } catch(x){}
+        Object.values(tags).forEach(t => { if (t && t.total > 0 && (t.correct/t.total) < 0.5) c++; });
+      });
+      return c;
+    })();
+    const topRSP = Object.keys(rspDist).sort((a,b)=>rspDist[b]-rspDist[a])[0];
+    const rspLabels = {PP:'Product Pushers',TA:'Trusted Advisors',PS:'Problem Solvers',EA:'Experience Architects',TrA:'Training Advisors'};
+    const bandDesc = {Outstanding:'exceptional readiness',Proficient:'strong readiness',Developing:'developing readiness',Foundation:'foundational stage'};
+    const riColor  = avgRI >= 85 ? '#1D9E75' : avgRI >= 70 ? '#1a7a3c' : avgRI >= 55 ? '#C9A84C' : '#C9613A';
+    const el = document.getElementById('execSummary');
+    if (el) el.innerHTML = `
+    <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);padding:22px 28px;margin-bottom:20px;box-shadow:var(--sh)">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Executive Summary</div>
+      <p style="font-size:13px;line-height:1.8;color:var(--navy)">
+        This batch of <strong>${n} associates</strong> achieved a team average Readiness Index of
+        <strong style="color:${riColor}">${avgRI}</strong>, placing the group in the
+        <strong>${topBand}</strong> band — indicating <em>${bandDesc[topBand]||'mixed readiness'}</em> for jewellery retail sales.
+        The majority profile type is <strong>${rspLabels[topRSP]||topRSP}</strong>, suggesting the team
+        ${topRSP==='PP' ? 'is product-focused and would benefit from consultative selling training' :
+          topRSP==='TA' ? 'shows strong advisory instincts and is ready for advanced coaching' :
+          topRSP==='PS' ? 'leads with problem-solving and needs Emotion Sequencing refinement' :
+          topRSP==='EA' ? 'excels at experiential selling and can mentor peers' :
+          'is in active development and benefits from structured coaching'}.
+        ${riskCount > 0 ? `<strong>${riskCount} knowledge risk${riskCount!==1?'s':''}</strong> were identified — areas where team-wide scores fall below 50% and require immediate training focus.` : 'No critical knowledge risks were identified across the team.'}
+        ${postRows.length > 0 ? `Post-training data is available for <strong>${postRows.length} of ${n}</strong> associates, enabling direct measurement of training impact.` : ''}
+      </p>
+    </div>`;
+  })();
   rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
   const skillMatrix = rows.map(r=>({
     name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
@@ -588,6 +629,105 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     </table>
   </div>`;
 
+
+  // ── Section 07: Glossary & Terms ──────────────────────────────────────────
+  const glossHtml = `
+  <div class="sh" style="margin-top:8px"><span class="sh-num">07</span><span class="sh-title">Glossary &amp; Terms</span><span class="sh-rule"></span></div>
+  <div class="panel">
+    <div class="pt">How to Read This Report</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px 32px;margin-bottom:24px">
+
+      <!-- Readiness Index -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">Readiness Index (RI)</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7">A composite score from <strong>0–100</strong> reflecting an associate's overall readiness for consultative jewellery sales. It combines 4Cs product knowledge, RSP stage, C2S profiling skill, and conversation technique scores. Higher RI = stronger, more independent sales performance.</p>
+      </div>
+
+      <!-- Band Levels -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">Performance Bands</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:3px 0;width:36px;font-weight:700;font-family:'DM Mono',monospace;color:#C9A84C">85–100</td><td style="padding:3px 6px;font-weight:700;color:#C9A84C">Outstanding</td><td style="padding:3px 0;color:var(--muted)">Independent expert; mentor-ready</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#1D9E75">70–84</td><td style="padding:3px 6px;font-weight:700;color:#1D9E75">Proficient</td><td style="padding:3px 0;color:var(--muted)">Consistent performer; needs light coaching</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#378ADD">55–69</td><td style="padding:3px 6px;font-weight:700;color:#378ADD">Developing</td><td style="padding:3px 0;color:var(--muted)">Growing; requires structured training</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#C9613A">0–54</td><td style="padding:3px 6px;font-weight:700;color:#C9613A">Foundation</td><td style="padding:3px 0;color:var(--muted)">Early stage; intensive coaching needed</td></tr>
+        </table>
+      </div>
+
+      <!-- RSP Stages -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">RSP Stage Profiles</div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">The Retail Sales Professional (RSP) framework classifies how an associate currently approaches sales conversations:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:3px 0;width:36px;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PP</td><td style="padding:3px 8px;font-weight:600">Product Pusher</td><td style="padding:3px 0;color:var(--muted)">Feature-led; low emotional engagement</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PS</td><td style="padding:3px 8px;font-weight:600">Problem Solver</td><td style="padding:3px 0;color:var(--muted)">Needs-led; good listener, reactive style</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TA</td><td style="padding:3px 8px;font-weight:600">Trusted Advisor</td><td style="padding:3px 0;color:var(--muted)">Relationship-led; builds long-term trust</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">EA</td><td style="padding:3px 8px;font-weight:600">Experience Architect</td><td style="padding:3px 0;color:var(--muted)">Emotion-led; crafts memorable journeys</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TrA</td><td style="padding:3px 8px;font-weight:600">Training Advisor</td><td style="padding:3px 0;color:var(--muted)">Coaching-ready; elevates team capability</td></tr>
+        </table>
+      </div>
+
+      <!-- C2S Profile -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">C2S Profile — Customer Types</div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">Customer-to-Sales (C2S) profiling assesses how well an associate recognises and adapts to a customer's buying style:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:3px 8px 3px 0;font-weight:600">Driver</td><td style="padding:3px 0;color:var(--muted)">Decisive, results-focused — needs efficiency</td></tr>
+          <tr><td style="padding:3px 8px 3px 0;font-weight:600">Analytical</td><td style="padding:3px 0;color:var(--muted)">Detail-oriented — needs facts and proof</td></tr>
+          <tr><td style="padding:3px 8px 3px 0;font-weight:600">Expressive</td><td style="padding:3px 0;color:var(--muted)">Emotional, story-driven — needs inspiration</td></tr>
+          <tr><td style="padding:3px 8px 3px 0;font-weight:600">Amiable</td><td style="padding:3px 0;color:var(--muted)">Relationship-first — needs trust and reassurance</td></tr>
+        </table>
+      </div>
+
+    </div><!-- end grid -->
+
+    <!-- 4Cs + Dot Matrix row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px 32px">
+
+      <!-- 4Cs -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">The 4Cs of Diamond Grading</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:3px 8px 3px 0;font-weight:700;color:#C9A84C">Carat</td><td style="padding:3px 0;color:var(--muted)">Unit of weight (1ct = 0.2g); affects perceived size and price</td></tr>
+          <tr><td style="padding:3px 8px 3px 0;font-weight:700;color:#185FA5">Color</td><td style="padding:3px 0;color:var(--muted)">Graded D–Z; D = colourless (most prized) to Z = light yellow</td></tr>
+          <tr><td style="padding:3px 8px 3px 0;font-weight:700;color:#B87A10">Clarity</td><td style="padding:3px 0;color:var(--muted)">Measures internal/external flaws (inclusions &amp; blemishes)</td></tr>
+          <tr><td style="padding:3px 8px 3px 0;font-weight:700;color:#1a7a3c">Cut</td><td style="padding:3px 0;color:var(--muted)">Proportions &amp; finish; determines brilliance and sparkle</td></tr>
+        </table>
+      </div>
+
+      <!-- Dot Matrix Legend -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">Skills Heatmap Legend</div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px">Each dot in Section 02 represents one skill for one associate:</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:12px;height:12px;border-radius:50%;background:#C94A4A;flex-shrink:0;display:inline-block"></span>
+            <span style="font-size:11px"><strong>Gap</strong> — Score &lt;50%. Immediate targeted training recommended.</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:12px;height:12px;border-radius:50%;border:2px solid #B87A10;flex-shrink:0;display:inline-block"></span>
+            <span style="font-size:11px"><strong>Developing</strong> — Score 50–74%. Coaching and practice recommended.</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:12px;height:12px;border-radius:50%;background:#1D9E75;opacity:.4;flex-shrink:0;display:inline-block"></span>
+            <span style="font-size:11px"><strong>Strong</strong> — Score ≥75%. Maintain and leverage as peer model.</span>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;font-weight:600;color:var(--navy);margin-bottom:4px">Skills Assessed:</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7">Discovery · Emotion Sequencing · Objection Handling · Closing · Carat Knowledge · Color Knowledge · Clarity Knowledge · Cut Knowledge</div>
+        </div>
+      </div>
+
+    </div><!-- end grid -->
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);text-align:center;line-height:1.6">
+      Assessment designed and administered by <strong>IGI School of Gemology</strong> — Retail Sales Excellence Program.<br>
+      Readiness Index, RSP stages, and C2S profiling are proprietary IGI assessment frameworks.
+    </div>
+  </div>`;
+
   const ctaHtml = `
   <div class="cta-block">
     <div>
@@ -667,7 +807,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   const avgDelta       = avgPostOverall - avgPreOverall;
 
   const knowledgeHtml = `
-  <div class="sh"><span class="sh-num">05</span><span class="sh-title">4Cs Knowledge — Training Impact</span><span class="sh-rule"></span></div>
+  <div class="sh"><span class="sh-num">06</span><span class="sh-title">4Cs Knowledge — Training Impact</span><span class="sh-rule"></span></div>
   <div class="panel">
 
     <!-- Completion counter -->
@@ -745,11 +885,11 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       </thead>
       <tbody>
         ${compRows.sort((a,b)=>(b.delta||0)-(a.delta||0)).map(r => {
-          if (!r.completed) return `<tr style="border-bottom:1px solid #F4F1EB">
-            <td style="padding:8px 8px"><div style="font-weight:600;color:var(--navy)">${r.name}</div><div style="font-size:10px;color:var(--muted)">${r.desig||''}</div></td>
-            <td style="padding:8px 8px;font-size:12px;color:var(--muted)">${r.branch||'—'}</td>
-            <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
-            <td style="text-align:center;color:var(--muted);font-size:11px" colspan="3">⏳ Pending</td>
+          if (!r.completed) return `<tr style="border-bottom:1px dotted #EDE9E2">
+            <td style="padding:3px 8px"><span style="font-size:11px;font-weight:600;color:var(--navy)">${r.name}</span></td>
+            <td style="padding:3px 8px;font-size:10px;color:var(--muted)">${r.branch||'—'}</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px">${r.prePct}%</td>
+            <td colspan="3" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Pending</td>
           </tr>`;
           const d    = r.delta;
           const bg   = d>=15?'#E8F5EE':d>=5?'#F0FAF5':d>=0?'#F9F3E3':'#FEF2F2';
@@ -769,7 +909,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     </table>`}
   </div>`;
 
-  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + loc05Html + knowledgeHtml + ctaHtml;
+  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + loc05Html + knowledgeHtml + glossHtml + ctaHtml;
 }
 </script>
 </body>
