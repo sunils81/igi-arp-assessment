@@ -244,6 +244,12 @@ function toTitleCase(s) {
   if (!s) return s;
   return s.toLowerCase().replace(/(?:^|\s|[\-\/])\S/g, c => c.toUpperCase()).trim();
 }
+function isJobTitle(s) {
+  // Detect when branch field contains a designation, not a store location
+  if (!s) return false;
+  const lower = s.toLowerCase();
+  return /\b(manager|director|head|lead|trainer|executive|coordinator|officer|regional|cluster|sr\.|sr\s)\b/.test(lower) && !/\b(hs|mall|store|road|nagar|society|market|plaza|tower|giva)\b/.test(lower);
+}
 
 function renderReport(rows, batch, client, trainerName, postRows) {
   postRows = postRows || [];
@@ -252,8 +258,8 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   rows = rows.filter(r => {
     if (!r.name || !r.name.trim()) return false; // no name — skip
     const badBand = !VALID_BANDS.includes(r.band);
-    const zeroRI  = !r.ri || parseFloat(r.ri) === 0;
-    if (badBand && zeroRI) return false; // corrupted row — exclude
+    const validRI  = parseFloat(r.ri) > 0;  // NaN, 0, undefined all fail this
+    if (badBand && !validRI) return false; // corrupted row (bad band + no valid RI) — exclude
     return true;
   });
   const n = rows.length;
@@ -602,7 +608,8 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   // Group rows by city
   const cityMap = {};
   rows.forEach(r => {
-    const city = toTitleCase((r.city || r.branch || '—').trim()) || '—';
+    const rawLoc = (r.city || r.branch || '').trim();
+    const city = (!rawLoc || isJobTitle(rawLoc)) ? '(No Location)' : toTitleCase(rawLoc);
     if (!cityMap[city]) cityMap[city] = [];
     cityMap[city].push(r);
   });
@@ -611,8 +618,10 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   // Group rows by store/branch
   const storeMap = {};
   rows.forEach(r => {
-    const store = (r.branch || '—').trim() || '—';
-    const city  = toTitleCase((r.city || '—').trim()) || '—';
+    const rawBranch = (r.branch || '').trim();
+    const store = isJobTitle(rawBranch) ? '(No Store)' : toTitleCase(rawBranch) || '—';
+    const rawCity = (r.city || r.branch || '').trim();
+    const city  = (!rawCity || isJobTitle(rawCity)) ? '(No Location)' : toTitleCase(rawCity);
     const key   = store;
     if (!storeMap[key]) storeMap[key] = { store, city, associates: [] };
     storeMap[key].associates.push(r);
