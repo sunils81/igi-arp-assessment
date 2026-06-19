@@ -466,11 +466,13 @@ function doGet(e){
         fcs:      headers.indexOf('4Cs Percentage'),
         fcsTags:  headers.indexOf('4Cs Tag Scores (JSON)'),
         client:   headers.indexOf('Client'),
-        trainer:  headers.indexOf('Trainer Name')
+        trainer:  headers.indexOf('Trainer Name'),
+        branch:   headers.indexOf('Store Branch')
       };
       const rows = batchRows.map(r => ({
         mobile:r[idx.mobile]||'',
         name:r[idx.name]||'', desig:r[idx.desig]||'',
+        branch:r[idx.branch]||'',
         c2s:r[idx.c2s]||'', rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
         ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||'',
         fcsTags:r[idx.fcsTags]||'{}'
