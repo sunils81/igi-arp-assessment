@@ -893,10 +893,10 @@ function gradeClass(pct) {
 }
 
 function readinessLabel(pct) {
-  if (pct >= 80) return 'Job Ready';
+  if (pct >= 80) return 'Certified';
   if (pct >= 65) return 'Developing';
   if (pct >= 50) return 'Needs Support';
-  return 'Immediate Review';
+  return 'Priority Coaching';
 }
 
 function readinessClass(pct) {
@@ -1033,7 +1033,7 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
 
   if (postPct >= 80) {
     impactEl.className = 'impact-box positive';
-    impactEl.innerHTML = `<strong>✅ Job Ready — Strong 4Cs knowledge demonstrated.</strong><br>
+    impactEl.innerHTML = `<strong>✅ Certified — Strong 4Cs knowledge demonstrated.</strong><br>
       ${name} scored ${postPct}% on the post-training assessment. Training has been effective.${baseCtx}`;
   } else if (postPct >= 65) {
     impactEl.className = 'impact-box positive';
@@ -1041,11 +1041,11 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
       ${name} scored ${postPct}%. The weaker categories above (below 60%) should be revisited with a focused refresher.${baseCtx}`;
   } else if (postPct >= 50) {
     impactEl.className = 'impact-box marginal';
-    impactEl.innerHTML = `<strong>→ Needs Support — Core concepts require consolidation.</strong><br>
+    impactEl.innerHTML = `<strong>→ Needs Support — Core concepts need consolidation.</strong><br>
       ${name} scored ${postPct}%. A targeted review of the low-scoring categories is recommended before customer-facing deployment.${baseCtx}`;
   } else {
     impactEl.className = 'impact-box negative';
-    impactEl.innerHTML = `<strong>⚠ Immediate Review Required.</strong><br>
+    impactEl.innerHTML = `<strong>⚠ Priority Coaching Required.</strong><br>
       ${name} scored ${postPct}%. Please schedule a one-on-one refresher session covering the categories highlighted above.${baseCtx}`;
   }
 }

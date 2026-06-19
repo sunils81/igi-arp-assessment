@@ -240,14 +240,28 @@ function loadReport() {
   });
 }
 
+function toTitleCase(s) {
+  if (!s) return s;
+  return s.toLowerCase().replace(/(?:^|\s|[\-\/])\S/g, c => c.toUpperCase()).trim();
+}
+
 function renderReport(rows, batch, client, trainerName, postRows) {
   postRows = postRows || [];
+  // Guard: filter out data-error rows (name present but RI=0 and band not a known band)
+  const VALID_BANDS = ['Outstanding','Proficient','Developing','Foundation'];
+  rows = rows.filter(r => {
+    if (!r.name || !r.name.trim()) return false; // no name — skip
+    const badBand = !VALID_BANDS.includes(r.band);
+    const zeroRI  = !r.ri || parseFloat(r.ri) === 0;
+    if (badBand && zeroRI) return false; // corrupted row — exclude
+    return true;
+  });
   const n = rows.length;
   const avgRI  = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
   const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
   const bandColors = {Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'};
   const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
-  rows.forEach(r=>{ const b=r.band||'Foundation'; bands[b]=(bands[b]||0)+1; });
+  rows.forEach(r=>{ const b=r.band||'Foundation'; if(bands.hasOwnProperty(b)) bands[b]++; });
   const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
   // ── D: Executive Summary ───────────────────────────────────────────────────
   (function(){
@@ -588,7 +602,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   // Group rows by city
   const cityMap = {};
   rows.forEach(r => {
-    const city = (r.city || r.branch || '—').trim() || '—';
+    const city = toTitleCase((r.city || r.branch || '—').trim()) || '—';
     if (!cityMap[city]) cityMap[city] = [];
     cityMap[city].push(r);
   });
@@ -598,7 +612,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   const storeMap = {};
   rows.forEach(r => {
     const store = (r.branch || '—').trim() || '—';
-    const city  = (r.city || '—').trim() || '—';
+    const city  = toTitleCase((r.city || '—').trim()) || '—';
     const key   = store;
     if (!storeMap[key]) storeMap[key] = { store, city, associates: [] };
     storeMap[key].associates.push(r);
@@ -815,7 +829,12 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
     </div>
   </div>
-  <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>`;
+  <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>
+  <div style="text-align:center;padding:18px 24px 10px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:4px;letter-spacing:.04em">
+    <span style="font-weight:600;color:var(--navy)">Sunil Sharma</span>
+    &nbsp;&mdash;&nbsp;
+    <span style="color:var(--navy-60,#6B6357)">Head of IGI School of Gemology, India</span>
+  </div>`;
 
 
   // ── 4Cs Knowledge Impact Section ─────────────────────────────────────────
@@ -864,7 +883,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     return Math.round((post - pre) / (100 - pre) * 100);
   }
   function readyLabel(pct) {
-    return pct >= 80 ? 'Job Ready' : pct >= 65 ? 'Developing' : pct >= 50 ? 'Needs Support' : 'Review Now';
+    return pct >= 80 ? 'Certified' : pct >= 65 ? 'Progressing' : pct >= 50 ? 'Needs Support' : 'Priority Coaching';
   }
   function readyColor(pct) {
     return pct >= 80 ? '#1a7a3c' : pct >= 65 ? '#B87A10' : pct >= 50 ? '#185FA5' : '#C94A4A';
@@ -981,9 +1000,14 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <td colspan="3" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Pending</td>
           </tr>`;
           const ng     = normGain(r.prePct, r.postPct);
-          const ngStr  = ng === null ? '—' : (ng > 0 ? '+' : '') + ng + '%';
-          const ngColor= ng === null ? 'var(--muted)' : ng >= 0 ? '#1a7a3c' : '#C94A4A';
           const highBase = r.prePct >= 75;
+          // For high-baseline associates with alarming negative norm gain, show softer label
+          const ngStr  = ng === null ? (r.prePct >= 100 ? 'Max Pre' : '—') :
+                         (highBase && ng < -20) ? '↓ slight' :
+                         (ng > 0 ? '+' : '') + ng + '%';
+          const ngColor= ng === null ? 'var(--muted)' :
+                         (highBase && ng < -20) ? '#B87A10' :
+                         ng >= 0 ? '#1a7a3c' : '#C94A4A';
           const bg     = readyBg(r.postPct);
           const rl     = readyLabel(r.postPct);
           const rc     = readyColor(r.postPct);
