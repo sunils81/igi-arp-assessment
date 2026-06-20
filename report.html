@@ -196,11 +196,54 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 
   <!-- REPORT CONTENT -->
-  <div id="reportScreen" class="hidden"></div>
+  <div id="reportScreen" class="hidden">
+  <div id="ar-bar" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:8px 16px;background:#f7f5f0;border-bottom:1px solid #e8e4dc;font-family:'DM Sans',sans-serif;font-size:12px">
+    <span id="ar-pill" style="color:#5a7a5a;font-weight:600;transition:opacity 0.4s;opacity:0.6">✓ Live · Auto-refreshes every 2 min</span>
+    <button onclick="manualRefresh()" style="background:#0D1B2E;color:#C8A84B;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">↻ Refresh Now</button>
+  </div>
+</div>
 </div>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g22cFqEPsGNdQbV1Ko-idi3miM9A8ZswK2EFU5k6__fZe6Fg/exec';
+
+// ── Auto-refresh state ──────────────────────────────────────
+let _arBatch = null, _arPass = null, _arTimer = null;
+const AUTO_REFRESH_MS = 2 * 60 * 1000; // every 2 minutes
+
+function startAutoRefresh(batch, pass) {
+  _arBatch = batch; _arPass = pass;
+  if (_arTimer) clearInterval(_arTimer);
+  _arTimer = setInterval(silentRefresh, AUTO_REFRESH_MS);
+}
+
+function silentRefresh() {
+  if (!_arBatch || !_arPass) return;
+  const pill = document.getElementById('ar-pill');
+  if (pill) { pill.textContent = '🔄 Refreshing…'; pill.style.opacity = '1'; }
+  gasGet({action:'getBatchReport', batch:_arBatch, pass:_arPass}, function(err, d) {
+    if (err || !d || d.status === 'error') {
+      if (pill) { pill.textContent = '⚠ Refresh failed'; pill.style.opacity = '1'; }
+      return;
+    }
+    gasGet({action:'getPostResults', batch:_arBatch}, function(err2, d2) {
+      const postRows = (!err2 && d2 && d2.postRows) ? d2.postRows : [];
+      renderReport(d.rows, _arBatch, d.client||_arBatch, d.trainerName||'', postRows);
+      updateLastRefreshed();
+    });
+  });
+}
+
+function updateLastRefreshed() {
+  const pill = document.getElementById('ar-pill');
+  if (!pill) return;
+  const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  pill.textContent = '✓ Live · Updated ' + t;
+  pill.style.opacity = '1';
+  setTimeout(() => { pill.style.opacity = '0.6'; }, 3000);
+}
+
+function manualRefresh() { silentRefresh(); }
 
 const SKILLS = ['Occasion-led discovery','Emotion-before-product sequencing','Diamond knowledge accuracy','Objection handling','Story-led selling','Confident single recommendation','Post-sale relationship building','Multi-stakeholder selling','Upsell and cross-sell instinct','Technical accuracy under pressure'];
 
@@ -297,9 +340,11 @@ function loadReport() {
     gasGet({action:'getPostResults', batch}, function(err2, d2) {
       const postRows = (!err2 && d2 && d2.postRows) ? d2.postRows : [];
       renderReport(d.rows, batch, d.client||batch, d.trainerName||'', postRows);
+      updateLastRefreshed();
     });
     document.getElementById('gateScreen').classList.add('hidden');
     document.getElementById('reportScreen').classList.remove('hidden');
+    startAutoRefresh(batch, pass);
   });
 }
 
