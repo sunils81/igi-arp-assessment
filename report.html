@@ -176,6 +176,29 @@ const RSP_ROLE_FIT = {
   TrA:"Reference standard. Customers seek out by name and refer. Development is about mentoring others to this level."
 };
 
+// Returns a band-aware RSP sub-description.
+// EA/TA in Developing or Foundation bands are honest about the gap between
+// their advisory instinct and their actual product knowledge readiness.
+function rspRoleFit(rspKey, band) {
+  const isAdvisory = rspKey === 'EA' || rspKey === 'TrA';
+  const needsWork  = band === 'Developing' || band === 'Foundation';
+  if (isAdvisory && needsWork) {
+    return 'Advisory instinct is present — the right foundation. Product knowledge and structured selling skills need to catch up before this translates to floor performance.';
+  }
+  return RSP_ROLE_FIT[rspKey] || '';
+}
+
+// Returns a band-aware RSP label (short line shown under the RSP type badge).
+function rspSubLabel(rspKey, band) {
+  const isAdvisory = rspKey === 'EA' || rspKey === 'TrA';
+  const needsWork  = band === 'Developing' || band === 'Foundation';
+  if (rspKey === 'EA') return needsWork ? 'Advisory instinct present' : 'Top-tier professional.';
+  if (rspKey === 'TrA') return needsWork ? 'Coaching mindset present' : 'Reference standard.';
+  if (rspKey === 'PS') return 'Genuine problem-solver.';
+  if (rspKey === 'PP') return 'Product-led interactions.';
+  return rspKey;
+}
+
 function gasGet(params, cb) {
   const url = GAS_URL + '?' + Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
   const cbName = '_rpCb_' + Date.now();
@@ -779,7 +802,8 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             </td>
             <td style="vertical-align:middle">
               <div class="atst">${a.rspLabel||a.rspKey}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5">${RSP_ROLE_FIT[a.rspKey]?RSP_ROLE_FIT[a.rspKey].split('.')[0]+'.':''}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5">${rspSubLabel(a.rspKey, a.band)}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;font-style:italic">${rspRoleFit(a.rspKey, a.band).split('.')[0]}.</div>
             </td>
             <td>
               <div class="atg">
@@ -797,8 +821,13 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
 
   // ── Section 05: City & Store Performance ─────────────────────────────────
   // Group rows by city
+  // Detect whether this batch has proper city data (new form) or only branch data (historical)
+  const hasCityData = rows.some(r => (r.city || '').trim().length > 0);
+  const missingCityCount = rows.filter(r => !(r.city || '').trim()).length;
+
   const cityMap = {};
   rows.forEach(r => {
+    // Use r.city (proper city field) when available; fall back to r.branch for historical data
     const rawLoc = (r.city || r.branch || '').trim();
     const city = (!rawLoc || isJobTitle(rawLoc)) ? '(No Location)' : toTitleCase(rawLoc);
     if (!cityMap[city]) cityMap[city] = [];
@@ -840,8 +869,19 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         }).join('') + '</div>';
   }
 
+  const cityDataNote = !hasCityData
+    ? `<div style="margin-bottom:14px;padding:8px 12px;background:#FDF8EC;border-left:3px solid #C9A84C;border-radius:4px;font-size:11px;color:#7A5C00">
+        <strong>Historical data:</strong> City grouping is derived from the Store Name field for this batch. Separate city data will be available for batches collected after the form update.
+       </div>`
+    : missingCityCount > 0
+    ? `<div style="margin-bottom:14px;padding:8px 12px;background:#EEF6FF;border-left:3px solid #378ADD;border-radius:4px;font-size:11px;color:#1A4F8A">
+        <strong>Mixed data:</strong> ${missingCityCount} associate${missingCityCount>1?'s':''} did not submit a city — their store name is used as the location grouper.
+       </div>`
+    : '';
+
   const loc05Html = `
   <div class="sh"><span class="sh-num">05</span><span class="sh-title">City &amp; Store Performance</span><span class="sh-rule"></span></div>
+  ${cityDataNote}
 
   <!-- City Summary -->
   <div class="panel" style="margin-bottom:20px">
