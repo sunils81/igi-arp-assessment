@@ -196,12 +196,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   </div>
 
   <!-- REPORT CONTENT -->
-  <div id="reportScreen" class="hidden">
-  <div id="ar-bar" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:8px 16px;background:#f7f5f0;border-bottom:1px solid #e8e4dc;font-family:'DM Sans',sans-serif;font-size:12px">
-    <span id="ar-pill" style="color:#5a7a5a;font-weight:600;transition:opacity 0.4s;opacity:0.6">✓ Live · Auto-refreshes every 2 min</span>
-    <button onclick="manualRefresh()" style="background:#0D1B2E;color:#C8A84B;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">↻ Refresh Now</button>
-  </div>
+  <!-- Auto-refresh bar — lives OUTSIDE reportScreen so innerHTML wipe doesn't kill it -->
+<div id="ar-bar" style="display:none;align-items:center;justify-content:flex-end;gap:10px;padding:8px 16px;background:#f7f5f0;border-bottom:1px solid #e8e4dc;font-family:'DM Sans',sans-serif;font-size:12px">
+  <span id="ar-pill" style="color:#5a7a5a;font-weight:600;transition:opacity 0.4s;opacity:0.6">✓ Live · Auto-refreshes every 2 min</span>
+  <button onclick="manualRefresh()" style="background:#0D1B2E;color:#C8A84B;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">↻ Refresh Now</button>
 </div>
+<div id="reportScreen" class="hidden"></div>
 </div>
 
 <script>
@@ -344,6 +344,7 @@ function loadReport() {
     });
     document.getElementById('gateScreen').classList.add('hidden');
     document.getElementById('reportScreen').classList.remove('hidden');
+    document.getElementById('ar-bar').style.display = 'flex';
     startAutoRefresh(batch, pass);
   });
 }
