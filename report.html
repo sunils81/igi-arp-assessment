@@ -133,9 +133,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .btn-print:hover{background:rgba(201,168,76,0.1)}
 .conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
 @page{margin:16mm 14mm;@bottom-center{content:"IGI ARP | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
-@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{background:#F7F5F0!important}.metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}.rpt-masthead{background:#0D1B2E!important}.cta-block{background:#0D1B2E!important}.mc.mg::before{background:#C9A84C!important;display:block!important}.mc.mt::before{background:#1D9E75!important;display:block!important}.mc.mr::before{background:#C9613A!important;display:block!important}.mc::before{display:block!important;-webkit-print-color-adjust:exact!important}.bs{-webkit-print-color-adjust:exact!important}.d-g{background:#C94A4A!important}.d-d{border-color:#B87A10!important}.atgt{background:#FEF2F2!important;color:#991B1B!important}.atdt{background:#FFF8E7!important;color:#7A5C00!important}.risk-block{background:#FEF9F7!important}.b-bar span{-webkit-print-color-adjust:exact!important}.bstr span{-webkit-print-color-adjust:exact!important}
-  @page{size:A4 landscape;margin:10mm}
-  .heatmap-wrap{overflow:visible!important}
+@media print{
+  /* ── A: colour fidelity ── */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  body{background:#F7F5F0!important}
+
+  /* ── B: hide screen-only chrome ── */
+  .gate-wrap,#gateScreen,.btn-print{display:none!important}
+
+  /* ── C: A4 portrait page setup with reliable page numbers ── */
+  @page{size:A4 portrait;margin:15mm 12mm;@bottom-center{content:"IGI ARP  |  Confidential  |  Page " counter(page);font-size:8px;color:#6B6357;font-family:sans-serif;letter-spacing:.04em}}
+
+  /* ── D: expand to full print width (remove 860px web cap) ── */
+  #app{max-width:100%!important;padding:0!important}
+
+  /* ── E: section page breaks — .print-pb added by JS onbeforeprint ── */
+  .print-pb{page-break-before:always!important;break-before:always!important}
+  .sh{page-break-after:avoid;break-after:avoid}
+  .sh+.panel,.sh+.heatmap-wrap{page-break-before:avoid;break-before:avoid}
+  .panel{page-break-inside:avoid}
+
+  /* ── F: exec summary & RI guide isolated pages ── */
+  #execSummary{page-break-before:always!important;break-before:always!important;page-break-after:always!important;break-after:always!important}
+  #rsiGuide{page-break-before:always!important;break-before:always!important;page-break-after:always!important;break-after:always!important}
+
+  /* ── G: heatmap — scale to fit portrait width ── */
+  .heatmap-wrap{overflow:visible!important;transform:scale(0.82);transform-origin:top left;margin-bottom:-18%}
   .heatmap{width:100%!important;font-size:7px!important;table-layout:fixed!important}
   .heatmap th{font-size:6px!important;padding:3px 2px!important;max-width:none!important;word-break:break-word!important;line-height:1.2!important}
   .heatmap th.sc{font-size:6px!important}
@@ -143,9 +166,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   .heatmap td.an{font-size:7px!important;white-space:normal!important;word-break:break-word!important;padding-right:3px!important}
   .heatmap td.ar{font-size:8px!important}
   .dot{width:7px!important;height:7px!important}
-  .panel{page-break-inside:avoid}.sh{page-break-after:avoid;break-after:avoid}.sh+.panel,.sh+.heatmap-wrap{page-break-before:avoid;break-before:avoid}
-  #execSummary{page-break-before:always!important;break-before:always!important;page-break-after:always!important;break-after:always!important}
-  #rsiGuide{page-break-before:always!important;break-before:always!important;page-break-after:always!important;break-after:always!important}}
+
+  /* ── H: box shadows & forced colours ── */
+  .metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}
+  .rpt-masthead{background:#0D1B2E!important}
+  .cta-block{background:#0D1B2E!important}
+  .mc.mg::before{background:#C9A84C!important;display:block!important}
+  .mc.mt::before{background:#1D9E75!important;display:block!important}
+  .mc.mr::before{background:#C9613A!important;display:block!important}
+  .mc::before{display:block!important;-webkit-print-color-adjust:exact!important}
+  .bs{-webkit-print-color-adjust:exact!important}
+  .d-g{background:#C94A4A!important}
+  .d-d{border-color:#B87A10!important}
+  .atgt{background:#FEF2F2!important;color:#991B1B!important}
+  .atdt{background:#FFF8E7!important;color:#7A5C00!important}
+  .risk-block{background:#FEF9F7!important}
+  .b-bar span{-webkit-print-color-adjust:exact!important}
+  .bstr span{-webkit-print-color-adjust:exact!important}
+}
 </style>
 </head>
 <body>
@@ -1279,6 +1317,17 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
 
   document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + loc05Html + knowledgeHtml + glossHtml + ctaHtml;
 }
+
+// ── Print: add page-break class to section headers 02+ ───────────────────────
+window.addEventListener('beforeprint', function() {
+  const headers = document.querySelectorAll('.sh');
+  headers.forEach((el, i) => {
+    if (i > 0) el.classList.add('print-pb');
+  });
+});
+window.addEventListener('afterprint', function() {
+  document.querySelectorAll('.sh.print-pb').forEach(el => el.classList.remove('print-pb'));
+});
 </script>
 </body>
 </html>

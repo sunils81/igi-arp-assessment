@@ -170,8 +170,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 /* ── Print ── */
 .print-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 18px;border-radius:7px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif;margin-top:12px;width:100%}
 .print-btn:hover{border-color:var(--gold);color:var(--navy)}
+
+/* ── Knowledge Card CTA ── */
+.kc-banner{display:none;margin-top:16px;border-radius:10px;overflow:hidden;border:1px solid #C8A84B}
+.kc-banner-inner{background:linear-gradient(135deg,#0D1B2E 0%,#1a2f4a 100%);padding:18px 20px;display:flex;align-items:center;gap:16px}
+.kc-icon{font-size:28px;flex-shrink:0}
+.kc-text{flex:1}
+.kc-text strong{display:block;color:#C8A84B;font-size:13px;font-weight:700;letter-spacing:0.04em;margin-bottom:2px}
+.kc-text span{color:rgba(255,255,255,0.7);font-size:12px;line-height:1.4}
+.kc-btn{display:inline-flex;align-items:center;gap:6px;background:#C8A84B;color:#0D1B2E;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background 0.15s}
+.kc-btn:hover{background:#d4b86a}
+.kc-btn svg{width:14px;height:14px;fill:currentColor}
+
 @media print{
-  .btn-primary,.print-btn,.q-nav,.dot-nav,.timer-bar{display:none!important}
+  .btn-primary,.print-btn,.q-nav,.dot-nav,.timer-bar,.kc-banner{display:none!important}
   .result-wrap{box-shadow:none;border:1px solid #ccc}
   .result-header{background:#0D1B2E!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
@@ -329,6 +341,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 
         <!-- Impact statement -->
         <div class="impact-box" id="impact-box"></div>
+
+        <!-- Knowledge Card — shown only on pass -->
+        <div class="kc-banner" id="kc-banner">
+          <div class="kc-banner-inner">
+            <div class="kc-icon">💎</div>
+            <div class="kc-text">
+              <strong id="kc-title">Your Diamond Knowledge Card is Ready</strong>
+              <span id="kc-desc">Download your quick-reference guide to use at the counter.</span>
+            </div>
+            <a class="kc-btn" id="kc-link" href="Your Diamond Knowledge Card.pdf" download target="_blank">
+              <svg viewBox="0 0 20 20"><path d="M10 14l-5-5h3V4h4v5h3l-5 5zm-6 2h12v2H4v-2z"/></svg>
+              Download PDF
+            </a>
+          </div>
+        </div>
 
         <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
       </div>
@@ -1025,6 +1052,21 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
   // Raw delta is misleading: a high-baseline scorer dropping 18pts may still be
   // more capable than a low-baseline scorer gaining 5pts. We use post score
   // as the primary signal and normalised gain as context.
+  // Knowledge Card banner — always visible, message varies by score
+  const kcBanner = document.getElementById('kc-banner');
+  if (kcBanner) {
+    kcBanner.style.display = 'block';
+    const kcTitle = document.getElementById('kc-title');
+    const kcDesc  = document.getElementById('kc-desc');
+    if (postPct >= 50) {
+      kcTitle.textContent = 'Your Diamond Knowledge Card is Ready';
+      kcDesc.textContent  = 'You\'ve passed the IGI 4Cs assessment. Keep this at the counter — your quick-reference guide for every customer interaction.';
+    } else {
+      kcTitle.textContent = 'Your Diamond Knowledge Card — Study & Come Back Stronger';
+      kcDesc.textContent  = 'Use this guide to review the 4Cs and reinforce the areas flagged above. Knowledge builds confidence at the counter.';
+    }
+  }
+
   const impactEl = document.getElementById('impact-box');
   const name     = preData.name || 'This associate';
   const baseCtx  = highBaseline
