@@ -358,6 +358,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
         </div>
 
         <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
+        <button class="print-btn" id="pre-card-btn" onclick="openPreCard()" style="margin-top:8px">📋 View Pre-Training Score Card</button>
       </div>
     </div>
   </div>
@@ -1090,6 +1091,89 @@ function renderResult({prePct, postPct, delta, postGrade, tagAcc, postTagScores,
     impactEl.innerHTML = `<strong>⚠ Priority Coaching Required.</strong><br>
       ${name} scored ${postPct}%. Please schedule a one-on-one refresher session covering the categories highlighted above.${baseCtx}`;
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PRE-TRAINING SCORE CARD — open in new tab
+// ══════════════════════════════════════════════════════════════
+function openPreCard() {
+  if (!preData) return;
+  const name    = preData.name    || 'Associate';
+  const branch  = preData.branch  || '';
+  const batch   = preData.batch   || preData.batchInput || '';
+  const client  = preData.client  || '';
+  const prePct  = preData.prePct  || 0;
+  const tags    = preData.preTagScores || {};
+
+  // Build category rows
+  const catMap = {cut:'C1 — Cut',color:'C2 — Color',clarity:'C3 — Clarity',carat:'C4 — Carat'};
+  const catRows = Object.entries(catMap).map(([k,label]) => {
+    const t = tags[k];
+    const pct = t && t.total > 0 ? Math.round((t.correct/t.total)*100) : '—';
+    const color = pct === '—' ? '#999' : pct >= 70 ? '#1a7a4a' : pct >= 50 ? '#b87a10' : '#c0392b';
+    const bar = pct !== '—' ? `<div style="height:6px;background:#eee;border-radius:3px;margin-top:6px"><div style="height:6px;background:${color};border-radius:3px;width:${pct}%"></div></div>` : '';
+    return `<tr>
+      <td style="padding:10px 14px;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0">${label}</td>
+      <td style="padding:10px 14px;font-size:13px;font-weight:700;color:${color};text-align:right;border-bottom:1px solid #f0f0f0">${pct}${pct!=='—'?'%':''}</td>
+      <td style="padding:10px 14px;width:120px;border-bottom:1px solid #f0f0f0">${bar}</td>
+    </tr>`;
+  }).join('');
+
+  const bandColor = prePct >= 70 ? '#1a7a4a' : prePct >= 50 ? '#b87a10' : '#c0392b';
+  const bandLabel = prePct >= 70 ? 'Strong Baseline' : prePct >= 50 ? 'Moderate Baseline' : 'Needs Training';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Pre-Training Score Card — ${name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:"DM Sans",sans-serif;background:#f5f5f5;display:flex;justify-content:center;padding:32px 16px}
+    .card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10);max-width:480px;width:100%}
+    .header{background:#0D1B2E;padding:28px 24px;text-align:center}
+    .header img{height:32px;margin-bottom:14px}
+    .header h1{font-family:"Playfair Display",serif;font-size:17px;color:#C8A84B;letter-spacing:0.04em;margin-bottom:4px}
+    .header .sub{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.06em;text-transform:uppercase}
+    .header .assoc{font-size:14px;color:rgba(255,255,255,0.75);margin-top:12px}
+    .header .assoc strong{color:#fff}
+    .score-block{padding:28px 24px;text-align:center;border-bottom:1px solid #f0f0f0}
+    .score-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#999;margin-bottom:8px}
+    .score-val{font-size:64px;font-weight:700;font-family:"Playfair Display",serif;color:#0D1B2E;line-height:1}
+    .score-band{display:inline-block;margin-top:12px;padding:5px 18px;border-radius:20px;font-size:12px;font-weight:700;background:${bandColor}20;color:${bandColor};border:1px solid ${bandColor}40}
+    .track{height:8px;background:#eee;border-radius:4px;margin:18px 0 0;overflow:hidden}
+    .fill{height:8px;background:${bandColor};border-radius:4px;width:${prePct}%}
+    .table-wrap{padding:0 24px 20px}
+    .table-wrap h3{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#999;padding:18px 0 10px}
+    table{width:100%;border-collapse:collapse}
+    .footer{background:#f9f9f9;border-top:1px solid #eee;padding:14px 24px;text-align:center;font-size:11px;color:#aaa}
+    .footer strong{color:#C8A84B}
+    @media print{body{background:#fff;padding:0}.card{box-shadow:none;border-radius:0;max-width:100%}}
+  </style>
+  </head><body>
+  <div class="card">
+    <div class="header">
+      <img src="assets/igi-school-of-gemology-white-logo.svg" alt="IGI">
+      <h1>Pre-Training Score Card</h1>
+      <div class="sub">IGI Retail Sales Excellence Program</div>
+      <div class="assoc"><strong>${name}</strong>${branch ? ' &nbsp;·&nbsp; '+branch : ''}${client ? ' &nbsp;·&nbsp; '+client : ''}${batch ? ' &nbsp;·&nbsp; Batch: '+batch : ''}</div>
+    </div>
+    <div class="score-block">
+      <div class="score-label">Pre-Training Score</div>
+      <div class="score-val">${prePct}%</div>
+      <div class="score-band">${bandLabel}</div>
+      <div class="track"><div class="fill"></div></div>
+    </div>
+    <div class="table-wrap">
+      <h3>Category Breakdown</h3>
+      <table>${catRows}</table>
+    </div>
+    <div class="footer">Assessed before IGI 4Cs training &nbsp;·&nbsp; <strong>Trained by IGI — The World's Largest Certification Lab</strong></div>
+  </div>
+  <script>window.onload=()=>setTimeout(()=>{},300)</script>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  window.open(url, '_blank');
 }
 
 // ══════════════════════════════════════════════════════════════
