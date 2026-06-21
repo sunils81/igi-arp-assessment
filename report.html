@@ -436,7 +436,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   const skillMatrix = rows.map(r=>({
     name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
     c2s:r.c2s, fcs:r.fcs, fcsTagsRaw:r.fcsTags||'{}',
-    riK:r.riK, riS:r.riS, riA:r.riA,
+    riK:r.riK, riS:r.riS, riA:r.riA, partialSubmission:r.partialSubmission||false,
     gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
   }));
   const skillGapCounts = SKILLS.map((_,si)=>({
@@ -720,14 +720,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
       bands.Developing  > bands.Foundation ? 'Developing'  : 'Foundation'
     ) : 'Foundation';
     const topBand   = Object.keys(bands).sort((a,b)=>bands[b]-bands[a])[0];
-    const riskCount = (() => {
-      let c = 0;
-      rows.forEach(r => {
-        const tags = safeJson(r.fcsTags);
-        Object.values(tags).forEach(t => { if (t && t.total > 0 && (t.correct/t.total) < 0.5) c++; });
-      });
-      return c;
-    })();
+    const riskCount = rows.filter(r => (parseFloat(r.fcs)||0) < 56).length;
     const topRSP = Object.keys(rspDist).sort((a,b)=>rspDist[b]-rspDist[a])[0];
     const rspLabels = {PP:'Product Pushers',TA:'Transaction Achievers',PS:'Problem Solvers',EA:'Expert Advisors',TrA:'Trusted Advisors'};
     const bandDesc = {Outstanding:'exceptional readiness',Proficient:'strong readiness',Developing:'developing readiness',Foundation:'foundational stage'};
