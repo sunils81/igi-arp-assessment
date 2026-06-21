@@ -365,13 +365,25 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   // Sanitize ri — coerce to number (some rows may carry a JSON string in this field)
   rows = rows.map(r => { const v = parseFloat(r.ri); return {...r, ri: isNaN(v) ? 0 : Math.round(v)}; });
 
+  // Sanitize text fields — detect corrupted data (JSON strings or timeTaken format landing in wrong columns)
+  const isJsonStr   = s => typeof s === 'string' && (s.trim().startsWith('{') || s.trim().startsWith('['));
+  const isTimingStr = s => typeof s === 'string' && /^\s*(\d+m\s*\d+s|4cs:)/i.test(s);
+  rows = rows.map(r => ({
+    ...r,
+    c2s:      (isJsonStr(r.c2s)      || isTimingStr(r.c2s))      ? '' : r.c2s,
+    rspLabel: isJsonStr(r.rspLabel)                               ? (r.rspKey||'') : r.rspLabel,
+    desig:    isJsonStr(r.desig)                                  ? '' : r.desig,
+    branch:   isJsonStr(r.branch)                                 ? '' : r.branch,
+  }));
+
   // Guard: filter out data-error rows (name present but RI=0 and band not a known band)
   const VALID_BANDS = ['Outstanding','Proficient','Developing','Foundation'];
   rows = rows.filter(r => {
     if (!r.name || !r.name.trim()) return false; // no name — skip
     const badBand = !VALID_BANDS.includes(r.band);
-    const validRI  = parseFloat(r.ri) > 0;  // NaN, 0, undefined all fail this
-    if (badBand && !validRI) return false; // corrupted row (bad band + no valid RI) — exclude
+    const ri = parseFloat(r.ri);
+    const validRI = ri >= 10; // real RI is always ≥10; values below 10 indicate a corrupted column shift
+    if (badBand && !validRI) return false; // corrupted row — exclude from report
     return true;
   });
   const n = rows.length;
@@ -789,7 +801,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <th>Associate</th>
             <th>Location</th>
             <th style="text-align:center">Index</th>
-            <th style="text-align:center">Stage</th>
+            <th style="text-align:center" title="RSP Stage — TrA: Trusted Advisor, EA: Expert Advisor, PS: Problem Solver, PP: Product Pusher">RSP Stage</th>
             ${SKILL_SHORT.map(s=>`<th class="sc" title="${s}">${s}</th>`).join('')}
           </tr>
         </thead>
@@ -856,7 +868,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           <th>Associate</th>
           <th style="width:110px">Location</th>
           <th style="text-align:center;width:80px">Index</th>
-          <th style="width:100px">Stage</th>
+          <th style="width:100px" title="RSP Stage — TrA: Trusted Advisor, EA: Expert Advisor, PS: Problem Solver, PP: Product Pusher">RSP Stage</th>
           <th>Gaps &amp; Development Areas</th>
         </tr>
       </thead>
@@ -912,8 +924,20 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   const hasCityData = rows.some(r => (r.city || '').trim().length > 0);
   const missingCityCount = rows.filter(r => !(r.city || '').trim()).length;
 
-  // Normalise a display name to a dedup key (lowercase, strip commas/extra spaces)
-  const normKey = s => s.toLowerCase().replace(/[,\.]+/g, ' ').replace(/\s+/g, ' ').trim();
+  // Normalise a display name to a dedup key (lowercase, strip commas/extra spaces, apply known aliases)
+  const STORE_ALIASES = {
+    'ambiance mall gurgaon':'ambience mall gurgaon','ambiance mall gurugram':'ambience mall gurgaon',
+    'ambience mall gurugram':'ambience mall gurgaon',
+    'borviali mumbai':'borivali mumbai','borvali mumbai':'borivali mumbai',
+    'borviali':'borivali',
+    'kolkata shantikentan':'kolkata shantiniketan','shantikentan':'shantiniketan',
+    'gariahat store':'gariahat','gariahat kolkata':'gariahat',
+    'gariahat store kolkata':'gariahat',
+  };
+  const normKey = s => {
+    const base = s.toLowerCase().replace(/[,\.]+/g,' ').replace(/\s+/g,' ').trim();
+    return STORE_ALIASES[base] || base;
+  };
 
   const cityMap = {};
   const cityCanon = {}; // normKey -> first-seen canonical display name
@@ -1164,7 +1188,8 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <div class="cta-trn">Sunil Sharma</div>
     </div>
     <div class="cta-act">
-      <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn-print" onclick="window.print()" title="In Chrome print dialog → More settings → uncheck 'Headers and footers'">Print / Save PDF</button>
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px;line-height:1.4;max-width:180px">Tip: uncheck <em>Headers &amp; footers</em><br>in Chrome print settings</div>
     </div>
   </div>
   <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>
@@ -1315,6 +1340,9 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         </div>`;
       }).join('')}
     </div>
+
+    <!-- High Baseline callout -->
+    ${compRows.some(r=>r.completed && r.prePct>=75) ? `<div style="margin-bottom:16px;padding:10px 14px;background:#FEF9EC;border-left:3px solid #B87A10;font-size:12px;color:#5C3D00;line-height:1.65"><strong>⭐ High Baseline associates</strong> scored ≥75% before training. Because they already knew most content, mathematical improvement is limited — a small dip in Normalised Gain is expected and acceptable for these associates. Use the <strong>CRS</strong> (Composite Readiness Score) column as the primary measure of their overall capability.</div>` : ''}
 
     <!-- Per-associate table -->
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Associate Knowledge Comparison</div>

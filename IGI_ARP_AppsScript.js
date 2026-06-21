@@ -260,19 +260,23 @@ function doPost(e){
     const rspClassification = d.rspStage    || d.rspClassification || '';
     const rspLabel          = d.rspLabel    || '';
 
+    // IMPORTANT: row order must match HEADERS exactly.
+    // HEADERS[12] = 'Time Taken', HEADERS[41] = 'Diamond Type', HEADERS[42] = 'City'
+    // City and Diamond Type were previously written at [12] and [13] — now corrected to the end.
     const row = [
-      d.timestamp||new Date().toISOString(), d.refId||'',
-      d.trainerName||'', d.batchCode||'', d.igiCentre||'', d.clientParam||'',
-      d.name||'', d.mobile||'', d.branch||'', d.designation||'',
-      d.experience||'', d.country||'', d.city||'', d.diamondType||'', d.timeTaken||'',
-      d.c2sPrimary||'', d.c2sClassification||'', d.c2sLabel||'', d.c2sScores||'',
-      c2s['1']||0, c2s['2']||0, c2s['3']||0, c2s['4']||0,
-      rspPrimary, rspClassification, rspLabel, d.rspScores||'',
-      rsp['H']||0, rsp['F']||0, rsp['C']||0, rsp['A']||0,
-      d.fcsScore||0, d.fcsPct||0, d.fcsGrade||'', d.fcsTagScores||'',
-      d.readinessTotal||0, d.readinessBand||'', d.knowledgePts||0, d.behaviouralPts||0,
-      d.comboProfile||'', d.insightTitle||'',
-      pdfUrl ? '=HYPERLINK("'+pdfUrl+'","View PDF")' : ''
+      d.timestamp||new Date().toISOString(), d.refId||'',           // 0-1
+      d.trainerName||'', d.batchCode||'', d.igiCentre||'', d.clientParam||'', // 2-5
+      d.name||'', d.mobile||'', d.branch||'', d.designation||'',   // 6-9
+      d.experience||'', d.country||'', d.timeTaken||'',             // 10-12 (Time Taken at 12 ✓)
+      d.c2sPrimary||'', d.c2sClassification||'', d.c2sLabel||'', d.c2sScores||'', // 13-16
+      c2s['1']||0, c2s['2']||0, c2s['3']||0, c2s['4']||0,         // 17-20
+      rspPrimary, rspClassification, rspLabel, d.rspScores||'',    // 21-24
+      rsp['H']||0, rsp['F']||0, rsp['C']||0, rsp['A']||0,         // 25-28
+      d.fcsScore||0, d.fcsPct||0, d.fcsGrade||'', d.fcsTagScores||'', // 29-32
+      d.readinessTotal||0, d.readinessBand||'', d.knowledgePts||0, d.behaviouralPts||0, // 33-36
+      d.comboProfile||'', d.insightTitle||'',                       // 37-38
+      pdfUrl ? '=HYPERLINK("'+pdfUrl+'","View PDF")' : '', '',      // 39-40 (PDF Link, Batch Password)
+      d.diamondType||'', d.city||''                                  // 41-42 (Diamond Type, City ✓)
     ];
 
     sheet.appendRow(row);
