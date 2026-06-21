@@ -139,7 +139,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   body{background:#F7F5F0!important}
 
   /* ── B: hide screen-only chrome ── */
-  .gate-wrap,#gateScreen,.btn-print,#ar-bar{display:none!important}
+  .gate-wrap,#gateScreen,.btn-print,#ar-bar,.print-tip{display:none!important}
 
   /* ── C: A4 portrait page setup with reliable page numbers ── */
   @page{size:A4 portrait;margin:15mm 12mm;@bottom-center{content:"Jewelbox  ·  IGI Retail Sales Excellence Programme  |  Confidential  |  Page " counter(page);font-size:8px;color:#6B6357;font-family:sans-serif;letter-spacing:.04em}}
@@ -1189,7 +1189,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     </div>
     <div class="cta-act">
       <button class="btn-print" onclick="window.print()" title="In Chrome print dialog → More settings → uncheck 'Headers and footers'">Print / Save PDF</button>
-      <div style="font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px;line-height:1.4;max-width:180px">Tip: uncheck <em>Headers &amp; footers</em><br>in Chrome print settings</div>
+      <div class="print-tip" style="font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px;line-height:1.4;max-width:180px">Tip: uncheck <em>Headers &amp; footers</em><br>in Chrome print settings</div>
     </div>
   </div>
   <div class="conf">IGI School of Gemology &nbsp;&mdash;&nbsp; Retail Sales Excellence Program &nbsp;&mdash;&nbsp; Confidential</div>
