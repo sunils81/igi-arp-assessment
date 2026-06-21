@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IGI ARP — Batch Report</title>
+<title>IGI Retail Sales Excellence Programme — Batch Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FFFFFF;--off:#F7F5F0;--muted:#6B6357;--border:#E2DDD6;--teal:#1D9E75;--coral:#C9613A;--purple:#534AB7;--blue:#378ADD;--gap-fill:#C94A4A;--dev-fill:#B87A10;--str-fill:#1D9E75;--rm:4px;--sh:0 1px 4px rgba(13,27,46,0.07),0 4px 16px rgba(13,27,46,0.05)}
@@ -132,17 +132,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .btn-print{background:transparent;color:var(--gold-light);border:1px solid rgba(201,168,76,0.4);padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;letter-spacing:.03em;border-radius:var(--rm);transition:all .18s}
 .btn-print:hover{background:rgba(201,168,76,0.1)}
 .conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-@page{margin:16mm 14mm;@bottom-center{content:"IGI ARP | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
+@page{margin:16mm 14mm;@bottom-center{content:"Jewelbox · IGI Retail Sales Excellence Programme | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
 @media print{
   /* ── A: colour fidelity ── */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   body{background:#F7F5F0!important}
 
   /* ── B: hide screen-only chrome ── */
-  .gate-wrap,#gateScreen,.btn-print{display:none!important}
+  .gate-wrap,#gateScreen,.btn-print,#ar-bar{display:none!important}
 
   /* ── C: A4 portrait page setup with reliable page numbers ── */
-  @page{size:A4 portrait;margin:15mm 12mm;@bottom-center{content:"IGI ARP  |  Confidential  |  Page " counter(page);font-size:8px;color:#6B6357;font-family:sans-serif;letter-spacing:.04em}}
+  @page{size:A4 portrait;margin:15mm 12mm;@bottom-center{content:"Jewelbox  ·  IGI Retail Sales Excellence Programme  |  Confidential  |  Page " counter(page);font-size:8px;color:#6B6357;font-family:sans-serif;letter-spacing:.04em}}
 
   /* ── D: expand to full print width (remove 860px web cap) ── */
   #app{max-width:100%!important;padding:0!important}
@@ -362,6 +362,9 @@ function isJobTitle(s) {
 
 function renderReport(rows, batch, client, trainerName, postRows) {
   postRows = postRows || [];
+  // Sanitize ri — coerce to number (some rows may carry a JSON string in this field)
+  rows = rows.map(r => { const v = parseFloat(r.ri); return {...r, ri: isNaN(v) ? 0 : Math.round(v)}; });
+
   // Guard: filter out data-error rows (name present but RI=0 and band not a known band)
   const VALID_BANDS = ['Outstanding','Proficient','Developing','Foundation'];
   rows = rows.filter(r => {
@@ -909,26 +912,35 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   const hasCityData = rows.some(r => (r.city || '').trim().length > 0);
   const missingCityCount = rows.filter(r => !(r.city || '').trim()).length;
 
+  // Normalise a display name to a dedup key (lowercase, strip commas/extra spaces)
+  const normKey = s => s.toLowerCase().replace(/[,\.]+/g, ' ').replace(/\s+/g, ' ').trim();
+
   const cityMap = {};
+  const cityCanon = {}; // normKey -> first-seen canonical display name
   rows.forEach(r => {
-    // Use r.city (proper city field) when available; fall back to r.branch for historical data
     const rawLoc = (r.city || r.branch || '').trim();
-    const city = (!rawLoc || isJobTitle(rawLoc)) ? '(No Location)' : toTitleCase(rawLoc);
-    if (!cityMap[city]) cityMap[city] = [];
-    cityMap[city].push(r);
+    const display = (!rawLoc || isJobTitle(rawLoc)) ? '(No Location)' : toTitleCase(rawLoc);
+    const nk = normKey(display);
+    if (!cityCanon[nk]) cityCanon[nk] = display;
+    const canon = cityCanon[nk];
+    if (!cityMap[canon]) cityMap[canon] = [];
+    cityMap[canon].push(r);
   });
   const cityList = Object.keys(cityMap).sort();
 
-  // Group rows by store/branch
+  // Group rows by store/branch (deduplicated)
   const storeMap = {};
+  const storeCanon = {};
   rows.forEach(r => {
     const rawBranch = (r.branch || '').trim();
-    const store = isJobTitle(rawBranch) ? '(No Store)' : toTitleCase(rawBranch) || '—';
+    const displayStore = isJobTitle(rawBranch) ? '(No Store)' : toTitleCase(rawBranch) || '—';
+    const nk = normKey(displayStore);
+    if (!storeCanon[nk]) storeCanon[nk] = displayStore;
+    const storeKey = storeCanon[nk];
     const rawCity = (r.city || r.branch || '').trim();
     const city  = (!rawCity || isJobTitle(rawCity)) ? '(No Location)' : toTitleCase(rawCity);
-    const key   = store;
-    if (!storeMap[key]) storeMap[key] = { store, city, associates: [] };
-    storeMap[key].associates.push(r);
+    if (!storeMap[storeKey]) storeMap[storeKey] = { store: storeKey, city, associates: [] };
+    storeMap[storeKey].associates.push(r);
   });
   const storeList = Object.keys(storeMap).sort();
 
