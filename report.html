@@ -378,6 +378,38 @@ function renderReport(rows, batch, client, trainerName, postRows) {
 
   // Guard: filter out data-error rows (name present but RI=0 and band not a known band)
   const VALID_BANDS = ['Outstanding','Proficient','Developing','Foundation'];
+
+  // ── New Triad RI recalculator (runs on every row using live component data) ──
+  const RSP_CONSULT_SCORE = {PP:20,TA:45,PS:65,EA:85,TrA:100};
+  function calcTriadRI(fcs, rspKey, c2sScoresJson) {
+    const knowledgeScore = Math.round(parseFloat(fcs)||0);
+    const consultScore   = RSP_CONSULT_SCORE[rspKey] || 20;
+    let adaptScore = 50; // fallback if no C2S data
+    try {
+      const sc = typeof c2sScoresJson==='string' ? JSON.parse(c2sScoresJson) : (c2sScoresJson||{});
+      const vals = [sc['1']||0, sc['2']||0, sc['3']||0, sc['4']||0];
+      if (vals.some(v=>v>0)) {
+        const range = Math.max(...vals) - Math.min(...vals);
+        adaptScore = Math.round(Math.max(0, 100 - (range/24)*100));
+      }
+    } catch(e){}
+    const total = Math.min(100, Math.round(knowledgeScore*0.40 + consultScore*0.35 + adaptScore*0.25));
+    return {total, knowledgeScore, consultScore, adaptScore};
+  }
+  function getTriadBand(score) {
+    if (score>=90) return 'Outstanding';
+    if (score>=78) return 'Proficient';
+    if (score>=62) return 'Developing';
+    return 'Foundation';
+  }
+
+  // Apply new RI to all rows
+  rows = rows.map(r => {
+    const triad = calcTriadRI(r.fcs, r.rspKey, r.c2sScores);
+    return {...r, ri: triad.total, band: getTriadBand(triad.total),
+      riK: triad.knowledgeScore, riS: triad.consultScore, riA: triad.adaptScore};
+  });
+
   rows = rows.filter(r => {
     if (!r.name || !r.name.trim()) return false; // no name — skip
     const badBand = !VALID_BANDS.includes(r.band);
@@ -394,10 +426,11 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   rows.forEach(r=>{ const b=r.band||'Foundation'; if(bands.hasOwnProperty(b)) bands[b]++; });
   const rspDist = {PP:0,TA:0,PS:0,EA:0,TrA:0};
   rows.forEach(r=>{ const k=r.rspKey||'PP'; rspDist[k]=(rspDist[k]||0)+1; });
-  
+
   const skillMatrix = rows.map(r=>({
     name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
     c2s:r.c2s, fcs:r.fcs, fcsTagsRaw:r.fcsTags||'{}',
+    riK:r.riK, riS:r.riS, riA:r.riA,
     gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
   }));
   const skillGapCounts = SKILLS.map((_,si)=>({
@@ -412,7 +445,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   });
   const topGaps = skillGapCounts.slice(0,3);
   const knowledgeRisk = rows.filter(r=>(parseFloat(r.fcs)||0)<56);
-  const avgBand = avgRI>=85?'Outstanding':avgRI>=70?'Proficient':avgRI>=55?'Developing':'Foundation';
+  const avgBand = avgRI>=90?'Outstanding':avgRI>=78?'Proficient':avgRI>=62?'Developing':'Foundation';
   const avgColor = bandColors[avgBand];
   const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
@@ -437,7 +470,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
       <div class="mv">${n}</div>
       <div class="ml">Associates Assessed</div>
     </div>
-    <div class="mc" style="${avgRI>=70?'--t:var(--teal)':'--t:var(--coral)'}">
+    <div class="mc" style="${avgRI>=78?'--t:var(--teal)':'--t:var(--coral)'}">
       <div class="mv" style="color:${avgColor}">${avgRI}</div>
       <div class="ml">Avg. Readiness Index</div>
       <div class="ms">${avgBand} band</div>
@@ -651,10 +684,10 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     <div class="pt">IGI Retail Sales Excellence Index — Benchmark Reference</div>
     <table class="bench-t">
       ${[
-        {range:'85–100',band:'Outstanding',color:'#C9A84C',desc:'Store-ready for high-value, complex sales independently. Minimal supervision needed.',action:'Consider for mentor / buddy role'},
-        {range:'70–84', band:'Proficient',  color:'#1D9E75',desc:'Solid performer. Handles most floor situations well. 1–2 specific gaps to close.',action:'Light coaching, RSP advanced module'},
-        {range:'55–69', band:'Developing',  color:'#378ADD',desc:'Foundational capability present. Structured coaching needed before premium selling.',action:'Structured RSP program, priority'},
-        {range:'0–54',  band:'Foundation',  color:'#C9613A',desc:'Significant gaps. 4Cs training required before floor deployment on premium products.',action:'4Cs certification first, then RSP'}
+        {range:'90–100',band:'Outstanding',color:'#C9A84C',desc:'Store-ready for high-value, complex sales independently. Minimal supervision needed.',action:'Consider for mentor / buddy role'},
+        {range:'78–89', band:'Proficient',  color:'#1D9E75',desc:'Solid performer. Handles most floor situations well. 1–2 specific gaps to close.',action:'Light coaching, RSP advanced module'},
+        {range:'62–77', band:'Developing',  color:'#378ADD',desc:'Foundational capability present. Structured coaching needed before premium selling.',action:'Structured RSP program, priority'},
+        {range:'0–61',  band:'Foundation',  color:'#C9613A',desc:'Significant gaps. 4Cs training required before floor deployment on premium products.',action:'4Cs certification first, then RSP'}
       ].map(b=>`
         <tr style="${avgBand===b.band?'background:#FAFAF7':''}">
           <td class="b-bar"><span style="background:${b.color}"></span></td>
@@ -666,7 +699,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     </table>
     <div style="margin-top:14px;padding:10px 14px;background:var(--off);border-left:2px solid var(--gold);font-size:12px;color:var(--navy)">
       <strong>This batch:</strong> Average index of <strong style="color:${avgColor}">${avgRI}/100</strong> — ${avgBand} band.
-      ${avgRI>=70?'Strong foundation. IGI RSP program will accelerate further.':avgRI>=55?'Targeted RSP training expected to move most associates to Proficient within 4–6 weeks.':'Prioritize 4Cs knowledge certification before behavioral skills development.'}
+      ${avgRI>=78?'Strong foundation. IGI RSP program will accelerate further.':avgRI>=62?'Targeted RSP training expected to move most associates to Proficient within 4–6 weeks.':'Prioritize 4Cs knowledge certification before behavioral skills development.'}
     </div>
   </div>
 `;
@@ -692,14 +725,14 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     const topRSP = Object.keys(rspDist).sort((a,b)=>rspDist[b]-rspDist[a])[0];
     const rspLabels = {PP:'Product Pushers',TA:'Trusted Advisors',PS:'Problem Solvers',EA:'Expert Advisors',TrA:'Training Advisors'};
     const bandDesc = {Outstanding:'exceptional readiness',Proficient:'strong readiness',Developing:'developing readiness',Foundation:'foundational stage'};
-    const riColor  = avgRI >= 85 ? '#1D9E75' : avgRI >= 70 ? '#1a7a3c' : avgRI >= 55 ? '#C9A84C' : '#C9613A';
+    const riColor  = avgRI >= 90 ? '#1D9E75' : avgRI >= 78 ? '#1a7a3c' : avgRI >= 62 ? '#C9A84C' : '#C9613A';
     const topPerformers = [...rows].sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).slice(0,5);
     const lowestRisk = rows.filter(r=>(parseFloat(r.fcs)||0)<56).sort((a,b)=>(parseFloat(a.fcs)||0)-(parseFloat(b.fcs)||0)).slice(0,5);
     const recActions = [];
-    if (avgRI < 55) recActions.push('Immediate re-training recommended before floor deployment.');
-    else if (avgRI < 70) recActions.push('Schedule structured coaching sessions for Foundation & Developing associates.');
+    if (avgRI < 62) recActions.push('Immediate re-training recommended before floor deployment.');
+    else if (avgRI < 78) recActions.push('Schedule structured coaching sessions for Foundation & Developing associates.');
     if (riskCount > 0) recActions.push(`Address ${riskCount} 4Cs knowledge gap${riskCount!==1?'s':''} with targeted product knowledge sessions.`);
-    if (avgRI >= 70 && bands.Outstanding > 0) recActions.push('Deploy Outstanding performers as peer mentors to elevate the team.');
+    if (avgRI >= 78 && bands.Outstanding > 0) recActions.push('Deploy Outstanding performers as peer mentors to elevate the team.');
     if (topRSP === 'PP') recActions.push('Run consultative selling workshop — team skews product-push, not advisory.');
     if (recActions.length === 0) recActions.push('Team readiness is solid. Focus on maintaining performance with monthly refreshers.');
 
@@ -800,7 +833,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <tr>
               <td class="an">${a.name}</td>
               <td style="font-size:11px;color:var(--muted)">${a.branch||"—"}</td>
-              <td class="ar" style="color:${parseFloat(a.ri)>=70?'var(--teal)':parseFloat(a.ri)>=55?'var(--blue)':'var(--coral)'}">${a.ri}</td>
+              <td class="ar" style="color:${parseFloat(a.ri)>=78?'var(--teal)':parseFloat(a.ri)>=62?'var(--blue)':'var(--coral)'}">${a.ri}</td>
               <td class="as">${a.rspKey}</td>
               ${a.gaps.map(g=>`<td class="dc"><span class="dot ${g==='gap'?'d-g':g==='developing'?'d-d':'d-s'}" title="${g}"></span></td>`).join('')}
             </tr>`).join('')}
@@ -888,6 +921,11 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
               <div class="ats" style="color:${bc}">${a.ri}</div>
               <div class="atb" style="color:${bc}">${a.band}</div>
               <div class="score-bar"><div class="score-fill" style="width:${a.ri}%;background:${bc}"></div></div>
+              <div style="margin-top:5px;font-size:9px;color:var(--muted);line-height:1.6;text-align:left;padding-left:2px">
+                <span title="Knowledge score (4Cs %)">K&nbsp;${a.riK??'—'}</span> &nbsp;
+                <span title="Selling Stage score">S&nbsp;${a.riS??'—'}</span> &nbsp;
+                <span title="Adaptability score">A&nbsp;${a.riA??'—'}</span>
+              </div>
             </td>
             <td style="vertical-align:middle">
               <div class="atst">${a.rspLabel||a.rspKey}</div>
@@ -1010,7 +1048,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <tbody>
         ${cityList.map(city => {
           const st = locStats(cityMap[city]);
-          const riColor = st.avgRI>=70?'var(--teal)':st.avgRI>=55?'#C9A84C':'var(--coral)';
+          const riColor = st.avgRI>=78?'var(--teal)':st.avgRI>=62?'#C9A84C':'var(--coral)';
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${city}</td>
             <td style="text-align:center;padding:9px 10px;font-size:13px;font-weight:600">${st.n}</td>
@@ -1049,7 +1087,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         ${storeList.map(key => {
           const s = storeMap[key];
           const st = locStats(s.associates);
-          const riColor = st.avgRI>=70?'var(--teal)':st.avgRI>=55?'#C9A84C':'var(--coral)';
+          const riColor = st.avgRI>=78?'var(--teal)':st.avgRI>=62?'#C9A84C':'var(--coral)';
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${s.store}</td>
             
@@ -1079,17 +1117,17 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <!-- Readiness Index -->
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">Readiness Index (RI)</div>
-        <p style="font-size:12px;color:var(--muted);line-height:1.7">A composite score from <strong>0–100</strong> reflecting an associate's overall readiness for consultative jewellery sales. It combines 4Cs product knowledge, RSP stage, C2S profiling skill, and conversation technique scores. Higher RI = stronger, more independent sales performance.</p>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7">A composite score from <strong>0–100</strong> reflecting an associate's overall readiness for consultative jewellery sales. Calculated from three components: <strong>Knowledge 40%</strong> (4Cs accuracy), <strong>Selling Stage 35%</strong> (RSP progression), and <strong>Adaptability 25%</strong> (ability to flex across customer styles). Each card shows K / S / A sub-scores below the total.</p>
       </div>
 
       <!-- Band Levels -->
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">Performance Bands</div>
         <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <tr><td style="padding:3px 0;width:36px;font-weight:700;font-family:'DM Mono',monospace;color:#C9A84C">85–100</td><td style="padding:3px 6px;font-weight:700;color:#C9A84C">Outstanding</td><td style="padding:3px 0;color:var(--muted)">Independent expert; mentor-ready</td></tr>
-          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#1D9E75">70–84</td><td style="padding:3px 6px;font-weight:700;color:#1D9E75">Proficient</td><td style="padding:3px 0;color:var(--muted)">Consistent performer; needs light coaching</td></tr>
-          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#378ADD">55–69</td><td style="padding:3px 6px;font-weight:700;color:#378ADD">Developing</td><td style="padding:3px 0;color:var(--muted)">Growing; requires structured training</td></tr>
-          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#C9613A">0–54</td><td style="padding:3px 6px;font-weight:700;color:#C9613A">Foundation</td><td style="padding:3px 0;color:var(--muted)">Early stage; intensive coaching needed</td></tr>
+          <tr><td style="padding:3px 0;width:36px;font-weight:700;font-family:'DM Mono',monospace;color:#C9A84C">90–100</td><td style="padding:3px 6px;font-weight:700;color:#C9A84C">Outstanding</td><td style="padding:3px 0;color:var(--muted)">Independent expert; mentor-ready</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#1D9E75">78–89</td><td style="padding:3px 6px;font-weight:700;color:#1D9E75">Proficient</td><td style="padding:3px 0;color:var(--muted)">Consistent performer; needs light coaching</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#378ADD">62–77</td><td style="padding:3px 6px;font-weight:700;color:#378ADD">Developing</td><td style="padding:3px 0;color:var(--muted)">Growing; requires structured training</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:#C9613A">0–61</td><td style="padding:3px 6px;font-weight:700;color:#C9613A">Foundation</td><td style="padding:3px 0;color:var(--muted)">Early stage; intensive coaching needed</td></tr>
         </table>
       </div>
 
@@ -1099,8 +1137,8 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         <p style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">The Retail Sales Professional (RSP) framework classifies how an associate currently approaches sales conversations:</p>
         <table style="width:100%;border-collapse:collapse;font-size:11px">
           <tr><td style="padding:3px 0;width:36px;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PP</td><td style="padding:3px 8px;font-weight:600">Product Pusher</td><td style="padding:3px 0;color:var(--muted)">Feature-led; low emotional engagement</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TA</td><td style="padding:3px 8px;font-weight:600">Transaction Achiever</td><td style="padding:3px 0;color:var(--muted)">Transaction-led; gets deals done with consistency</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PS</td><td style="padding:3px 8px;font-weight:600">Problem Solver</td><td style="padding:3px 0;color:var(--muted)">Needs-led; good listener, reactive style</td></tr>
-          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TA</td><td style="padding:3px 8px;font-weight:600">Trusted Advisor</td><td style="padding:3px 0;color:var(--muted)">Relationship-led; builds long-term trust</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">EA</td><td style="padding:3px 8px;font-weight:600">Expert Advisor</td><td style="padding:3px 0;color:var(--muted)">Emotion-led; crafts memorable journeys</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TrA</td><td style="padding:3px 8px;font-weight:600">Training Advisor</td><td style="padding:3px 0;color:var(--muted)">Coaching-ready; elevates team capability</td></tr>
         </table>

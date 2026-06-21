@@ -467,6 +467,7 @@ function doGet(e){
         name:     headers.indexOf('Name'),
         desig:    headers.indexOf('Designation'),
         c2s:      headers.indexOf('C2S Classification'),
+        c2sScores:headers.indexOf('C2S Scores (JSON)'),
         rspKey:   headers.indexOf('RSP Primary'),
         rspLabel: headers.indexOf('RSP Label'),
         ri:       headers.indexOf('Readiness Total'),
@@ -482,7 +483,8 @@ function doGet(e){
         mobile:r[idx.mobile]||'',
         name:r[idx.name]||'', desig:r[idx.desig]||'',
         branch:r[idx.branch]||'', city:r[idx.city]||'',
-        c2s:r[idx.c2s]||'', rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
+        c2s:r[idx.c2s]||'', c2sScores:r[idx.c2sScores]||'{}',
+        rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
         ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||'',
         fcsTags:r[idx.fcsTags]||'{}'
       }));

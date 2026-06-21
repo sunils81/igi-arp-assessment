@@ -1104,24 +1104,34 @@ function getFCSGrade(pct){
 }
 
 function getReadiness(c2sAnalysis,rspAnalysis,fcsCorrect){
-  const knowledgePts=Math.round((fcsCorrect/25)*70);
+  // ── Component 1: Knowledge (40%) — raw 4Cs percentage ──────────────
+  const knowledgeScore=Math.round((fcsCorrect/25)*100);
+
+  // ── Component 2: Consultative Stage (35%) — RSP stage → 0-100 ─────
+  const RSP_CONSULT={PP:20,TA:45,PS:65,EA:85,TrA:100};
+  const consultScore=RSP_CONSULT[rspAnalysis.stage.key]||20;
+
+  // ── Component 3: Adaptability (25%) — reward range, penalise rigidity
+  // High C2S range = dominant single style = low adaptability
+  // Flat C2S distribution = flexible with all customer types = high adaptability
   const c2sVals=c2sAnalysis.sorted.map(x=>x[1]);
-  const c2sClarity=Math.min(15,Math.round((Math.max(0,c2sVals[0]-c2sVals[1])/24)*30));
-  const rspClarity=Math.min(15,Math.round(((rspAnalysis.avg - 1.0)/2.0)*15));
-  const behaviouralPts=Math.min(30,c2sClarity+rspClarity);
-  const total=Math.min(100,knowledgePts+behaviouralPts);
-  const c2sClarityPct=(c2sVals[0]/24)*100;
+  const c2sRange=Math.max(0,c2sVals[0]-c2sVals[c2sVals.length-1]);
+  const adaptScore=Math.round(Math.max(0,100-(c2sRange/24)*100));
+
+  const total=Math.min(100,Math.round(knowledgeScore*0.40+consultScore*0.35+adaptScore*0.25));
+
   return{
-    total,knowledgePts,behaviouralPts,
-    c2sClarityLabel:c2sClarityPct>=50?'Strong':c2sClarityPct>=35?'Moderate':'Blended',
-    rspClarityLabel:rspAnalysis.label
+    total,knowledgeScore,consultScore,adaptScore,
+    // keep legacy aliases so nothing downstream breaks
+    knowledgePts:knowledgeScore,behaviouralPts:Math.round(consultScore*0.35+adaptScore*0.25),
+    rspStageKey:rspAnalysis.stage.key,rspStageLabel:rspAnalysis.stage.label
   };
 }
 
 function getReadinessBand(score){
-  if(score>=85) return{label:'Outstanding',color:'#C9A84C'};
-  if(score>=70) return{label:'Proficient',color:'#1D9E75'};
-  if(score>=55) return{label:'Developing',color:'#378ADD'};
+  if(score>=90) return{label:'Outstanding',color:'#C9A84C'};
+  if(score>=78) return{label:'Proficient',color:'#1D9E75'};
+  if(score>=62) return{label:'Developing',color:'#378ADD'};
   return{label:'Foundation',color:'#C9613A'};
 }
 
@@ -1638,10 +1648,10 @@ function submitAll(){
         <div style="font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">IGI Retail Sales Excellence Index — What this means</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           ${[
-            {range:'85–100',band:'Outstanding',desc:'Store-ready for high-value sales independently.',color:'#C9A84C'},
-            {range:'70–84', band:'Proficient',  desc:'Solid performer, light coaching to go further.',color:'#1D9E75'},
-            {range:'55–69', band:'Developing',  desc:'Foundational — structured coaching needed.',color:'#378ADD'},
-            {range:'0–54',  band:'Foundation',  desc:'Training required before premium deployment.',color:'#C9613A'}
+            {range:'90–100',band:'Outstanding',desc:'Store-ready for high-value sales independently.',color:'#C9A84C'},
+            {range:'78–89', band:'Proficient',  desc:'Solid performer, light coaching to go further.',color:'#1D9E75'},
+            {range:'62–77', band:'Developing',  desc:'Foundational — structured coaching needed.',color:'#378ADD'},
+            {range:'0–61',  band:'Foundation',  desc:'Training required before premium deployment.',color:'#C9613A'}
           ].map(b=>`
             <div style="padding:8px 10px;border-radius:7px;background:${readinessBand.label===b.band?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${readinessBand.label===b.band?b.color+'60':'transparent'}">
               <div style="font-size:11px;font-weight:700;color:${b.color}">${b.range}</div>
@@ -1650,7 +1660,7 @@ function submitAll(){
             </div>`).join('')}
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:rgba(255,255,255,0.55);line-height:1.5">
-          <strong style="color:rgba(255,255,255,0.75)">Index formula:</strong> Diamond Knowledge 70 pts + Communication Style clarity 15 pts + Sales Persona maturity 15 pts
+          <strong style="color:rgba(255,255,255,0.75)">Index formula:</strong> Knowledge 40% + Selling Stage 35% + Adaptability 25%
         </div>
       </div>
       <div class="ri-panels">
@@ -1665,10 +1675,23 @@ function submitAll(){
         </div>
         <div class="ri-divider"></div>
         <div class="ri-panel" style="align-items:stretch">
-          <div class="ri-panel-label" style="color:var(--muted);text-align:center">Behavioural Profile</div>
-          <div style="margin-top:16px">
-            <div class="clarity-row"><span style="color:var(--muted);font-weight:500">Communication</span><span class="clarity-pill" style="color:${C2S_COLORS[c2sA.primary]}">${readiness.c2sClarityLabel}</span></div>
-            <div class="clarity-row"><span style="color:var(--muted);font-weight:500">Sales Persona</span><span class="clarity-pill" style="color:${rspA.stage.color}">${readiness.rspClarityLabel}</span></div>
+          <div class="ri-panel-label" style="color:var(--muted);text-align:center">Score Breakdown</div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;color:var(--muted);font-weight:500">Knowledge</span>
+              <span style="font-size:13px;font-weight:700;color:var(--purple)">${readiness.knowledgeScore}<small style="font-size:9px;font-weight:400;color:var(--muted)"> /100</small></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;color:var(--muted);font-weight:500">Selling Stage</span>
+              <span style="font-size:13px;font-weight:700;color:${rspA.stage.color}">${readiness.consultScore}<small style="font-size:9px;font-weight:400;color:var(--muted)"> /100</small></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;color:var(--muted);font-weight:500">Adaptability</span>
+              <span style="font-size:13px;font-weight:700;color:${C2S_COLORS[c2sA.primary]}">${readiness.adaptScore}<small style="font-size:9px;font-weight:400;color:var(--muted)"> /100</small></span>
+            </div>
+            <div style="margin-top:4px;padding-top:6px;border-top:1px solid var(--border);font-size:9px;color:var(--muted);line-height:1.5">
+              K×40% + S×35% + A×25%
+            </div>
           </div>
         </div>
       </div>
@@ -1744,7 +1767,7 @@ function submitAll(){
       <div class="tn-grid">
         <div class="tn-item"><div class="tn-lbl">C2S Profile</div><div class="tn-val">${c2sA.label} (${c2sA.classification})</div></div>
         <div class="tn-item"><div class="tn-lbl">RSP Profile</div><div class="tn-val">${rspA.label} (${rspA.classification})</div></div>
-        <div class="tn-item"><div class="tn-lbl">Excellence Index</div><div class="tn-val">${readiness.total}/100 &mdash; ${readinessBand.label}</div></div>
+        <div class="tn-item"><div class="tn-lbl">Excellence Index</div><div class="tn-val">${readiness.total}/100 &mdash; ${readinessBand.label} (K:${readiness.knowledgeScore} S:${readiness.consultScore} A:${readiness.adaptScore})</div></div>
         <div class="tn-item"><div class="tn-lbl">4Cs Score</div><div class="tn-val">${fcsPct}% (${fcsResult.correct}/25) ${fcsGrade.flag?'&#9888; Training needed':''}</div></div>
         <div class="tn-item"><div class="tn-lbl">Skill Gaps</div><div class="tn-val">${gapCount} gap${gapCount!==1?'s':''}, ${devCount} developing</div></div>
         <div class="tn-item"><div class="tn-lbl">Diamond Type</div><div class="tn-val">${dtLabel}</div></div>
@@ -1796,7 +1819,8 @@ function submitAll(){
     fcsScore:fcsResult.correct,fcsPct,fcsGrade:fcsGrade.label,
     fcsTagScores:JSON.stringify(fcsResult.tagScores),
     readinessTotal:readiness.total,readinessBand:readinessBand.label,
-    knowledgePts:readiness.knowledgePts,behaviouralPts:readiness.behaviouralPts,
+    knowledgePts:readiness.knowledgeScore,behaviouralPts:readiness.behaviouralPts,
+    riKnowledge:readiness.knowledgeScore,riConsult:readiness.consultScore,riAdapt:readiness.adaptScore,
     comboProfile:comboKey,insightTitle:profile.title
   };
   if(SHEET_URL) {
