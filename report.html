@@ -385,16 +385,21 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     const knowledgeScore = Math.round(parseFloat(fcs)||0);
     const consultScore   = RSP_CONSULT_SCORE[rspKey] || 20;
     let adaptScore = 50; // fallback if no C2S data
+    let c2sIncomplete = false;
     try {
       const sc = typeof c2sScoresJson==='string' ? JSON.parse(c2sScoresJson) : (c2sScoresJson||{});
       const vals = [sc['1']||0, sc['2']||0, sc['3']||0, sc['4']||0];
       if (vals.some(v=>v>0)) {
         const range = Math.max(...vals) - Math.min(...vals);
         adaptScore = Math.round(Math.max(0, 100 - (range/24)*100));
+      } else {
+        c2sIncomplete = true; // all zeros = sections 2 & 3 not submitted
       }
-    } catch(e){}
+    } catch(e){ c2sIncomplete = true; }
+    // Mark as partial submission: all-zero C2S AND defaulted to PP (no RSP data either)
+    const partialSubmission = c2sIncomplete && (!rspKey || rspKey === 'PP');
     const total = Math.min(100, Math.round(knowledgeScore*0.40 + consultScore*0.35 + adaptScore*0.25));
-    return {total, knowledgeScore, consultScore, adaptScore};
+    return {total, knowledgeScore, consultScore, adaptScore, partialSubmission};
   }
   function getTriadBand(score) {
     if (score>=90) return 'Outstanding';
@@ -407,7 +412,8 @@ function renderReport(rows, batch, client, trainerName, postRows) {
   rows = rows.map(r => {
     const triad = calcTriadRI(r.fcs, r.rspKey, r.c2sScores);
     return {...r, ri: triad.total, band: getTriadBand(triad.total),
-      riK: triad.knowledgeScore, riS: triad.consultScore, riA: triad.adaptScore};
+      riK: triad.knowledgeScore, riS: triad.consultScore, riA: triad.adaptScore,
+      partialSubmission: triad.partialSubmission};
   });
 
   rows = rows.filter(r => {
@@ -543,22 +549,22 @@ function renderReport(rows, batch, client, trainerName, postRows) {
             <tbody>
               <tr style="border-bottom:1px solid #F0ECE8">
                 <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#C9A84C;display:inline-block"></span><strong>Outstanding</strong></span></td>
-                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#C9A84C;font-weight:700">85 – 100</td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#C9A84C;font-weight:700">90 – 100</td>
                 <td style="padding:7px 10px;color:#3A3530">Exceptional foundation. Ready to perform; can mentor peers.</td>
               </tr>
               <tr style="border-bottom:1px solid #F0ECE8;background:#FAFAFA">
                 <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#1D9E75;display:inline-block"></span><strong>Proficient</strong></span></td>
-                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#1D9E75;font-weight:700">70 – 84</td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#1D9E75;font-weight:700">78 – 89</td>
                 <td style="padding:7px 10px;color:#3A3530">Strong baseline. Consistent performance expected post-training.</td>
               </tr>
               <tr style="border-bottom:1px solid #F0ECE8">
                 <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#378ADD;display:inline-block"></span><strong>Developing</strong></span></td>
-                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#378ADD;font-weight:700">55 – 69</td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#378ADD;font-weight:700">62 – 77</td>
                 <td style="padding:7px 10px;color:#3A3530">Progressing. Structured coaching will unlock significant growth.</td>
               </tr>
               <tr>
                 <td style="padding:7px 10px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#C9613A;display:inline-block"></span><strong>Foundation</strong></span></td>
-                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#C9613A;font-weight:700">0 – 54</td>
+                <td style="padding:7px 10px;text-align:center;font-family:'DM Mono',monospace;color:#C9613A;font-weight:700">0 – 61</td>
                 <td style="padding:7px 10px;color:#3A3530">Critical gaps. Immediate intervention needed before floor role.</td>
               </tr>
             </tbody>
@@ -605,22 +611,22 @@ function renderReport(rows, batch, client, trainerName, postRows) {
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:8px">Manager Action Guide — By RI Band</div>
 
           <div style="background:#FEF9F2;border:1px solid #E8D89A;border-left:4px solid #C9A84C;padding:11px 14px;margin-bottom:8px;border-radius:0 3px 3px 0">
-            <div style="font-size:11px;font-weight:700;color:#7A5C00;margin-bottom:4px">⭐ Outstanding (85–100)</div>
+            <div style="font-size:11px;font-weight:700;color:#7A5C00;margin-bottom:4px">⭐ Outstanding (90–100)</div>
             <div style="font-size:11px;color:#3A3530;line-height:1.65">Assign as peer mentors. Include in advanced selling modules. Recognise publicly to motivate the team. Focus coaching on leadership communication, not product knowledge.</div>
           </div>
 
           <div style="background:#F0FBF6;border:1px solid #A3D9BF;border-left:4px solid #1D9E75;padding:11px 14px;margin-bottom:8px;border-radius:0 3px 3px 0">
-            <div style="font-size:11px;font-weight:700;color:#155C3E;margin-bottom:4px">✅ Proficient (70–84)</div>
+            <div style="font-size:11px;font-weight:700;color:#155C3E;margin-bottom:4px">✅ Proficient (78–89)</div>
             <div style="font-size:11px;color:#3A3530;line-height:1.65">Schedule monthly performance check-ins. Assign upselling & luxury segment coaching. No urgent intervention — focus on consistency and floor confidence.</div>
           </div>
 
           <div style="background:#EFF6FF;border:1px solid #B3D4F5;border-left:4px solid #378ADD;padding:11px 14px;margin-bottom:8px;border-radius:0 3px 3px 0">
-            <div style="font-size:11px;font-weight:700;color:#1E4A8A;margin-bottom:4px">📈 Developing (55–69)</div>
+            <div style="font-size:11px;font-weight:700;color:#1E4A8A;margin-bottom:4px">📈 Developing (62–77)</div>
             <div style="font-size:11px;color:#3A3530;line-height:1.65">Pair with a Proficient or Outstanding mentor. Run bi-weekly coaching sessions targeting 4Cs gaps identified in the heatmap. Set a 30-day re-assessment date. Supervised floor time only.</div>
           </div>
 
           <div style="background:#FEF2F2;border:1px solid #FBBFBF;border-left:4px solid #C9613A;padding:11px 14px;border-radius:0 3px 3px 0">
-            <div style="font-size:11px;font-weight:700;color:#8B2500;margin-bottom:4px">🔴 Foundation (0–54)</div>
+            <div style="font-size:11px;font-weight:700;color:#8B2500;margin-bottom:4px">🔴 Foundation (0–61)</div>
             <div style="font-size:11px;color:#3A3530;line-height:1.65">Do not deploy independently on the sales floor. Enrol in full IGI remedial module. Address specific gaps from the Knowledge column (Section 07). Reassess within 2 weeks post-training completion.</div>
           </div>
         </div>
@@ -640,7 +646,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
               </tr>
               <tr style="border-bottom:1px solid #F0ECE8">
                 <td style="padding:7px 10px;font-weight:700;color:#0D1B2E">RSP Type</td>
-                <td style="padding:7px 10px;color:#3A3530"><strong>TA</strong> (Trusted Advisor) &amp; <strong>EA</strong> (Expert Advisor) = ideal advisory styles. <strong>PP</strong> (Product Pusher) = needs consultative coaching. <strong>PS</strong> (Problem Solver) = good instinct, needs sequencing refinement.</td>
+                <td style="padding:7px 10px;color:#3A3530"><strong>TrA</strong> (Trusted Advisor) &amp; <strong>EA</strong> (Expert Advisor) = ideal advisory styles. <strong>TA</strong> (Transaction Achiever) = transactional; needs discovery depth. <strong>PP</strong> (Product Pusher) = needs consultative coaching. <strong>PS</strong> (Problem Solver) = good instinct, needs sequencing refinement.</td>
               </tr>
               <tr>
                 <td style="padding:7px 10px;font-weight:700;color:#0D1B2E">Heatmap Colours</td>
@@ -723,7 +729,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
       return c;
     })();
     const topRSP = Object.keys(rspDist).sort((a,b)=>rspDist[b]-rspDist[a])[0];
-    const rspLabels = {PP:'Product Pushers',TA:'Trusted Advisors',PS:'Problem Solvers',EA:'Expert Advisors',TrA:'Training Advisors'};
+    const rspLabels = {PP:'Product Pushers',TA:'Transaction Achievers',PS:'Problem Solvers',EA:'Expert Advisors',TrA:'Trusted Advisors'};
     const bandDesc = {Outstanding:'exceptional readiness',Proficient:'strong readiness',Developing:'developing readiness',Foundation:'foundational stage'};
     const riColor  = avgRI >= 90 ? '#1D9E75' : avgRI >= 78 ? '#1a7a3c' : avgRI >= 62 ? '#C9A84C' : '#C9613A';
     const topPerformers = [...rows].sort((a,b)=>(parseFloat(b.ri)||0)-(parseFloat(a.ri)||0)).slice(0,5);
@@ -750,8 +756,8 @@ function renderReport(rows, batch, client, trainerName, postRows) {
            topRSP==='TA' ? 'strong advisory instincts; ready for advanced coaching' :
            topRSP==='PS' ? 'problem-solving led; needs Emotion Sequencing refinement' :
            topRSP==='EA' ? 'experiential selling experts; can mentor peers' :
-           'actively developing; benefits from structured coaching'}.
-        ${riskCount > 0 ? `<strong style="color:#C94A4A">${riskCount} knowledge risk${riskCount!==1?'s':''}</strong> identified below 50% threshold.` : ''}
+           'strong advisory profile; ready to elevate the team'}.
+        ${riskCount > 0 ? `<strong style="color:#C94A4A">${riskCount} associate${riskCount!==1?'s':''}</strong> below 56% 4Cs knowledge threshold — priority intervention required.` : ''}
         ${postRows.length > 0 ? `Post-training results in for <strong>${postRows.length} of ${n}</strong> associates.` : ''}
         ${(()=>{
           return '';
@@ -922,9 +928,10 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
               <div class="atb" style="color:${bc}">${a.band}</div>
               <div class="score-bar"><div class="score-fill" style="width:${a.ri}%;background:${bc}"></div></div>
               <div style="margin-top:5px;font-size:9px;color:var(--muted);line-height:1.6;text-align:left;padding-left:2px">
-                <span title="Knowledge score (4Cs %)">K&nbsp;${a.riK??'—'}</span> &nbsp;
-                <span title="Selling Stage score">S&nbsp;${a.riS??'—'}</span> &nbsp;
-                <span title="Adaptability score">A&nbsp;${a.riA??'—'}</span>
+                ${a.partialSubmission
+                  ? `<span title="Sections 2 &amp; 3 (RSP &amp; C2S) not submitted — score reflects 4Cs only" style="color:#B87A10;font-weight:700">⚠ 4Cs only</span>&nbsp;<span style="color:#B87A10">K&nbsp;${a.riK??'—'}&nbsp;S&nbsp;—&nbsp;A&nbsp;—</span>`
+                  : `<span title="Knowledge score (4Cs %)">K&nbsp;${a.riK??'—'}</span> &nbsp;<span title="Selling Stage score">S&nbsp;${a.riS??'—'}</span> &nbsp;<span title="Adaptability score">A&nbsp;${a.riA??'—'}</span>`
+                }
               </div>
             </td>
             <td style="vertical-align:middle">
@@ -1140,7 +1147,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TA</td><td style="padding:3px 8px;font-weight:600">Transaction Achiever</td><td style="padding:3px 0;color:var(--muted)">Transaction-led; gets deals done with consistency</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">PS</td><td style="padding:3px 8px;font-weight:600">Problem Solver</td><td style="padding:3px 0;color:var(--muted)">Needs-led; good listener, reactive style</td></tr>
           <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">EA</td><td style="padding:3px 8px;font-weight:600">Expert Advisor</td><td style="padding:3px 0;color:var(--muted)">Emotion-led; crafts memorable journeys</td></tr>
-          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TrA</td><td style="padding:3px 8px;font-weight:600">Training Advisor</td><td style="padding:3px 0;color:var(--muted)">Coaching-ready; elevates team capability</td></tr>
+          <tr><td style="padding:3px 0;font-weight:700;font-family:'DM Mono',monospace;color:var(--navy)">TrA</td><td style="padding:3px 8px;font-weight:600">Trusted Advisor</td><td style="padding:3px 0;color:var(--muted)">Coaching-ready; elevates team capability</td></tr>
         </table>
       </div>
 
@@ -1148,11 +1155,17 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:6px;border-bottom:2px solid var(--gold);padding-bottom:4px">C2S Profile — Customer Types</div>
         <p style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px">Customer-to-Sales (C2S) profiling assesses how well an associate recognises and adapts to a customer's buying style:</p>
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px">
           <tr><td style="padding:3px 8px 3px 0;font-weight:600">Driver</td><td style="padding:3px 0;color:var(--muted)">Decisive, results-focused — needs efficiency</td></tr>
           <tr><td style="padding:3px 8px 3px 0;font-weight:600">Analytical</td><td style="padding:3px 0;color:var(--muted)">Detail-oriented — needs facts and proof</td></tr>
           <tr><td style="padding:3px 8px 3px 0;font-weight:600">Expressive</td><td style="padding:3px 0;color:var(--muted)">Emotional, story-driven — needs inspiration</td></tr>
           <tr><td style="padding:3px 8px 3px 0;font-weight:600">Amiable</td><td style="padding:3px 0;color:var(--muted)">Relationship-first — needs trust and reassurance</td></tr>
+        </table>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy);margin-bottom:4px">Style Classification</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:2px 8px 2px 0;font-weight:600;white-space:nowrap">Defined</td><td style="padding:2px 0;color:var(--muted)">One style dominates (&gt;60% weight) — consistent but less flexible</td></tr>
+          <tr><td style="padding:2px 8px 2px 0;font-weight:600;white-space:nowrap">Leaning</td><td style="padding:2px 0;color:var(--muted)">Moderate preference (40–60%) — adapts with coaching</td></tr>
+          <tr><td style="padding:2px 8px 2px 0;font-weight:600;white-space:nowrap">Blended</td><td style="padding:2px 0;color:var(--muted)">Near-equal across styles — most versatile; highest Adaptability score</td></tr>
         </table>
       </div>
 
