@@ -437,6 +437,7 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     name:r.name, desig:r.desig, branch:r.branch||"", city:r.city||"", ri:r.ri, band:r.band, rspKey:r.rspKey, rspLabel:r.rspLabel,
     c2s:r.c2s, fcs:r.fcs, fcsTagsRaw:r.fcsTags||'{}',
     riK:r.riK, riS:r.riS, riA:r.riA, partialSubmission:r.partialSubmission||false,
+    preDate:r.preDate||'',
     gaps:computeSkillGaps(r.c2s, r.rspKey, parseFloat(r.fcs)||0)
   }));
   const skillGapCounts = SKILLS.map((_,si)=>({
@@ -824,6 +825,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <th>Location</th>
             <th style="text-align:center">Index</th>
             <th style="text-align:center" title="RSP Stage — TrA: Trusted Advisor, EA: Expert Advisor, PS: Problem Solver, PP: Product Pusher">RSP Stage</th>
+            <th style="text-align:center;min-width:72px">Pre-Test Date</th>
             ${SKILL_SHORT.map(s=>`<th class="sc" title="${s}">${s}</th>`).join('')}
           </tr>
         </thead>
@@ -834,6 +836,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
               <td style="font-size:11px;color:var(--muted)">${a.branch||"—"}</td>
               <td class="ar" style="color:${parseFloat(a.ri)>=78?'var(--teal)':parseFloat(a.ri)>=62?'var(--blue)':'var(--coral)'}">${a.ri}</td>
               <td class="as">${a.rspKey}</td>
+              <td style="font-size:10px;color:var(--muted);text-align:center;white-space:nowrap">${a.preDate||'—'}</td>
               ${a.gaps.map(g=>`<td class="dc"><span class="dot ${g==='gap'?'d-g':g==='developing'?'d-d':'d-s'}" title="${g}"></span></td>`).join('')}
             </tr>`).join('')}
         </tbody>
@@ -1268,10 +1271,11 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         prePct, postPct:Number(pr.postPct)||0,
         delta, postGrade:pr.postGrade||'',
         postTags, preTags: preTags2,
+        preDate:r.preDate||'', postDate:pr.postDate||'',
         completed:true
       };
     }
-    return { name:r.name||'', desig:r.desig||'', branch:r.branch||'', city:r.city||'', prePct, postPct:null, delta:null, completed:false };
+    return { name:r.name||'', desig:r.desig||'', branch:r.branch||'', city:r.city||'', prePct, postPct:null, delta:null, preDate:r.preDate||'', postDate:'', completed:false };
   });
 
   // Normalised gain helper
@@ -1385,7 +1389,9 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         <tr style="border-bottom:2px solid #F4F1EB">
           <th style="text-align:left;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Associate</th>
           <th style="text-align:left;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Location</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pre-Test Date</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pre</th>
+          <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Post-Test Date</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Post</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Norm. Gain</th>
           <th style="text-align:center;padding:7px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Readiness</th>
@@ -1396,8 +1402,9 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           if (!r.completed) return `<tr style="border-bottom:1px dotted #EDE9E2">
             <td style="padding:3px 8px"><span style="font-size:11px;font-weight:600;color:var(--navy)">${r.name}</span></td>
             <td style="padding:3px 8px;font-size:10px;color:var(--muted)">${r.branch||'—'}</td>
+            <td style="text-align:center;font-size:10px;color:var(--muted);padding:3px 8px;white-space:nowrap">${r.preDate||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px">${r.prePct}%</td>
-            <td colspan="3" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Pending</td>
+            <td colspan="4" style="text-align:center;color:#B0A898;font-size:10px;padding:3px 8px">⏳ Post-test pending</td>
           </tr>`;
           const ng     = normGain(r.prePct, r.postPct);
           const highBase = r.prePct >= 75;
@@ -1417,7 +1424,9 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
               <div style="font-size:10px;color:var(--muted)">${r.desig||''}${highBase?' · <span style="color:#B87A10">⭐ High Baseline</span>':''}</div>
             </td>
             <td style="padding:8px 8px;font-size:12px;color:var(--muted)">${r.branch||'—'}</td>
+            <td style="text-align:center;font-size:10px;color:var(--muted);white-space:nowrap">${r.preDate||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
+            <td style="text-align:center;font-size:10px;color:var(--muted);white-space:nowrap">${r.postDate||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${rc}">${r.postPct}%</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${ngColor}">${ngStr}</td>
             <td style="text-align:center">

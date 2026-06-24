@@ -462,22 +462,23 @@ function doGet(e){
       if (!authenticated) return respond({status:'error', reason:'wrong_password'});
 
       const idx = {
-        batch:    headers.indexOf('Batch Code'),
-        mobile:   headers.indexOf('Mobile'),
-        name:     headers.indexOf('Name'),
-        desig:    headers.indexOf('Designation'),
-        c2s:      headers.indexOf('C2S Classification'),
-        c2sScores:headers.indexOf('C2S Scores (JSON)'),
-        rspKey:   headers.indexOf('RSP Primary'),
-        rspLabel: headers.indexOf('RSP Label'),
-        ri:       headers.indexOf('Readiness Total'),
-        band:     headers.indexOf('Readiness Band'),
-        fcs:      headers.indexOf('4Cs Percentage'),
-        fcsTags:  headers.indexOf('4Cs Tag Scores (JSON)'),
-        client:   headers.indexOf('Client'),
-        trainer:  headers.indexOf('Trainer Name'),
-        branch:   headers.indexOf('Store Branch'),
-        city:     headers.indexOf('City')
+        batch:     headers.indexOf('Batch Code'),
+        mobile:    headers.indexOf('Mobile'),
+        name:      headers.indexOf('Name'),
+        desig:     headers.indexOf('Designation'),
+        c2s:       headers.indexOf('C2S Classification'),
+        c2sScores: headers.indexOf('C2S Scores (JSON)'),
+        rspKey:    headers.indexOf('RSP Primary'),
+        rspLabel:  headers.indexOf('RSP Label'),
+        ri:        headers.indexOf('Readiness Total'),
+        band:      headers.indexOf('Readiness Band'),
+        fcs:       headers.indexOf('4Cs Percentage'),
+        fcsTags:   headers.indexOf('4Cs Tag Scores (JSON)'),
+        client:    headers.indexOf('Client'),
+        trainer:   headers.indexOf('Trainer Name'),
+        branch:    headers.indexOf('Store Branch'),
+        city:      headers.indexOf('City'),
+        timestamp: headers.indexOf('Timestamp')
       };
       const rows = batchRows.map(r => ({
         mobile:r[idx.mobile]||'',
@@ -486,7 +487,8 @@ function doGet(e){
         c2s:r[idx.c2s]||'', c2sScores:r[idx.c2sScores]||'{}',
         rspKey:r[idx.rspKey]||'', rspLabel:r[idx.rspLabel]||'',
         ri:r[idx.ri]||0, band:r[idx.band]||'', fcs:r[idx.fcs]||0, client:r[idx.client]||'',
-        fcsTags:r[idx.fcsTags]||'{}'
+        fcsTags:r[idx.fcsTags]||'{}',
+        preDate: idx.timestamp >= 0 && r[idx.timestamp] ? new Date(r[idx.timestamp]).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''
       }));
       if (!rows.length) return respond({status:'error', reason:'no_data'});
       const trainerName = idx.trainer >= 0 ? String(batchRows[0][idx.trainer]||'') : '';
@@ -510,7 +512,8 @@ function doGet(e){
           deltaPct:  Number(r[ph.indexOf('Delta %')]        )||0,
           postGrade: String(r[ph.indexOf('Post Grade')]  ||''),
           postTags:  String(r[ph.indexOf('Post Tag Scores (JSON)')] ||'{}'),
-          preTags:   String(r[ph.indexOf('Pre Tag Scores (JSON)')]  ||'{}')
+          preTags:   String(r[ph.indexOf('Pre Tag Scores (JSON)')]  ||'{}'),
+          postDate:  (() => { const v = r[ph.indexOf('Submitted At')]; return v ? new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''; })()
         }));
       return respond({status:'ok', postRows});
     }
