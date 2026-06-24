@@ -416,23 +416,23 @@ const POST_QUESTIONS = [
   {
     tag:'carat', cat:'Carat',
     context:'',
-    q:'Why does a 1-carat diamond cost much more than a 0.95ct one?',
+    q:'What unit is used to measure a diamond\'s weight?',
     opts:[
-      {t:'Customers want round numbers — 1ct has higher demand.',c:true},
-      {t:'1ct stones are always cut better.',c:false},
-      {t:'Heavier stones cost more to ship.',c:false},
-      {t:'There is no real price difference.',c:false}
+      {t:'Carat',c:true},
+      {t:'Gram',c:false},
+      {t:'Milligram',c:false},
+      {t:'Ounce',c:false}
     ]
   },
   {
     tag:'carat', cat:'Carat',
-    context:'Two diamonds weigh exactly 1ct but look different sizes from the top.',
-    q:'Why does one diamond look bigger face-up?',
+    context:'',
+    q:'One carat equals how many milligrams?',
     opts:[
-      {t:'It has a better color grade.',c:false},
-      {t:'It is shallower — so the width is greater.',c:true},
-      {t:'Polishing removes material and makes it larger.',c:false},
-      {t:'Lab-grown diamonds always look bigger.',c:false}
+      {t:'100 mg',c:false},
+      {t:'200 mg',c:true},
+      {t:'500 mg',c:false},
+      {t:'50 mg',c:false}
     ]
   },
   {
@@ -449,12 +449,12 @@ const POST_QUESTIONS = [
   {
     tag:'carat', cat:'Carat',
     context:'',
-    q:'In diamonds, what does "magic size" mean?',
+    q:'Which is heavier — a 0.50ct diamond or a 1ct diamond?',
     opts:[
-      {t:'Stones with special optical illusions.',c:false},
-      {t:'Popular weights like 0.50ct or 1ct where price jumps.',c:true},
-      {t:'The largest diamonds in a store.',c:false},
-      {t:'Stones cut to look bigger than their weight.',c:false}
+      {t:'0.50ct',c:false},
+      {t:'1ct',c:true},
+      {t:'Both weigh the same',c:false},
+      {t:'Depends on the cut',c:false}
     ]
   },
   {
@@ -484,12 +484,12 @@ const POST_QUESTIONS = [
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'A J-color diamond in a yellow gold ring will look:',
+    q:'Which color grade is the most colorless on the IGI scale?',
     opts:[
-      {t:'Very yellow — gold makes warm tones worse.',c:false},
-      {t:'White — yellow gold hides warm color tones.',c:true},
-      {t:'Exactly the same as in white gold.',c:false},
-      {t:'More valuable than in white gold.',c:false}
+      {t:'Z',c:false},
+      {t:'J',c:false},
+      {t:'G',c:false},
+      {t:'D',c:true}
     ]
   },
   {
@@ -517,25 +517,25 @@ const POST_QUESTIONS = [
   {
     tag:'color', cat:'Color',
     context:'',
-    q:'Two G-color diamonds look slightly different. Is this normal?',
+    q:'Which color grade range is considered "near colorless"?',
     opts:[
-      {t:'No — same grade means identical appearance.',c:false},
-      {t:'Yes — G covers a range; both can look slightly different.',c:true},
-      {t:'One certificate must be wrong.',c:false},
-      {t:'Only fluorescence causes color differences.',c:false}
+      {t:'D–F',c:false},
+      {t:'G–J',c:true},
+      {t:'K–M',c:false},
+      {t:'S–Z',c:false}
     ]
   },
 
   // ── CLARITY (5) ────────────────────────────────────────────────
   {
     tag:'clarity', cat:'Clarity',
-    context:'A customer is worried an SI1 diamond will look dirty.',
-    q:'What do you tell them?',
+    context:'',
+    q:'What does "SI" stand for in diamond clarity grading?',
     opts:[
-      {t:'Agree — they should buy VS2 or better.',c:false},
-      {t:'SI1 inclusions are invisible to the naked eye.',c:true},
-      {t:'SI1 inclusions sit on the surface.',c:false},
-      {t:'All diamonds look the same — do not worry.',c:false}
+      {t:'Slightly Included',c:true},
+      {t:'Super Included',c:false},
+      {t:'Surface Inclusion',c:false},
+      {t:'Small Inclusion',c:false}
     ]
   },
   {
@@ -552,12 +552,12 @@ const POST_QUESTIONS = [
   {
     tag:'clarity', cat:'Clarity',
     context:'',
-    q:'Clarity is graded at 10x magnification. What does this mean for buyers?',
+    q:'Which clarity grade means the diamond has no inclusions even under 10x magnification?',
     opts:[
-      {t:'Customers will easily see all inclusions.',c:false},
-      {t:'Inclusions look very large in-store.',c:false},
-      {t:'Most SI diamonds look clean to the naked eye.',c:true},
-      {t:'You need a microscope even for I1 stones.',c:false}
+      {t:'VS1',c:false},
+      {t:'SI1',c:false},
+      {t:'VVS2',c:false},
+      {t:'Flawless (FL)',c:true}
     ]
   },
   {
