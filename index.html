@@ -1785,6 +1785,7 @@ function submitAll(){
         <div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">Assessed on</div><div style="font-size:12px;color:var(--muted)">${dateStr}</div></div>
         <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
       </div>
+      <div id="save-status" style="display:none;align-items:center;justify-content:center;font-size:12px;padding:8px 12px;margin-top:10px;border-radius:6px;background:#F7F5F0;border:1px solid var(--border)"></div>
       <div style="margin-top:16px;text-align:center">
         <a id="postTestLink" href="post-test.html${(function(){var b=new URLSearchParams(window.location.search).get('batch');return b?'?batch='+encodeURIComponent(b):'';})()} " style="display:inline-block;background:var(--navy);color:var(--gold);padding:11px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;text-decoration:none;letter-spacing:0.02em">💎 Take Post-Training 4Cs Test →</a>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">Complete this after your IGI training session</div>
@@ -1824,13 +1825,45 @@ function submitAll(){
     comboProfile:comboKey,insightTitle:profile.title
   };
   if(SHEET_URL) {
-    let submitted = false; // guard: ensure only one fetch fires per assessment
-    function doSubmit(extraPayload) {
-      if (submitted) return;
-      submitted = true;
-      const body = Object.assign({}, payload, extraPayload||{});
-      fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(body)}).catch(()=>{});
+    // ── STEP 1: Submit data IMMEDIATELY — never wait for PDF ──────────────────
+    // Save to localStorage first as crash-safe backup
+    const PENDING_KEY = 'igi_pending_' + (payload.mobile||'') + '_' + (payload.batchCode||'');
+    localStorage.setItem(PENDING_KEY, JSON.stringify({url: SHEET_URL, body: payload, ts: Date.now()}));
+
+    // Show save status indicator on result screen
+    function setSaveStatus(state) {
+      const el = document.getElementById('save-status');
+      if (!el) return;
+      if (state === 'saving')  { el.style.display='flex'; el.innerHTML='<span style="color:#B87A10">⏳ Saving your results…</span>'; }
+      if (state === 'saved')   { el.style.display='flex'; el.innerHTML='<span style="color:#1D9E75">✅ Results saved successfully</span>'; localStorage.removeItem(PENDING_KEY); }
+      if (state === 'retry')   { el.style.display='flex'; el.innerHTML='<span style="color:#B87A10">🔄 Retrying save…</span>'; }
+      if (state === 'failed')  { el.style.display='flex'; el.innerHTML='<span style="color:#C94A4A">⚠ Save failed — please inform your trainer. Your Ref ID: <strong>'+(payload.refId||'—')+'</strong></span>'; }
     }
+
+    let saveSubmitted = false;
+    function submitData(bodyOverride, attempt) {
+      if (saveSubmitted) return;
+      attempt = attempt || 1;
+      if (attempt === 1) setSaveStatus('saving');
+      else setSaveStatus('retry');
+      fetch(SHEET_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(bodyOverride || payload)})
+        .then(function() {
+          saveSubmitted = true;
+          setSaveStatus('saved');
+        })
+        .catch(function() {
+          if (attempt < 3) {
+            setTimeout(function() { submitData(bodyOverride, attempt + 1); }, 6000);
+          } else {
+            setSaveStatus('failed');
+          }
+        });
+    }
+
+    // Fire data submission immediately — do NOT wait for PDF
+    submitData(payload);
+
+    // ── STEP 2: Generate PDF separately (non-blocking) ────────────────────────
     if(typeof html2pdf !== 'undefined') {
       setTimeout(() => {
         const opt = {
@@ -1841,15 +1874,30 @@ function submitAll(){
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().from(s3).set(opt).outputPdf('datauristring').then(function(pdfDataUri) {
-          doSubmit({ pdfBase64: pdfDataUri.substring(pdfDataUri.indexOf(',') + 1) });
-        }).catch(() => {
-          doSubmit({}); // PDF failed — submit without PDF, never double-fire
-        });
-      }, 500); // allow UI to render first
-    } else {
-      doSubmit({});
+          // Update record with PDF — only if data was already saved successfully
+          if (!saveSubmitted) return; // data save still in progress, skip PDF update
+          fetch(SHEET_URL, {method:'POST', mode:'no-cors',
+            body: JSON.stringify(Object.assign({}, payload, {pdfBase64: pdfDataUri.substring(pdfDataUri.indexOf(',') + 1)}))
+          }).catch(()=>{});
+        }).catch(()=>{ /* PDF failed — data already saved above, ignore */ });
+      }, 800);
     }
   }
+
+  // ── On page load: retry any pending submissions from previous crashes ────────
+  (function retryPending() {
+    Object.keys(localStorage).forEach(function(key) {
+      if (!key.startsWith('igi_pending_')) return;
+      try {
+        const item = JSON.parse(localStorage.getItem(key));
+        // Only retry if less than 2 hours old
+        if (!item || (Date.now() - item.ts) > 7200000) { localStorage.removeItem(key); return; }
+        fetch(item.url, {method:'POST', mode:'no-cors', body: JSON.stringify(item.body)})
+          .then(function() { localStorage.removeItem(key); })
+          .catch(function() {});
+      } catch(x) { localStorage.removeItem(key); }
+    });
+  })();
 }
 </script>
 </body>

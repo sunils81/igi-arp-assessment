@@ -287,14 +287,17 @@ function doPost(e){
       logCodeAttempt(ss, d.sessionCode, true, 'Submission accepted', d.mobile||'');
     }
 
-    // Rebuild all analytics sheets
-    rebuildTrainingDashboard(ss);
-    rebuildBatchPerformance(ss);
-    rebuildRSPDistribution(ss);
-    rebuild4CsHeatmap(ss);
-
+    // Release lock BEFORE rebuilding analytics — row is already saved, respond fast
     lock.releaseLock();
-    return jsonResponse({status:'ok', refId: d.refId||''});
+    const resp = jsonResponse({status:'ok', refId: d.refId||''});
+
+    // Rebuild analytics sheets after responding (non-blocking for the associate)
+    try { rebuildTrainingDashboard(ss); } catch(x) {}
+    try { rebuildBatchPerformance(ss); } catch(x) {}
+    try { rebuildRSPDistribution(ss); } catch(x) {}
+    try { rebuild4CsHeatmap(ss); } catch(x) {}
+
+    return resp;
 
   } catch(err) {
     lock.releaseLock();
