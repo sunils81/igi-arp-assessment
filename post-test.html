@@ -183,7 +183,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .kc-btn svg{width:14px;height:14px;fill:currentColor}
 
 @media print{
-  .btn-primary,.print-btn,.q-nav,.dot-nav,.timer-bar,.kc-banner{display:none!important}
+  .btn-primary,.print-btn,.q-nav,.dot-nav,.timer-bar,.kc-banner,#answer-review,#review-toggle-btn{display:none!important}
   .result-wrap{box-shadow:none;border:1px solid #ccc}
   .result-header{background:#0D1B2E!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
@@ -359,6 +359,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 
         <button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
         <button class="print-btn" id="pre-card-btn" onclick="openPreCard()" style="margin-top:8px">📋 View Pre-Training Score Card</button>
+
+        <!-- Answer Review — only visible if admin has released feedback for this batch -->
+        <div id="answer-review-section" style="margin-top:24px;display:none">
+          <button class="print-btn" id="review-toggle-btn" onclick="toggleAnswerReview()" style="background:#F4F1EB;border-color:var(--gold);color:var(--navy);font-weight:600">📝 Review My Answers</button>
+          <div id="answer-review" style="display:none;margin-top:16px"></div>
+        </div>
+        <div id="feedback-pending-msg" style="margin-top:16px;display:none;font-size:12px;color:var(--muted);text-align:center;padding:10px;background:#F7F5F0;border-radius:6px;border:1px dashed var(--border)">
+          Answer review will be available once your trainer releases it.
+        </div>
       </div>
     </div>
   </div>
@@ -903,6 +912,20 @@ function calculate() {
   // Save to GAS (fire and forget)
   saveResult(totalCorrect, postPct, postGrade, delta, postTagScores);
 
+  // Check if admin has released answer feedback for this batch
+  const batchForFeedback = (preData.batchInput || preData.batch || '').trim().toUpperCase();
+  if (batchForFeedback) {
+    gasGet({ action: 'checkFeedback', batch: batchForFeedback }, function(err, d) {
+      if (!err && d && d.released) {
+        const sec = document.getElementById('answer-review-section');
+        if (sec) sec.style.display = 'block';
+      } else {
+        const msg = document.getElementById('feedback-pending-msg');
+        if (msg) msg.style.display = 'block';
+      }
+    });
+  }
+
   setTimeout(() => showScreen('s-result'), 800);
 }
 
@@ -1197,6 +1220,77 @@ function saveResult(postScore, postPct, postGrade, delta, postTagScores) {
     preTagScores: JSON.stringify(preData.preTagScores || {}),
     deltaPct:     delta
   }, function() {}); // fire and forget
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ANSWER REVIEW
+// ══════════════════════════════════════════════════════════════
+function toggleAnswerReview() {
+  const box = document.getElementById('answer-review');
+  const btn = document.getElementById('review-toggle-btn');
+  if (box.style.display === 'none') {
+    if (!box.innerHTML) renderAnswerReview();
+    box.style.display = 'block';
+    btn.textContent = '▲ Hide Answer Review';
+  } else {
+    box.style.display = 'none';
+    btn.textContent = '📝 Review My Answers';
+  }
+}
+
+function renderAnswerReview() {
+  const catLabels = {cut:'C1 — Cut', color:'C2 — Color', clarity:'C3 — Clarity', carat:'C4 — Carat'};
+  let html = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">Question-by-Question Review</div>`;
+
+  let currentCat = null;
+  shuffled.forEach(function(q, i) {
+    const opts    = q._optsShuffled || q.opts;
+    const selIdx  = answers[i];
+    const selOpt  = selIdx !== null ? opts[selIdx] : null;
+    const isRight = selOpt && selOpt.c;
+    const correctOpt = opts.find(o => o.c);
+
+    // Category header when tag changes
+    if (q.tag !== currentCat) {
+      currentCat = q.tag;
+      html += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);padding:10px 0 6px;border-top:2px solid var(--border);margin-top:${i===0?'0':'16px'}">${catLabels[q.tag]||q.tag}</div>`;
+    }
+
+    const borderColor = isRight ? '#1D9E75' : '#C94A4A';
+    const bgColor     = isRight ? '#F0FBF7' : '#FEF2F2';
+    const icon        = isRight ? '✅' : '❌';
+
+    // Build options list
+    const optsHtml = opts.map(function(o, oi) {
+      const isSelected = oi === selIdx;
+      const isCorrect  = o.c;
+      let style = 'padding:5px 10px;border-radius:6px;font-size:12px;margin-bottom:4px;display:flex;align-items:center;gap:8px;';
+      let marker = '';
+      if (isCorrect && isSelected) {
+        style += 'background:#D4EDDA;color:#155724;font-weight:600;';
+        marker = '✅';
+      } else if (!isCorrect && isSelected) {
+        style += 'background:#F8D7DA;color:#721c24;font-weight:600;';
+        marker = '❌ Your answer';
+      } else if (isCorrect) {
+        style += 'background:#D4EDDA;color:#155724;font-weight:600;';
+        marker = '✔ Correct answer';
+      } else {
+        style += 'color:var(--muted);';
+        marker = '';
+      }
+      return `<div style="${style}"><span>${marker}</span><span>${o.t}</span></div>`;
+    }).join('');
+
+    html += `
+    <div style="border:1px solid ${borderColor};border-left:3px solid ${borderColor};background:${bgColor};border-radius:8px;padding:12px 14px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px">${icon} Q${i+1}. ${q.q}</div>
+      ${q.context ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic">${q.context}</div>` : ''}
+      <div>${optsHtml}</div>
+    </div>`;
+  });
+
+  document.getElementById('answer-review').innerHTML = html;
 }
 </script>
 </body>

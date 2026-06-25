@@ -495,6 +495,23 @@ function doGet(e){
       return respond({status:'ok', rows, client:rows[0].client||batchParam, trainerName});
     }
 
+    // ── checkFeedback: has admin released answer feedback for this batch? ──
+    if (action === 'checkFeedback') {
+      const batchParam = (p.batch||'').trim().toUpperCase();
+      if (!batchParam) return respond({released: false});
+      const released = getSetting('feedbackReleased_' + batchParam) === 'true';
+      return respond({released});
+    }
+
+    // ── releaseFeedback: admin releases / locks answer feedback for a batch ──
+    if (action === 'releaseFeedback') {
+      const batchParam = (p.batch||'').trim().toUpperCase();
+      const val        = (p.release||'').toLowerCase();
+      if (!batchParam) return respond({status:'error', reason:'missing_batch'});
+      setSetting('feedbackReleased_' + batchParam, val === 'true' ? 'true' : 'false');
+      return respond({status:'ok', batch: batchParam, released: val === 'true'});
+    }
+
     // ── getPostResults: return all post-test results for a batch (no extra auth needed) ──
     if (action === 'getPostResults') {
       const batchParam = (p.batch||'').trim().toUpperCase();

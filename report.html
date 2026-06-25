@@ -131,6 +131,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .cta-act{flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .btn-print{background:transparent;color:var(--gold-light);border:1px solid rgba(201,168,76,0.4);padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;letter-spacing:.03em;border-radius:var(--rm);transition:all .18s}
 .btn-print:hover{background:rgba(201,168,76,0.1)}
+.btn-release{background:rgba(201,97,58,0.15);color:#FFBFA8;border:1px solid rgba(201,97,58,0.5);padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;letter-spacing:.03em;border-radius:var(--rm);transition:all .18s}
+.btn-release:hover{background:rgba(201,97,58,0.25)}
+.btn-release.released{background:rgba(29,158,117,0.2);border-color:rgba(29,158,117,0.6);color:#7EEDC6}
+.btn-release.released:hover{background:rgba(29,158,117,0.3)}
+.score-locked{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#B0A898;letter-spacing:.03em}
 .conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
 @page{margin:16mm 14mm;@bottom-center{content:"Jewelbox · IGI Retail Sales Excellence Programme | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
 @media print{
@@ -139,7 +144,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   body{background:#F7F5F0!important}
 
   /* ── B: hide screen-only chrome ── */
-  .gate-wrap,#gateScreen,.btn-print,#ar-bar,.print-tip{display:none!important}
+  .gate-wrap,#gateScreen,.btn-print,.btn-release,#ar-bar,.print-tip{display:none!important}
 
   /* ── C: A4 portrait page setup with reliable page numbers ── */
   @page{size:A4 portrait;margin:15mm 12mm;@bottom-center{content:"Jewelbox  ·  IGI Retail Sales Excellence Programme  |  Confidential  |  Page " counter(page);font-size:8px;color:#6B6357;font-family:sans-serif;letter-spacing:.04em}}
@@ -339,8 +344,12 @@ function loadReport() {
     // Also fetch post-test results (no extra auth — batch already verified)
     gasGet({action:'getPostResults', batch}, function(err2, d2) {
       const postRows = (!err2 && d2 && d2.postRows) ? d2.postRows : [];
-      renderReport(d.rows, batch, d.client||batch, d.trainerName||'', postRows);
-      updateLastRefreshed();
+      // Check feedback release status, then render
+      gasGet({action:'checkFeedback', batch}, function(err3, d3) {
+        window._feedbackReleased = !err3 && d3 && d3.released;
+        renderReport(d.rows, batch, d.client||batch, d.trainerName||'', postRows);
+        updateLastRefreshed();
+      });
     });
     document.getElementById('gateScreen').classList.add('hidden');
     document.getElementById('reportScreen').classList.remove('hidden');
@@ -360,8 +369,37 @@ function isJobTitle(s) {
   return /\b(manager|director|head|lead|trainer|executive|coordinator|officer|regional|cluster|sr\.|sr\s)\b/.test(lower) && !/\b(hs|mall|store|road|nagar|society|market|plaza|tower|giva)\b/.test(lower);
 }
 
+// ── Report cache ──────────────────────────────────────────────────────────────
+window._rptCache = null;
+function scoresReleased() { return true; } // post-test scores always visible in report
+
+// ── Answer Feedback Release (server-side, per batch) ─────────────────────────
+window._feedbackReleased = false;
+function checkFeedbackStatus(batch) {
+  gasGet({action:'checkFeedback', batch}, function(err, d) {
+    window._feedbackReleased = !err && d && d.released;
+    const c = window._rptCache;
+    if (c) renderReport(c.rows, c.batch, c.client, c.trainerName, c.postRows);
+  });
+}
+function feedbackReleased() { return window._feedbackReleased === true; }
+function toggleFeedbackRelease() {
+  const cur = feedbackReleased();
+  const batch = (window._rptCache || {}).batch || '';
+  if (!batch) return;
+  const action = cur ? 'Lock answer feedback for this batch?' : 'Release answer feedback for this batch?\n\nAssociates will be able to see correct answers after completing the post-test.';
+  if (!confirm(action)) return;
+  gasGet({action:'releaseFeedback', batch, release: cur ? 'false' : 'true'}, function(err, d) {
+    if (err || !d || d.status !== 'ok') { alert('Failed to update. Please try again.'); return; }
+    window._feedbackReleased = !cur;
+    const c = window._rptCache;
+    if (c) renderReport(c.rows, c.batch, c.client, c.trainerName, c.postRows);
+  });
+}
+
 function renderReport(rows, batch, client, trainerName, postRows) {
   postRows = postRows || [];
+  window._rptCache = {rows, batch, client, trainerName, postRows};
   // Sanitize ri — coerce to number (some rows may carry a JSON string in this field)
   rows = rows.map(r => { const v = parseFloat(r.ri); return {...r, ri: isNaN(v) ? 0 : Math.round(v)}; });
 
@@ -1225,6 +1263,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <div class="cta-trn">Sunil Sharma</div>
     </div>
     <div class="cta-act">
+      <button class="btn-release${feedbackReleased()?` released`:``}" onclick="toggleFeedbackRelease()" title="Control whether associates can see correct answers after their post-test">${feedbackReleased()?`✅ Answer Feedback Released`:`🔒 Release Answer Feedback`}</button>
       <button class="btn-print" onclick="window.print()" title="In Chrome print dialog → More settings → uncheck 'Headers and footers'">Print / Save PDF</button>
       <div class="print-tip" style="font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px;line-height:1.4;max-width:180px">Tip: uncheck <em>Headers &amp; footers</em><br>in Chrome print settings</div>
     </div>
@@ -1399,6 +1438,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       </thead>
       <tbody>
         ${compRows.sort((a,b)=>(b.postPct||0)-(a.postPct||0)).map(r => {
+          const rel = scoresReleased();
           if (!r.completed) return `<tr style="border-bottom:1px dotted #EDE9E2">
             <td style="padding:3px 8px"><span style="font-size:11px;font-weight:600;color:var(--navy)">${r.name}</span></td>
             <td style="padding:3px 8px;font-size:10px;color:var(--muted)">${r.branch||'—'}</td>
@@ -1418,20 +1458,24 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
           const bg     = readyBg(r.postPct);
           const rl     = readyLabel(r.postPct);
           const rc     = readyColor(r.postPct);
-          return `<tr style="background:${bg};border-bottom:1px solid rgba(255,255,255,0.6)">
+          const lockCell = `<td style="text-align:center;padding:8px"><span class="score-locked">🔒</span></td>`;
+          return `<tr style="background:${rel?bg:'inherit'};border-bottom:1px solid rgba(0,0,0,0.05)">
             <td style="padding:8px 8px">
               <div style="font-weight:600;color:var(--navy)">${r.name}</div>
-              <div style="font-size:10px;color:var(--muted)">${r.desig||''}${highBase?' · <span style="color:#B87A10">⭐ High Baseline</span>':''}</div>
+              <div style="font-size:10px;color:var(--muted)">${r.desig||''}${(rel&&highBase)?' · <span style="color:#B87A10">⭐ High Baseline</span>':''}</div>
             </td>
             <td style="padding:8px 8px;font-size:12px;color:var(--muted)">${r.branch||'—'}</td>
             <td style="text-align:center;font-size:10px;color:var(--muted);white-space:nowrap">${r.preDate||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">${r.prePct}%</td>
-            <td style="text-align:center;font-size:10px;color:var(--muted);white-space:nowrap">${r.postDate||'—'}</td>
+            ${rel
+              ? `<td style="text-align:center;font-size:10px;color:var(--muted);white-space:nowrap">${r.postDate||'—'}</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${rc}">${r.postPct}%</td>
             <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${ngColor}">${ngStr}</td>
             <td style="text-align:center">
               <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${bg};color:${rc};border:1px solid ${rc}">${rl}</span>
-            </td>
+            </td>`
+              : `${lockCell}${lockCell}${lockCell}${lockCell}`
+            }
           </tr>`;
         }).join('')}
       </tbody>
