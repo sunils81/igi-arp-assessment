@@ -190,7 +190,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 
   /* ── H: box shadows & forced colours ── */
   .metrics-row,.panel,.rpt-masthead,.cta-block{box-shadow:none!important}
-  .rpt-masthead{background:#0D1B2E!important}
+  .rpt-masthead{background:#0D1B2E!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  /* ── I: cover text — force visible on dark masthead ── */
+  .rpt-eyebrow{color:#C9A84C!important}
+  .rpt-client{color:#ffffff!important}
+  .rpt-meta{color:rgba(255,255,255,0.85)!important}
+  .rpt-conf{color:rgba(255,255,255,0.6)!important}
+  /* ── J: cover page isolation — masthead+KPIs on page 1, rest on page 2 ── */
+  .rpt-masthead{page-break-after:avoid!important;break-after:avoid!important}
+  #fixed-metrics{page-break-after:always!important;break-after:always!important}
+  /* ── K: section 05 — keep note+table with header (general sibling, not adjacent) ── */
+  .sh~.panel{page-break-before:avoid!important;break-before:avoid!important}
   .cta-block{background:#0D1B2E!important}
   .mc.mg::before{background:#C9A84C!important;display:block!important}
   .mc.mt::before{background:#1D9E75!important;display:block!important}
@@ -431,6 +441,15 @@ function isJobTitle(s) {
   if (!s) return false;
   const lower = s.toLowerCase();
   return /\b(manager|director|head|lead|trainer|executive|coordinator|officer|regional|cluster|sr\.|sr\s)\b/.test(lower) && !/\b(hs|mall|store|road|nagar|society|market|plaza|tower|giva)\b/.test(lower);
+}
+function isBadLocation(s) {
+  // Reject emails, placeholder values, and non-location strings
+  if (!s) return true;
+  const t = s.trim().toLowerCase();
+  if (/^(na|n\/a|none|nil|no|not applicable|unknown|-|\.+|test)$/.test(t)) return true;
+  if (/@/.test(s)) return true; // email addresses
+  if (/^\d{10,}$/.test(s.trim())) return true; // phone numbers
+  return false;
 }
 
 // ── Report cache ──────────────────────────────────────────────────────────────
@@ -1248,7 +1267,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   const cityCanon = {}; // normKey -> first-seen canonical display name
   rows.forEach(r => {
     const rawLoc = (r.city || r.branch || '').trim();
-    const display = (!rawLoc || isJobTitle(rawLoc)) ? '(No Location)' : toTitleCase(rawLoc);
+    const display = (!rawLoc || isJobTitle(rawLoc) || isBadLocation(rawLoc)) ? '(No Location)' : toTitleCase(rawLoc);
     const nk = normKey(display);
     if (!cityCanon[nk]) cityCanon[nk] = display;
     const canon = cityCanon[nk];
@@ -1262,12 +1281,12 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
   const storeCanon = {};
   rows.forEach(r => {
     const rawBranch = (r.branch || '').trim();
-    const displayStore = isJobTitle(rawBranch) ? '(No Store)' : toTitleCase(rawBranch) || '—';
+    const displayStore = (isJobTitle(rawBranch) || isBadLocation(rawBranch)) ? '(No Store)' : toTitleCase(rawBranch) || '—';
     const nk = normKey(displayStore);
     if (!storeCanon[nk]) storeCanon[nk] = displayStore;
     const storeKey = storeCanon[nk];
     const rawCity = (r.city || r.branch || '').trim();
-    const city  = (!rawCity || isJobTitle(rawCity)) ? '(No Location)' : toTitleCase(rawCity);
+    const city  = (!rawCity || isJobTitle(rawCity) || isBadLocation(rawCity)) ? '(No Location)' : toTitleCase(rawCity);
     if (!storeMap[storeKey]) storeMap[storeKey] = { store: storeKey, city, associates: [] };
     storeMap[storeKey].associates.push(r);
   });
@@ -1627,6 +1646,11 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         <div style="font-size:11px;color:var(--muted);margin-top:3px">Avg Post: ${avgPostOverall}%</div>
       </div>
     </div>
+
+    ${avgPostOverall < avgPreOverall ? `
+    <div style="margin:0 0 16px;padding:9px 13px;background:#FFF8E7;border-left:3px solid #C9A84C;border-radius:4px;font-size:11px;color:#7A5C00;line-height:1.6">
+      <strong>Note on averages:</strong> The post-test average (${avgPostOverall}%) appears lower than pre-test (${avgPreOverall}%) because only ${completedRows.length} of ${rows.length} associates have completed the post-test so far. Associates who scored higher in pre-test tend to take the post-test earlier — once all ${rows.length} complete it, the gap will close.
+    </div>` : ''}
 
     <!-- Category bar chart -->
     <div style="margin-bottom:20px">
