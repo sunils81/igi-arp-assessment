@@ -1325,7 +1325,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <tbody>
         ${cityList.map(city => {
           const st = locStats(cityMap[city]);
-          const riColor = st.avgRI>=78?'var(--teal)':st.avgRI>=62?'#C9A84C':'var(--coral)';
+          const riColor = st.avgRI>=90?'#C9A84C':st.avgRI>=78?'var(--teal)':st.avgRI>=62?'#378ADD':'var(--coral)';
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${city}</td>
             <td style="text-align:center;padding:9px 10px;font-size:13px;font-weight:600">${st.n}</td>
@@ -1364,7 +1364,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
         ${storeList.map(key => {
           const s = storeMap[key];
           const st = locStats(s.associates);
-          const riColor = st.avgRI>=78?'var(--teal)':st.avgRI>=62?'#C9A84C':'var(--coral)';
+          const riColor = st.avgRI>=90?'#C9A84C':st.avgRI>=78?'var(--teal)':st.avgRI>=62?'#378ADD':'var(--coral)';
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:9px 10px;font-weight:700;color:var(--navy)">${s.store}</td>
             
