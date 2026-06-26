@@ -137,6 +137,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .btn-release.released:hover{background:rgba(29,158,117,0.3)}
 .score-locked{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#B0A898;letter-spacing:.03em}
 .conf{text-align:center;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+/* ── FILTER BAR ── */
+#filter-bar{background:#FAFAF8;border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#filter-bar label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+#filter-bar select,#filter-bar input[type=date]{font-size:11px;border:1px solid var(--border);border-radius:4px;padding:4px 7px;background:var(--white);color:var(--navy);font-family:'DM Sans',sans-serif;cursor:pointer}
+.filter-group{display:flex;align-items:center;gap:5px}
+.filter-sep{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0}
+#filter-clear{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--coral);background:none;border:1px solid rgba(201,97,58,0.4);padding:3px 10px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif}
+#filter-clear:hover{background:rgba(201,97,58,0.08)}
+.filter-active-badge{display:inline-block;font-size:9px;background:var(--gold);color:var(--navy);font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.04em}
+/* ── DYNAMIC DASH ── */
+.dyn-metrics-row{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid rgba(201,168,76,0.4);background:#FAFAF7;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.dyn-heading{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);padding:5px 0 5px 12px;border-left:3px solid var(--gold);margin-bottom:8px;background:rgba(201,168,76,0.06)}
+/* ── UPDATE TOAST ── */
+#update-toast{position:fixed;bottom:24px;right:24px;background:#0D1B2E;color:#C9A84C;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;padding:8px 16px;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.25);display:none;z-index:9999}
+/* ── PRINT: hide filter/dynamic elements ── */
+@media print{#filter-bar,#dynamic-dash,#ar-bar,#update-toast{display:none!important}}
 @page{margin:16mm 14mm;@bottom-center{content:"Jewelbox · IGI Retail Sales Excellence Programme | Confidential | Page " counter(page) " of " counter(pages);font-size:8px;color:#6B6357;font-family:sans-serif}}@media(max-width:640px){.metrics-row{grid-template-columns:1fr 1fr}.mc{border-right:none;border-bottom:1px solid var(--border)}.rpt-masthead{padding:24px 20px}.rpt-client{font-size:26px}.cta-block{grid-template-columns:1fr;gap:20px}.panel{padding:20px}}
 @media print{
   /* ── A: colour fidelity ── */
@@ -203,9 +219,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   <!-- REPORT CONTENT -->
   <!-- Auto-refresh bar — lives OUTSIDE reportScreen so innerHTML wipe doesn't kill it -->
 <div id="ar-bar" style="display:none;align-items:center;justify-content:flex-end;gap:10px;padding:8px 16px;background:#f7f5f0;border-bottom:1px solid #e8e4dc;font-family:'DM Sans',sans-serif;font-size:12px">
-  <span id="ar-pill" style="color:#5a7a5a;font-weight:600;transition:opacity 0.4s;opacity:0.6">✓ Live · Auto-refreshes every 2 min</span>
+  <span id="ar-countdown" style="color:#8a9a8a;font-size:11px"></span>
+  <span id="ar-pill" style="color:#5a7a5a;font-weight:600;transition:opacity 0.4s;opacity:0.6">✓ Live</span>
   <button onclick="manualRefresh()" style="background:#0D1B2E;color:#C8A84B;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">↻ Refresh Now</button>
 </div>
+<div id="update-toast"></div>
 <div id="reportScreen" class="hidden"></div>
 </div>
 
@@ -216,25 +234,71 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycby0kO9x-oSt3Tad92TPS2g2
 let _arBatch = null, _arPass = null, _arTimer = null;
 const AUTO_REFRESH_MS = 2 * 60 * 1000; // every 2 minutes
 
+let _arCountdownTimer = null, _arSecondsLeft = 0;
 function startAutoRefresh(batch, pass) {
   _arBatch = batch; _arPass = pass;
   if (_arTimer) clearInterval(_arTimer);
-  _arTimer = setInterval(silentRefresh, AUTO_REFRESH_MS);
+  if (_arCountdownTimer) clearInterval(_arCountdownTimer);
+  _arTimer = setInterval(function() { silentRefresh(); _startCountdown(); }, AUTO_REFRESH_MS);
+  _startCountdown();
+}
+function _startCountdown() {
+  _arSecondsLeft = AUTO_REFRESH_MS / 1000;
+  if (_arCountdownTimer) clearInterval(_arCountdownTimer);
+  _arCountdownTimer = setInterval(function() {
+    _arSecondsLeft--;
+    const cd = document.getElementById('ar-countdown');
+    if (cd) {
+      const m = Math.floor(_arSecondsLeft/60), s = _arSecondsLeft%60;
+      cd.textContent = _arSecondsLeft>0 ? 'Next refresh in '+m+':'+(s<10?'0':'')+s : '';
+    }
+    if (_arSecondsLeft<=0) clearInterval(_arCountdownTimer);
+  }, 1000);
 }
 
 function silentRefresh() {
   if (!_arBatch || !_arPass) return;
   const pill = document.getElementById('ar-pill');
-  if (pill) { pill.textContent = '🔄 Refreshing…'; pill.style.opacity = '1'; }
   gasGet({action:'getBatchReport', batch:_arBatch, pass:_arPass}, function(err, d) {
     if (err || !d || d.status === 'error') {
       if (pill) { pill.textContent = '⚠ Refresh failed'; pill.style.opacity = '1'; }
       return;
     }
     gasGet({action:'getPostResults', batch:_arBatch}, function(err2, d2) {
-      const postRows = (!err2 && d2 && d2.postRows) ? d2.postRows : [];
-      renderReport(d.rows, _arBatch, d.client||_arBatch, d.trainerName||'', postRows);
+      const newRawRows = d.rows || [];
+      const newPostRows = (!err2 && d2 && d2.postRows) ? d2.postRows : [];
+      const newFp = _dataFp(newRawRows, newPostRows);
+      // ── No change: just update timestamp ──
+      if (window._rawData && window._rawData.fp === newFp) {
+        updateLastRefreshed();
+        return;
+      }
+      // ── Data changed: sanitize new rows, update _rawData, re-render filtered sections ──
+      const sanitized = _sanitizeRows(newRawRows);
+      const prevPostLen = window._rawData ? window._rawData.postRows.length : 0;
+      window._rawData = {
+        rows: sanitized, postRows: newPostRows,
+        batch: _arBatch, client: d.client||_arBatch,
+        trainerName: d.trainerName||'', fp: newFp
+      };
+      window._rptCache = {rows: sanitized, batch: _arBatch, client: d.client||_arBatch, trainerName: d.trainerName||'', postRows: newPostRows};
+      // Update fixed KPI values in-place (no scroll reset)
+      const fullN=sanitized.length, avgRI=fullN?Math.round(sanitized.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/fullN):0;
+      const avgFcs=fullN?Math.round(sanitized.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/fullN):0;
+      const krLen=sanitized.filter(r=>(parseFloat(r.fcs)||0)<56).length;
+      const avgBand=avgRI>=90?'Outstanding':avgRI>=78?'Proficient':avgRI>=62?'Developing':'Foundation';
+      const bandColors={Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'};
+      const qv=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+      qv('fixed-n',fullN); qv('fixed-ri',avgRI); qv('fixed-ri-band',avgBand+' band');
+      qv('fixed-fcs',avgFcs+'%'); qv('fixed-fcs-lbl',avgFcs>=70?'Strong':'Needs development'); qv('fixed-kr',krLen);
+      const riEl=document.getElementById('fixed-ri'); if(riEl) riEl.style.color=bandColors[avgBand];
+      const fcsEl=document.getElementById('fixed-fcs'); if(fcsEl) fcsEl.style.color=avgFcs>=70?'var(--teal)':avgFcs>=56?'var(--gold)':'var(--coral)';
+      // Re-apply current filters to updated data
+      applyFiltersAndRender();
       updateLastRefreshed();
+      const added=newPostRows.length-prevPostLen;
+      if(added>0) showUpdateToast('⬆ '+added+' new post-test result'+(added>1?'s':''));
+      else showUpdateToast('⬆ Results updated');
     });
   });
 }
@@ -397,71 +461,237 @@ function toggleFeedbackRelease() {
   });
 }
 
+// ── Module-level RI helpers (hoisted from renderReport for reuse) ──────────
+const _RSP_TRIAD = {PP:20,TA:45,PS:65,EA:85,TrA:100};
+function _calcTriadRI(fcs, rspKey, c2sScoresJson) {
+  const knowledgeScore = Math.round(parseFloat(fcs)||0);
+  const consultScore   = _RSP_TRIAD[rspKey] || 20;
+  let adaptScore = 50, c2sIncomplete = false;
+  try {
+    const sc = typeof c2sScoresJson==='string' ? JSON.parse(c2sScoresJson) : (c2sScoresJson||{});
+    const vals = [sc['1']||0,sc['2']||0,sc['3']||0,sc['4']||0];
+    if (vals.some(v=>v>0)) { const rng=Math.max(...vals)-Math.min(...vals); adaptScore=Math.round(Math.max(0,100-(rng/24)*100)); }
+    else { c2sIncomplete = true; }
+  } catch(e){ c2sIncomplete = true; }
+  const partialSubmission = c2sIncomplete && (!rspKey || rspKey==='PP');
+  const total = Math.min(100, Math.round(knowledgeScore*0.40 + consultScore*0.35 + adaptScore*0.25));
+  return {total, knowledgeScore, consultScore, adaptScore, partialSubmission};
+}
+function _getTriadBand(score) {
+  if (score>=90) return 'Outstanding';
+  if (score>=78) return 'Proficient';
+  if (score>=62) return 'Developing';
+  return 'Foundation';
+}
+function _sanitizeRows(rows) {
+  const VALID_BANDS = ['Outstanding','Proficient','Developing','Foundation'];
+  const isJsonStr   = s => typeof s==='string' && (s.trim().startsWith('{')||s.trim().startsWith('['));
+  const isTimingStr = s => typeof s==='string' && /^\s*(\d+m\s*\d+s|4cs:)/i.test(s);
+  rows = rows.map(r => { const v=parseFloat(r.ri); return {...r, ri:isNaN(v)?0:Math.round(v)}; });
+  rows = rows.map(r => ({...r,
+    c2s:      (isJsonStr(r.c2s)||isTimingStr(r.c2s)) ? '' : r.c2s,
+    rspLabel: isJsonStr(r.rspLabel) ? (r.rspKey||'') : r.rspLabel,
+    desig:    isJsonStr(r.desig)    ? '' : r.desig,
+    branch:   isJsonStr(r.branch)   ? '' : r.branch,
+  }));
+  rows = rows.map(r => {
+    const t=_calcTriadRI(r.fcs,r.rspKey,r.c2sScores);
+    return {...r, ri:t.total, band:_getTriadBand(t.total), riK:t.knowledgeScore, riS:t.consultScore, riA:t.adaptScore, partialSubmission:t.partialSubmission};
+  });
+  return rows.filter(r => {
+    if (!r.name||!r.name.trim()) return false;
+    const ri=parseFloat(r.ri);
+    if (!VALID_BANDS.includes(r.band) && ri<10) return false;
+    return true;
+  });
+}
+function _dataFp(rows, postRows) {
+  return rows.length+'|'+postRows.length+'|'+((rows[rows.length-1]||{}).mobile||'')+((postRows[postRows.length-1]||{}).mobile||'');
+}
+
+// ── Filter state ─────────────────────────────────────────────────────────────
+window._rawData = null;
+window._filters = {branch:'', postStatus:'all', readiness:'all', scoreRange:'all', dateFrom:'', dateTo:''};
+
+function _applyFilters(rawRows, rawPostRows) {
+  const f = window._filters;
+  let rows = rawRows.slice();
+  if (f.branch) rows = rows.filter(r=>(r.branch||'').trim()===f.branch);
+  if (f.readiness!=='all') rows = rows.filter(r=>r.band===f.readiness);
+  if (f.scoreRange!=='all') rows = rows.filter(r=>{
+    const p=parseFloat(r.fcs)||0;
+    if (f.scoreRange==='below50') return p<50;
+    if (f.scoreRange==='50to70') return p>=50&&p<=70;
+    if (f.scoreRange==='above70') return p>70;
+    return true;
+  });
+  if (f.dateFrom||f.dateTo) {
+    const from=f.dateFrom?new Date(f.dateFrom):null;
+    const to  =f.dateTo  ?new Date(f.dateTo+'T23:59:59'):null;
+    rows = rows.filter(r=>{
+      if (!r.preDate) return true;
+      const d=new Date(r.preDate); if(isNaN(d)) return true;
+      if(from&&d<from) return false;
+      if(to  &&d>to)   return false;
+      return true;
+    });
+  }
+  const mobileSet = new Set(rawPostRows.map(pr=>String(pr.mobile||'').trim()));
+  let postRows = rawPostRows.slice();
+  if (f.postStatus==='completed') {
+    rows = rows.filter(r=>mobileSet.has(String(r.mobile||'').trim()));
+    const filtMobiles = new Set(rows.map(r=>String(r.mobile||'').trim()));
+    postRows = rawPostRows.filter(pr=>filtMobiles.has(String(pr.mobile||'').trim()));
+  } else if (f.postStatus==='pending') {
+    rows = rows.filter(r=>!mobileSet.has(String(r.mobile||'').trim()));
+    postRows = [];
+  }
+  return {rows, postRows};
+}
+
+function _computeDerived(rows, postRows) {
+  const bandColors = {Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'};
+  const n = rows.length;
+  if (n===0) return {n:0,avgRI:0,avgFcs:0,avgBand:'Foundation',avgColor:'#C9613A',bands:{Outstanding:0,Proficient:0,Developing:0,Foundation:0},skillMatrix:[],skillGapCounts:[],topGaps:[],knowledgeRisk:[],bandColors};
+  const avgRI  = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
+  const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
+  const bands = {Outstanding:0,Proficient:0,Developing:0,Foundation:0};
+  rows.forEach(r=>{ const b=r.band||'Foundation'; if(bands.hasOwnProperty(b)) bands[b]++; });
+  const skillMatrix = rows.map(r=>({
+    name:r.name,desig:r.desig,branch:r.branch||'',city:r.city||'',ri:r.ri,band:r.band,
+    rspKey:r.rspKey,rspLabel:r.rspLabel,c2s:r.c2s,fcs:r.fcs,fcsTagsRaw:r.fcsTags||'{}',
+    riK:r.riK,riS:r.riS,riA:r.riA,partialSubmission:r.partialSubmission||false,preDate:r.preDate||'',
+    gaps:computeSkillGaps(r.c2s,r.rspKey,parseFloat(r.fcs)||0)
+  }));
+  const skillGapCounts = SKILLS.map((_,si)=>({
+    skill:SKILLS[si],short:SKILL_SHORT[si],
+    gapCount:skillMatrix.filter(a=>a.gaps[si]==='gap').length,
+    devCount:skillMatrix.filter(a=>a.gaps[si]==='developing').length,
+    strongCount:skillMatrix.filter(a=>a.gaps[si]==='strong').length
+  })).sort((a,b)=>{
+    const sA=a.gapCount*3+(a.strongCount>0?a.devCount*0.5:0);
+    const sB=b.gapCount*3+(b.strongCount>0?b.devCount*0.5:0);
+    return sB-sA;
+  });
+  const topGaps = skillGapCounts.slice(0,3);
+  const knowledgeRisk = rows.filter(r=>(parseFloat(r.fcs)||0)<56);
+  const avgBand = avgRI>=90?'Outstanding':avgRI>=78?'Proficient':avgRI>=62?'Developing':'Foundation';
+  const avgColor = bandColors[avgBand];
+  return {n,avgRI,avgFcs,avgBand,avgColor,bands,skillMatrix,skillGapCounts,topGaps,knowledgeRisk,bandColors};
+}
+
+function renderFilterBar() {
+  const fb = document.getElementById('filter-bar');
+  if (!fb||!window._rawData) return;
+  const rawRows = window._rawData.rows;
+  const branches = [...new Set(rawRows.map(r=>(r.branch||'').trim()).filter(Boolean))].sort();
+  const f = window._filters;
+  const hasFilter = !!(f.branch||f.postStatus!=='all'||f.readiness!=='all'||f.scoreRange!=='all'||f.dateFrom||f.dateTo);
+  fb.innerHTML = `
+    <div class="filter-group"><label>Branch</label>
+      <select onchange="window._filters.branch=this.value;applyFiltersAndRender()">
+        <option value="">All</option>
+        ${branches.map(b=>`<option value="${b}"${f.branch===b?' selected':''}>${b}</option>`).join('')}
+      </select></div>
+    <div class="filter-sep"></div>
+    <div class="filter-group"><label>Post-Test</label>
+      <select onchange="window._filters.postStatus=this.value;applyFiltersAndRender()">
+        <option value="all"${f.postStatus==='all'?' selected':''}>All</option>
+        <option value="completed"${f.postStatus==='completed'?' selected':''}>Completed</option>
+        <option value="pending"${f.postStatus==='pending'?' selected':''}>Pending</option>
+      </select></div>
+    <div class="filter-sep"></div>
+    <div class="filter-group"><label>Readiness</label>
+      <select onchange="window._filters.readiness=this.value;applyFiltersAndRender()">
+        <option value="all"${f.readiness==='all'?' selected':''}>All bands</option>
+        <option value="Outstanding"${f.readiness==='Outstanding'?' selected':''}>Outstanding</option>
+        <option value="Proficient"${f.readiness==='Proficient'?' selected':''}>Proficient</option>
+        <option value="Developing"${f.readiness==='Developing'?' selected':''}>Developing</option>
+        <option value="Foundation"${f.readiness==='Foundation'?' selected':''}>Foundation</option>
+      </select></div>
+    <div class="filter-sep"></div>
+    <div class="filter-group"><label>4Cs Score</label>
+      <select onchange="window._filters.scoreRange=this.value;applyFiltersAndRender()">
+        <option value="all"${f.scoreRange==='all'?' selected':''}>All scores</option>
+        <option value="above70"${f.scoreRange==='above70'?' selected':''}>Above 70%</option>
+        <option value="50to70"${f.scoreRange==='50to70'?' selected':''}>50–70%</option>
+        <option value="below50"${f.scoreRange==='below50'?' selected':''}>Below 50%</option>
+      </select></div>
+    <div class="filter-sep"></div>
+    <div class="filter-group"><label>From</label>
+      <input type="date" value="${f.dateFrom||''}" onchange="window._filters.dateFrom=this.value;applyFiltersAndRender()">
+      <label style="margin-left:4px">To</label>
+      <input type="date" value="${f.dateTo||''}" onchange="window._filters.dateTo=this.value;applyFiltersAndRender()"></div>
+    ${hasFilter?`<div class="filter-sep"></div><button id="filter-clear" onclick="clearFilters()">✕ Clear</button><span class="filter-active-badge">Filtered</span>`:''}
+  `;
+}
+
+function clearFilters() {
+  window._filters = {branch:'',postStatus:'all',readiness:'all',scoreRange:'all',dateFrom:'',dateTo:''};
+  applyFiltersAndRender();
+}
+
+function renderDynamicDash(fRows, fPostRows, fullN) {
+  const dd = document.getElementById('dynamic-dash');
+  if (!dd) return;
+  const f = window._filters;
+  const hasFilter = !!(f.branch||f.postStatus!=='all'||f.readiness!=='all'||f.scoreRange!=='all'||f.dateFrom||f.dateTo);
+  if (!hasFilter) { dd.innerHTML=''; return; }
+  const n = fRows.length, postCount=fPostRows.length;
+  const avgRI  = n>0?Math.round(fRows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n):0;
+  const avgFcs = n>0?Math.round(fRows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n):0;
+  const krCount= fRows.filter(r=>(parseFloat(r.fcs)||0)<56).length;
+  const bandColors={Outstanding:'#C9A84C',Proficient:'#1D9E75',Developing:'#378ADD',Foundation:'#C9613A'};
+  const avgBand= avgRI>=90?'Outstanding':avgRI>=78?'Proficient':avgRI>=62?'Developing':'Foundation';
+  const avgColor=bandColors[avgBand];
+  const pct = fullN>0?Math.round((n/fullN)*100):0;
+  dd.innerHTML = `
+    <div class="dyn-heading">📊 Filtered View — showing ${n} of ${fullN} associates (${pct}%)</div>
+    <div class="dyn-metrics-row">
+      <div class="mc mg"><div class="mv">${n}</div><div class="ml">Filtered Associates</div><div class="ms">${pct}% of batch</div></div>
+      <div class="mc" style="${avgRI>=78?'--t:var(--teal)':'--t:var(--coral)'}">
+        <div class="mv" style="color:${avgColor}">${n?avgRI:'—'}</div>
+        <div class="ml">Avg Readiness</div><div class="ms">${n?avgBand+' band':'—'}</div></div>
+      <div class="mc mt">
+        <div class="mv" style="color:${avgFcs>=70?'var(--teal)':avgFcs>=56?'var(--gold)':'var(--coral)'}">${n?avgFcs+'%':'—'}</div>
+        <div class="ml">Avg 4Cs Score</div><div class="ms">${n?(avgFcs>=70?'Strong':'Needs dev'):'—'}</div></div>
+      <div class="mc">
+        <div class="mv" style="color:${postCount?'var(--teal)':'var(--muted)'}">${postCount}</div>
+        <div class="ml">Post-Test Done</div><div class="ms">${n?Math.round((postCount/n)*100)+'% completion':'—'}</div></div>
+      <div class="mc mr">
+        <div class="mv" style="color:${krCount?'var(--coral)':'var(--teal)'}">${krCount}</div>
+        <div class="ml">Knowledge Risk</div><div class="ms">Below 56%</div></div>
+    </div>`;
+}
+
+function applyFiltersAndRender() {
+  if (!window._rawData) return;
+  const {rows:rawRows,postRows:rawPostRows,batch,trainerName} = window._rawData;
+  renderFilterBar();
+  const {rows,postRows} = _applyFilters(rawRows,rawPostRows);
+  renderDynamicDash(rows, postRows, rawRows.length);
+  const d = _computeDerived(rows, postRows);
+  renderHeatmapAndRest(rows, batch, d.n, d.skillMatrix, d.skillGapCounts, d.topGaps, d.knowledgeRisk, trainerName, d.bandColors, d.avgRI, d.avgFcs, d.avgColor, postRows);
+}
+
+let _toastTimer=null;
+function showUpdateToast(msg) {
+  const t=document.getElementById('update-toast');
+  if (!t) return;
+  t.textContent=msg||'⬆ New data loaded';
+  t.style.display='block';
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{t.style.display='none';},3500);
+}
+
 function renderReport(rows, batch, client, trainerName, postRows) {
   postRows = postRows || [];
   window._rptCache = {rows, batch, client, trainerName, postRows};
-  // Sanitize ri — coerce to number (some rows may carry a JSON string in this field)
-  rows = rows.map(r => { const v = parseFloat(r.ri); return {...r, ri: isNaN(v) ? 0 : Math.round(v)}; });
+  // Sanitize + recalculate RI for all rows (uses hoisted _sanitizeRows)
+  rows = _sanitizeRows(rows);
 
-  // Sanitize text fields — detect corrupted data (JSON strings or timeTaken format landing in wrong columns)
-  const isJsonStr   = s => typeof s === 'string' && (s.trim().startsWith('{') || s.trim().startsWith('['));
-  const isTimingStr = s => typeof s === 'string' && /^\s*(\d+m\s*\d+s|4cs:)/i.test(s);
-  rows = rows.map(r => ({
-    ...r,
-    c2s:      (isJsonStr(r.c2s)      || isTimingStr(r.c2s))      ? '' : r.c2s,
-    rspLabel: isJsonStr(r.rspLabel)                               ? (r.rspKey||'') : r.rspLabel,
-    desig:    isJsonStr(r.desig)                                  ? '' : r.desig,
-    branch:   isJsonStr(r.branch)                                 ? '' : r.branch,
-  }));
-
-  // Guard: filter out data-error rows (name present but RI=0 and band not a known band)
-  const VALID_BANDS = ['Outstanding','Proficient','Developing','Foundation'];
-
-  // ── New Triad RI recalculator (runs on every row using live component data) ──
-  const RSP_CONSULT_SCORE = {PP:20,TA:45,PS:65,EA:85,TrA:100};
-  function calcTriadRI(fcs, rspKey, c2sScoresJson) {
-    const knowledgeScore = Math.round(parseFloat(fcs)||0);
-    const consultScore   = RSP_CONSULT_SCORE[rspKey] || 20;
-    let adaptScore = 50; // fallback if no C2S data
-    let c2sIncomplete = false;
-    try {
-      const sc = typeof c2sScoresJson==='string' ? JSON.parse(c2sScoresJson) : (c2sScoresJson||{});
-      const vals = [sc['1']||0, sc['2']||0, sc['3']||0, sc['4']||0];
-      if (vals.some(v=>v>0)) {
-        const range = Math.max(...vals) - Math.min(...vals);
-        adaptScore = Math.round(Math.max(0, 100 - (range/24)*100));
-      } else {
-        c2sIncomplete = true; // all zeros = sections 2 & 3 not submitted
-      }
-    } catch(e){ c2sIncomplete = true; }
-    // Mark as partial submission: all-zero C2S AND defaulted to PP (no RSP data either)
-    const partialSubmission = c2sIncomplete && (!rspKey || rspKey === 'PP');
-    const total = Math.min(100, Math.round(knowledgeScore*0.40 + consultScore*0.35 + adaptScore*0.25));
-    return {total, knowledgeScore, consultScore, adaptScore, partialSubmission};
-  }
-  function getTriadBand(score) {
-    if (score>=90) return 'Outstanding';
-    if (score>=78) return 'Proficient';
-    if (score>=62) return 'Developing';
-    return 'Foundation';
-  }
-
-  // Apply new RI to all rows
-  rows = rows.map(r => {
-    const triad = calcTriadRI(r.fcs, r.rspKey, r.c2sScores);
-    return {...r, ri: triad.total, band: getTriadBand(triad.total),
-      riK: triad.knowledgeScore, riS: triad.consultScore, riA: triad.adaptScore,
-      partialSubmission: triad.partialSubmission};
-  });
-
-  rows = rows.filter(r => {
-    if (!r.name || !r.name.trim()) return false; // no name — skip
-    const badBand = !VALID_BANDS.includes(r.band);
-    const ri = parseFloat(r.ri);
-    const validRI = ri >= 10; // real RI is always ≥10; values below 10 indicate a corrupted column shift
-    if (badBand && !validRI) return false; // corrupted row — exclude from report
-    return true;
-  });
+  // Store raw (full-batch) sanitized data for filter/refresh use
+  window._rawData = {rows: rows.slice(), postRows: postRows.slice(), batch, client, trainerName, fp: _dataFp(rows, postRows)};
   const n = rows.length;
   const avgRI  = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.ri)||0),0)/n);
   const avgFcs = Math.round(rows.reduce((a,r)=>a+(parseFloat(r.fcs)||0),0)/n);
@@ -510,27 +740,31 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     </div>
   </div>
 
-  <div class="metrics-row">
+  <div class="metrics-row" id="fixed-metrics">
     <div class="mc mg">
-      <div class="mv">${n}</div>
+      <div class="mv" id="fixed-n">${n}</div>
       <div class="ml">Associates Assessed</div>
+      <div class="ms">Full batch</div>
     </div>
     <div class="mc" style="${avgRI>=78?'--t:var(--teal)':'--t:var(--coral)'}">
-      <div class="mv" style="color:${avgColor}">${avgRI}</div>
+      <div class="mv" style="color:${avgColor}" id="fixed-ri">${avgRI}</div>
       <div class="ml">Avg. Readiness Index</div>
-      <div class="ms">${avgBand} band</div>
+      <div class="ms" id="fixed-ri-band">${avgBand} band</div>
     </div>
     <div class="mc mt">
-      <div class="mv" style="color:${avgFcs>=70?'var(--teal)':avgFcs>=56?'var(--gold)':'var(--coral)'}">${avgFcs}%</div>
+      <div class="mv" style="color:${avgFcs>=70?'var(--teal)':avgFcs>=56?'var(--gold)':'var(--coral)'}" id="fixed-fcs">${avgFcs}%</div>
       <div class="ml">Avg. 4Cs Knowledge</div>
-      <div class="ms">${avgFcs>=70?'Strong':'Needs development'}</div>
+      <div class="ms" id="fixed-fcs-lbl">${avgFcs>=70?'Strong':'Needs development'}</div>
     </div>
     <div class="mc mr">
-      <div class="mv" style="color:${knowledgeRisk.length>0?'var(--coral)':'var(--teal)'}">${knowledgeRisk.length}</div>
+      <div class="mv" style="color:${knowledgeRisk.length>0?'var(--coral)':'var(--teal)'}" id="fixed-kr">${knowledgeRisk.length}</div>
       <div class="ml">Knowledge Risk</div>
       <div class="ms">Below 56% threshold</div>
     </div>
   </div>
+
+  <div id="filter-bar" style="margin-top:20px"></div>
+  <div id="dynamic-dash"></div>
 
   <div id="execSummary"></div>
   <div id="rsiGuide" style="background:#fff;padding:32px 36px 28px;font-family:'Jost',sans-serif;color:#0D1B2E">
@@ -747,9 +981,11 @@ function renderReport(rows, batch, client, trainerName, postRows) {
       ${avgRI>=78?'Strong foundation. IGI RSP program will accelerate further.':avgRI>=62?'Targeted RSP training expected to move most associates to Proficient within 4–6 weeks.':'Prioritize 4Cs knowledge certification before behavioral skills development.'}
     </div>
   </div>
+  <div id="dynamic-content"></div>
 `;
   document.getElementById('reportScreen').innerHTML = html;
-  renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGaps, knowledgeRisk, trainerName, bandColors, avgRI, avgFcs, avgColor, postRows);
+  // Render filter bar + dynamic sections (filtered or full)
+  applyFiltersAndRender();
 
 // ── D: Executive Summary ───────────────────────────────────────────────────
   (function(){
@@ -1482,7 +1718,8 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
     </table>`}
   </div>`;
 
-  document.getElementById('reportScreen').innerHTML += heatmapHtml + priorityHtml + assocHtml + loc05Html + knowledgeHtml + glossHtml + ctaHtml;
+  const dynContent = document.getElementById('dynamic-content');
+  if (dynContent) dynContent.innerHTML = heatmapHtml + priorityHtml + assocHtml + loc05Html + knowledgeHtml + glossHtml + ctaHtml;
 }
 
 // ── Print: add page-break class to section headers 02+ ───────────────────────
