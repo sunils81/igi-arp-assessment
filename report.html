@@ -215,6 +215,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
   .b-bar span{-webkit-print-color-adjust:exact!important}
   .bstr span{-webkit-print-color-adjust:exact!important}
 }
+
+/* ── ADMIN PASSWORD MODAL ── */
+#adminPassModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(13,27,46,0.65);backdrop-filter:blur(3px);align-items:center;justify-content:center}
+#adminPassModal.open{display:flex}
+.admin-modal-card{background:#fff;border-top:3px solid #C9A84C;border-radius:2px;padding:36px 32px;width:380px;max-width:90vw;box-shadow:0 8px 32px rgba(13,27,46,0.18)}
+.admin-modal-card .gate-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#C9A84C;margin-bottom:8px}
+.admin-modal-card h3{font-family:"Playfair Display",serif;font-size:20px;font-weight:700;color:#0D1B2E;margin-bottom:6px}
+.admin-modal-card p{font-size:12px;color:#6B6357;margin-bottom:20px;line-height:1.6}
+.admin-modal-card .field label{display:block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6B6357;margin-bottom:7px}
+.admin-modal-card .field input{width:100%;padding:10px 0;border:none;border-bottom:2px solid #E2DDD6;background:transparent;font-size:14px;color:#0D1B2E;outline:none;box-sizing:border-box;transition:border-color .2s}
+.admin-modal-card .field input:focus{border-bottom-color:#C9A84C}
+.admin-modal-err{font-size:11px;color:#C9613A;margin-bottom:12px;display:none}
+.admin-modal-btns{display:flex;gap:10px;margin-top:20px}
+.admin-modal-btns .btn-confirm{flex:1;background:#C9A84C;color:#0D1B2E;border:none;padding:11px 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:1px}
+.admin-modal-btns .btn-confirm:hover{background:#b8963e}
+.admin-modal-btns .btn-cancel{flex:1;background:transparent;color:#6B6357;border:1px solid #E2DDD6;padding:11px 0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:1px}
+.admin-modal-btns .btn-cancel:hover{background:#f9f7f4}
 </style>
 </head>
 <body>
@@ -1518,7 +1535,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
       <div class="cta-trn">Sunil Sharma</div>
     </div>
     <div class="cta-act">
-      <button class="btn-release${feedbackReleased()?` released`:``}" onclick="toggleFeedbackRelease()" title="Control whether associates can see correct answers after their post-test">${feedbackReleased()?`✅ Answer Feedback Released`:`🔒 Release Answer Feedback`}</button>
+      <button class="btn-release${feedbackReleased()?` released`:``}" onclick="toggleFeedbackReleaseSecure()" title="Control whether associates can see correct answers after their post-test">${feedbackReleased()?`✅ Answer Feedback Released`:`🔒 Release Answer Feedback`}</button>
       <button class="btn-print" onclick="window.print()" title="In Chrome print dialog → More settings → uncheck 'Headers and footers'">Print / Save PDF</button>
       <div class="print-tip" style="font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:4px;line-height:1.4;max-width:180px">Tip: uncheck <em>Headers &amp; footers</em><br>in Chrome print settings</div>
     </div>
@@ -1757,5 +1774,74 @@ window.addEventListener('afterprint', function() {
   document.querySelectorAll('.sh.print-pb').forEach(el => el.classList.remove('print-pb'));
 });
 </script>
+
+<!-- ADMIN PASSWORD MODAL -->
+<div id="adminPassModal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+  <div class="admin-modal-card">
+    <div class="gate-eyebrow">Admin Access Required</div>
+    <h3 id="adminModalTitle">Enter Admin Password</h3>
+    <p>This action is restricted to IGI administrators. Enter your admin password to continue.</p>
+    <div class="field">
+      <label>Admin Password</label>
+      <input type="password" id="adminPassInput" placeholder="Enter admin password" autocomplete="off" onkeydown="if(event.key==='Enter')_confirmAdminPass();if(event.key==='Escape')_closeAdminModal()">
+    </div>
+    <div class="admin-modal-err" id="adminPassErr">Incorrect password. Please try again.</div>
+    <div class="admin-modal-btns">
+      <button class="btn-cancel" onclick="_closeAdminModal()">Cancel</button>
+      <button class="btn-confirm" onclick="_confirmAdminPass()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ADMIN PASSWORD GATE ──────────────────────────────────────────
+// SHA-256 of 'IGIAdmin@2024'  — change hash to change password
+const _ADMIN_HASH = 'bafc955445200861ba7cdfdb94229c08a0864771add436e5a737ad48ae376139';
+let _adminCallback = null;
+
+async function _sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function _requireAdminPass(callback) {
+  _adminCallback = callback;
+  const modal = document.getElementById('adminPassModal');
+  const input = document.getElementById('adminPassInput');
+  const err   = document.getElementById('adminPassErr');
+  err.style.display = 'none';
+  input.value = '';
+  modal.classList.add('open');
+  setTimeout(()=>input.focus(), 80);
+}
+
+function _closeAdminModal() {
+  document.getElementById('adminPassModal').classList.remove('open');
+  _adminCallback = null;
+}
+
+async function _confirmAdminPass() {
+  const input = document.getElementById('adminPassInput');
+  const err   = document.getElementById('adminPassErr');
+  const hash  = await _sha256(input.value);
+  if (hash !== _ADMIN_HASH) {
+    err.style.display = 'block';
+    input.value = '';
+    input.focus();
+    return;
+  }
+  _closeAdminModal();
+  if (_adminCallback) _adminCallback();
+}
+
+// Override toggleFeedbackRelease to require admin password first
+const _origToggleFeedback = typeof toggleFeedbackRelease !== 'undefined' ? toggleFeedbackRelease : null;
+window.toggleFeedbackReleaseSecure = function() {
+  _requireAdminPass(function() {
+    if (_origToggleFeedback) _origToggleFeedback();
+  });
+};
+</script>
+
 </body>
 </html>
