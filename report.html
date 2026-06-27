@@ -232,6 +232,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--off);color:var(--navy);mi
 .admin-modal-btns .btn-confirm:hover{background:#b8963e}
 .admin-modal-btns .btn-cancel{flex:1;background:transparent;color:#6B6357;border:1px solid #E2DDD6;padding:11px 0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:1px}
 .admin-modal-btns .btn-cancel:hover{background:#f9f7f4}
+
+/* ── BATCH SNAPSHOT PANEL ── */
+.snapshot-panel{margin-bottom:20px}
+.snap-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.snap-metric{background:#fff;border:1px solid var(--border);border-top:3px solid #C9A84C;padding:12px 14px;border-radius:2px}
+.snap-metric-val{font-family:"Playfair Display",serif;font-size:26px;font-weight:700;color:var(--navy);line-height:1}
+.snap-metric-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.snap-metric-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.snap-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.snap-box{background:#fff;border:1px solid var(--border);padding:14px 16px;border-radius:2px}
+.snap-box-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.snap-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.snap-bar-lbl{font-size:11px;color:var(--navy);width:100px;flex-shrink:0}
+.snap-bar-track{flex:1;background:#F0EDE8;border-radius:3px;height:10px;overflow:hidden}
+.snap-bar-val{font-size:11px;font-weight:600;color:var(--navy);min-width:48px;text-align:right}
+.snap-status-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.snap-status-row:last-child{border-bottom:none}
+@media print{.snapshot-panel{break-inside:avoid}}
+@media(max-width:640px){.snap-metrics{grid-template-columns:repeat(2,1fr)}.snap-row2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -977,7 +996,106 @@ function renderReport(rows, batch, client, trainerName, postRows) {
     </div><!-- end grid -->
   </div><!-- end rsiGuide -->
 
-  <div class="sh"><span class="sh-num">01</span><span class="sh-title">Readiness Distribution</span><span class="sh-rule"></span></div>
+  
+  <!-- ── BATCH SNAPSHOT PANEL ── -->
+  <div class="snapshot-panel" style="margin-bottom:24px">
+    <!-- Row 1: Key metrics -->
+    <div class="snap-metrics">
+      <div class="snap-metric">
+        <div class="snap-metric-val">${n}</div>
+        <div class="snap-metric-lbl">Associates assessed</div>
+      </div>
+      <div class="snap-metric">
+        <div class="snap-metric-val" style="color:${avgColor}">${avgRI}<span style="font-size:14px;color:var(--muted);font-weight:400">/100</span></div>
+        <div class="snap-metric-lbl">Avg Readiness Index</div>
+        <div class="snap-metric-sub" style="color:${avgColor}">${avgBand}</div>
+      </div>
+      <div class="snap-metric">
+        <div class="snap-metric-val">${avgFcs}%</div>
+        <div class="snap-metric-lbl">Avg 4Cs Knowledge</div>
+        <div class="snap-metric-sub">${avgFcs>=75?'Strong':'Developing'}</div>
+      </div>
+      <div class="snap-metric" style="${knowledgeRisk.length>0?'border-top:3px solid #C9613A':'border-top:3px solid #1D9E75'}">
+        <div class="snap-metric-val" style="color:${knowledgeRisk.length>0?'#C9613A':'#1D9E75'}">${knowledgeRisk.length}</div>
+        <div class="snap-metric-lbl">Knowledge risk</div>
+        <div class="snap-metric-sub">Below 56% threshold</div>
+      </div>
+      <div class="snap-metric">
+        <div class="snap-metric-val">${postRows.length}</div>
+        <div class="snap-metric-lbl">Post-test completed</div>
+        <div class="snap-metric-sub">of ${n} associates</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Band distribution + top gaps -->
+    <div class="snap-row2">
+      <!-- Band bars -->
+      <div class="snap-box">
+        <div class="snap-box-title">Band distribution</div>
+        ${Object.entries(bands).map(([band, count]) => {
+          const pct = Math.round((count/n)*100);
+          const bc = bandColors[band];
+          return `<div class="snap-bar-row">
+            <span class="snap-bar-lbl">${band}</span>
+            <div class="snap-bar-track"><div style="width:${pct}%;background:${bc};height:10px;border-radius:3px"></div></div>
+            <span class="snap-bar-val">${count} <span style="color:var(--muted);font-size:10px">(${pct}%)</span></span>
+          </div>`;
+        }).join('')}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          <div class="snap-box-title">Top skill gaps</div>
+          ${topGaps.map((g,i) => `<div class="snap-bar-row">
+            <span class="snap-bar-lbl" style="font-size:10px">${g.short||g.skill}</span>
+            <div class="snap-bar-track"><div style="width:${Math.min(100,Math.round((g.gapCount/n)*100))}%;background:#C9613A;height:10px;border-radius:3px"></div></div>
+            <span class="snap-bar-val" style="font-size:10px">${g.gapCount} gaps</span>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Post-training readiness -->
+      <div class="snap-box">
+        <div class="snap-box-title">Post-training readiness (${postRows.length}/${n})</div>
+        ${(() => {
+          const cert = postRows.filter(r => (parseFloat(r.postPct)||0) >= 80).length;
+          const prog = postRows.filter(r => { const p=parseFloat(r.postPct)||0; return p>=65 && p<80; }).length;
+          const need = postRows.filter(r => { const p=parseFloat(r.postPct)||0; return p>=50 && p<65; }).length;
+          const pri  = postRows.filter(r => (parseFloat(r.postPct)||0) < 50).length;
+          const statuses = [
+            { label:'Certified (≥80%)', count:cert, color:'#1D9E75', bg:'#E8F7F1' },
+            { label:'Progressing (65–79%)', count:prog, color:'#378ADD', bg:'#EBF3FB' },
+            { label:'Needs support (50–64%)', count:need, color:'#BA7517', bg:'#FDF3E0' },
+            { label:'Priority coaching (<50%)', count:pri, color:'#C9613A', bg:'#FAECE7' },
+          ];
+          return statuses.map(s => `<div class="snap-status-row">
+            <span style="font-size:12px;color:var(--navy)">${s.label}</span>
+            <span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;background:${s.bg};color:${s.color}">${s.count}</span>
+          </div>`).join('');
+        })()}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          <div class="snap-box-title">4Cs pre → post gain</div>
+          ${(() => {
+            if (!postRows.length) return '<div style="font-size:11px;color:var(--muted)">No post-test data yet</div>';
+            const cats = ['Carat','Color','Clarity','Cut'];
+            const preFields  = ['caratPct','colorPct','clarityPct','cutPct'];
+            const postFields = ['postCaratPct','postColorPct','postClarityPct','postCutPct'];
+            return cats.map((cat,i) => {
+              const preAvg  = Math.round(rows.reduce((a,r)=>a+(parseFloat(r[preFields[i]])||0),0)/rows.length);
+              const postAvg = Math.round(postRows.reduce((a,r)=>a+(parseFloat(r[postFields[i]])||0),0)/postRows.length);
+              const gain = postAvg - preAvg;
+              const gainColor = gain >= 0 ? '#1D9E75' : '#C9613A';
+              return `<div class="snap-bar-row">
+                <span class="snap-bar-lbl" style="font-size:11px">${cat}</span>
+                <div class="snap-bar-track"><div style="width:${postAvg}%;background:#1D9E75;height:10px;border-radius:3px"></div></div>
+                <span class="snap-bar-val" style="font-size:10px;color:${gainColor}">${gain>=0?'+':''}${gain}%</span>
+              </div>`;
+            }).join('');
+          })()}
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ── END SNAPSHOT PANEL ── -->
+
+<div class="sh"><span class="sh-num">01</span><span class="sh-title">Readiness Distribution</span><span class="sh-rule"></span></div>
   <div class="panel">
     <div class="pt">Team Band Breakdown — ${n} Associates</div>
     <div class="band-track">
@@ -1243,7 +1361,7 @@ function renderHeatmapAndRest(rows, batch, n, skillMatrix, skillGapCounts, topGa
             <td style="vertical-align:middle">
               <div class="atst">${a.rspLabel||a.rspKey}</div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5">${rspSubLabel(a.rspKey, a.band)}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;font-style:italic">${rspRoleFit(a.rspKey, a.band).split('.')[0]}.</div>
+
             </td>
             <td>
               <div class="atg">
