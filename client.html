@@ -141,9 +141,10 @@ function render(d) {
   batches.forEach(function (b) { (b.participants || []).forEach(function (p) { all.push(p); }); });
   var assessed = all.filter(function (p) { return p.readinessTotal != null; });
 
-  var expires = (d.accessExpiresAt || '').slice(0, 10);
-  var daysLeft = expires
-    ? Math.max(0, Math.ceil((Date.parse(expires + 'T23:59:59Z') - Date.now()) / 86400000)) : null;
+  /* Counted from the stored expiry instant, not from its calendar date: rounding the
+     date up to end-of-day told a one-day link it had two days left. */
+  var expMs = d.accessExpiresAt ? Date.parse(d.accessExpiresAt) : NaN;
+  var daysLeft = isNaN(expMs) ? null : Math.max(0, Math.ceil((expMs - Date.now()) / 86400000));
 
   var h = '<div class="hdr">'
     + '<div><h1>Team Readiness Report</h1><div class="who">' + esc(d.client) + '</div></div>'
