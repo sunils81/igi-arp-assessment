@@ -5,100 +5,183 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0D1B2E">
-<title>Team Readiness — IGI</title>
+<title>Team Readiness Report — IGI School of Gemology</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="assets/arp-profiles.js?v=3"></script>
 <style>
-:root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FDFCF9;
---off:#F4F1EB;--muted:#8A8070;--border:rgba(201,168,76,0.2);--teal:#1D9E75;--coral:#C9613A;
---purple:#534AB7;--blue:#378ADD;--radius:12px;--shadow:0 4px 24px rgba(13,27,46,0.10)}
+:root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FFFFFF;
+--off:#F7F5F0;--muted:#6B6357;--border:#E2DDD6;--teal:#1D9E75;--coral:#C9613A;--purple:#534AB7;
+--blue:#378ADD;--gap-fill:#C94A4A;--dev-fill:#B87A10;--str-fill:#1D9E75;
+--rm:4px;--sh:0 1px 4px rgba(13,27,46,0.07),0 4px 16px rgba(13,27,46,0.05)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--off);color:var(--navy);
-line-height:1.6;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
-.wrap{max-width:1040px;margin:0 auto;
-padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-left)) 60px max(16px,env(safe-area-inset-right))}
-.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
-border-bottom:3px solid var(--gold);padding-bottom:14px;margin-bottom:20px;flex-wrap:wrap}
-.hdr h1{font-family:'Playfair Display',serif;font-size:25px;font-weight:600;line-height:1.2}
-.hdr .who{font-size:13px;color:var(--muted);margin-top:2px}
-.hdr .org{text-align:right;font-size:11.5px;color:var(--muted);line-height:1.6}
-.hdr .org b{display:block;font-family:'Playfair Display',serif;font-size:17px;color:var(--navy)}
-.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
-padding:22px 20px;margin-bottom:16px}
-h2{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;margin-bottom:3px}
-.sub{font-size:12.5px;color:var(--muted)}
-.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:11px;margin:14px 0}
-.kv>div{background:var(--off);border-radius:9px;padding:11px 13px}
-.kv span{display:block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.kv b{font-size:19px;font-weight:700}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-color:var(--muted);padding:8px 9px;border-bottom:2px solid var(--border);white-space:nowrap}
-td{padding:9px;border-bottom:1px solid #EFE9DC;vertical-align:top}
-tr:last-child td{border-bottom:none}
+font-size:14px;line-height:1.75;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;
+overscroll-behavior-y:contain}
+#app{max-width:880px;margin:0 auto;padding:0 0 70px}
+
+/* ── masthead: the same navy-to-teal band and gold rule the existing report uses ── */
+.mast{background:linear-gradient(135deg,#0D1B2E 0%,#123A44 56%,#1D9E75 160%);
+border-bottom:3px solid var(--gold);padding:26px 22px 22px;
+padding-top:max(26px,calc(env(safe-area-inset-top) + 18px));box-shadow:var(--sh)}
+.mast img{height:46px;width:auto;display:block;margin:0 auto 16px}
+.mast h1{font-family:'Playfair Display',serif;font-size:27px;font-weight:600;color:#fff;
+text-align:center;line-height:1.2;letter-spacing:.01em}
+.mast .for{text-align:center;color:var(--gold-light);font-size:13.5px;font-weight:500;
+margin-top:5px;letter-spacing:.02em}
+.mast .meta{text-align:center;color:rgba(255,255,255,.62);font-size:11.5px;margin-top:9px;
+letter-spacing:.05em;text-transform:uppercase}
+.wrap{padding:22px max(18px,env(safe-area-inset-left)) 0 max(18px,env(safe-area-inset-right))}
+
+.card{background:var(--white);border-radius:var(--rm);box-shadow:var(--sh);padding:24px 22px;
+margin-bottom:18px;border-top:2px solid transparent}
+.card.accent{border-top-color:var(--gold)}
+.eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+color:var(--gold);margin-bottom:5px}
+h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;line-height:1.3}
+h3{font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+color:var(--muted);margin-bottom:11px}
+.sub{font-size:13px;color:var(--muted);margin-top:4px}
+.lead{font-size:15.5px;line-height:1.7;margin-top:12px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;
+background:var(--border);border:1px solid var(--border);border-radius:var(--rm);
+overflow:hidden;margin:16px 0}
+.stat{background:var(--white);padding:14px 13px}
+.stat .l{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:'Playfair Display',serif;font-size:27px;font-weight:600;line-height:1.15;margin-top:3px}
+.stat .v small{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;color:var(--muted)}
+.stat .n{font-size:11px;color:var(--muted);line-height:1.45}
+
+.bandrow{margin-bottom:9px}
+.bandrow .t{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:3px}
+.track{height:8px;background:#EDE8DF;border-radius:8px;overflow:hidden}
+.track>i{display:block;height:100%;border-radius:8px}
+
+.hm{width:100%;border-collapse:separate;border-spacing:2px;font-size:11px}
+.hm th{font-size:9.5px;font-weight:700;color:var(--muted);padding:0 0 6px;text-align:center;
+vertical-align:bottom;line-height:1.25}
+.hm th.who{text-align:left;width:150px;padding-right:8px}
+.hm td{text-align:center;border-radius:3px;height:26px;color:#fff;font-weight:700;font-size:10px}
+.hm td.who{background:transparent;color:var(--navy);text-align:left;font-weight:500;
+font-size:12px;padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.sw-strong{background:var(--str-fill)}.sw-dev{background:var(--dev-fill)}.sw-gap{background:var(--gap-fill)}
+.sw-none{background:#EDE8DF}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:12px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:2px;display:block}
+
+table.roster{width:100%;border-collapse:collapse;font-size:13px}
+.roster th{text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.07em;
+text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:2px solid var(--border);white-space:nowrap}
+.roster td{padding:11px 8px;border-bottom:1px solid #F0ECE4;vertical-align:middle}
+.roster tr:last-child td{border-bottom:none}
 .tc{text-align:center}
-.pill{display:inline-block;border-radius:20px;padding:2px 10px;font-size:11.5px;font-weight:700}
-.bar{height:7px;background:#E6DFCF;border-radius:7px;overflow:hidden;margin-top:4px}
-.bar>i{display:block;height:100%;border-radius:7px}
-.note{background:var(--gold-pale);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;
-padding:12px 14px;font-size:13px;margin:12px 0}
-.spin{text-align:center;padding:60px 20px;color:var(--muted)}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -20px;padding:0 20px}
-.btn{background:var(--gold);color:var(--navy);border:none;border-radius:9px;padding:11px 22px;
-font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;min-height:44px}
-@media(max-width:700px){
-  .wrap{padding-left:max(13px,env(safe-area-inset-left));padding-right:max(13px,env(safe-area-inset-right))}
-  .card{padding:17px 15px}
-  .hdr h1{font-size:21px}
-  .kv{grid-template-columns:1fr 1fr;gap:9px}
-  .kv b{font-size:17px}
-  table{font-size:12.5px}
-  .scroll{margin:0 -15px;padding:0 15px}
+.pill{display:inline-block;border-radius:3px;padding:2px 9px;font-size:11px;font-weight:700}
+.cards{display:none}
+.pcard{background:var(--white);border:1px solid var(--border);border-radius:var(--rm);
+padding:14px;margin-bottom:10px}
+.pcard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.pcard .nm{font-weight:700;font-size:15px;line-height:1.3}
+.pcard .br{font-size:12px;color:var(--muted)}
+.pcard .ri{font-family:'Playfair Display',serif;font-size:30px;font-weight:600;line-height:1;text-align:right}
+.pcard .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px;
+padding-top:11px;border-top:1px solid #F0ECE4}
+.pcard .g .l{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.pcard .g .v{font-size:13px;font-weight:600}
+
+.note{background:var(--gold-pale);border-left:3px solid var(--gold);padding:14px 16px;
+font-size:13.5px;line-height:1.65;margin:14px 0;border-radius:0 var(--rm) var(--rm) 0}
+.gaplist{list-style:none}
+.gaplist li{display:flex;justify-content:space-between;align-items:center;gap:12px;
+padding:10px 0;border-bottom:1px solid #F0ECE4;font-size:13.5px}
+.gaplist li:last-child{border-bottom:none}
+.gaplist .cnt{font-weight:700;white-space:nowrap}
+.glos dt{font-weight:700;margin-top:11px;font-size:13.5px}
+.glos dd{color:var(--muted);line-height:1.6;font-size:13px}
+.foot{text-align:center;font-size:11.5px;color:var(--muted);padding:22px 18px;line-height:1.7}
+.btn{background:var(--gold);color:var(--navy);border:none;border-radius:var(--rm);
+padding:12px 24px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;min-height:46px}
+.btn:hover{background:var(--gold-light)}
+.spin{text-align:center;padding:70px 24px;color:var(--muted)}
+
+@media(max-width:760px){
+  .wrap{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  .mast{padding:20px 16px 18px}
+  .mast img{height:38px;margin-bottom:12px}
+  .mast h1{font-size:21px}
+  .card{padding:18px 15px}
+  h2{font-size:17.5px}
+  .lead{font-size:14.5px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat .v{font-size:23px}
+  /* The roster is ten columns wide. On a phone that is a horizontal scroll nobody
+     performs, so each associate becomes a card instead. */
+  table.roster{display:none}
+  .cards{display:block}
+  /* The heatmap keeps its grid and scrolls, because the pattern ACROSS skills is the
+     whole point of it — collapsing it to cards would destroy what it shows. */
+  .hmwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -15px;padding:0 15px}
+  .hm{min-width:640px}
 }
 @media print{
-  body{background:#fff}
-  .card{box-shadow:none;border:1px solid #E6DFCF;break-inside:avoid}
+  body{background:#fff;font-size:11.5px}
+  .card{box-shadow:none;border:1px solid var(--border);break-inside:avoid;page-break-inside:avoid}
   .noprint{display:none!important}
-  @page{size:A4;margin:12mm}
+  .cards{display:none!important}
+  table.roster{display:table!important}
+  .mast,.hm td,.track>i,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:11mm}
 }
 </style>
 </head>
 <body>
-<div class="wrap" id="root"><div class="spin">Loading your team&rsquo;s readiness&hellip;</div></div>
+<div id="app"><div class="spin">Loading your team&rsquo;s readiness&hellip;</div></div>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   Client manager dashboard.
+   Client manager report.
 
-   The whole page is one call to arp_client_report, which takes the manager's token
-   and returns their own batches and nobody else's. The scoping is the WHERE clause
-   of a security-definer function, not a filter here, so there is nothing this page
-   could ask for that would widen it: the ARP tables have no anon read policy at
-   all. Expiry and revocation are checked in that same function, so a dead token
-   stops working whatever page presents it.
+   Scoping: one call to arp_client_report, which takes the manager's token and
+   returns their batches and nobody else's. That scoping is the WHERE clause of a
+   security-definer function, not a filter here, so there is nothing this page can
+   ask for that would widen it — the ARP tables have no anon read policy at all.
 
-   What the client never sees, by design: course fee, invoice, discount, GST, any
-   other client's name, any participant outside their own batches.
+   Content follows the report.html IGI already shares with clients: executive
+   summary, readiness distribution, the ten-skill gap heatmap, training priorities,
+   performance by outlet, individual profiles and the before-and-after. The
+   vocabulary is kept identical so a manager who has seen one recognises the other.
+
+   Never shown: fee, invoice, discount, GST, revenue month, any other client, and
+   the associates' mobile numbers and email addresses.
    ═══════════════════════════════════════════════════════════════════════════ */
 var SB = 'https://atbexvtrcopaagcdbpqi.supabase.co/rest/v1';
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0YmV4dnRyY29wYWFnY2RicHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNDI0MDgsImV4cCI6MjA5NjkxODQwOH0.4hl6Hs2ZnDW6vSMiRTOkp9sR-93v5dpTjC0uNuticBM';
 var TOKEN = (new URLSearchParams(location.search).get('t') || '').trim();
+var C = window.ARP_COPY || {};
+var SKILLS = C.SKILLS || [], SKILL_SHORT = C.SKILL_SHORT || [];
 
 var BAND_COLOUR = { Outstanding: '#C9A84C', Proficient: '#1D9E75', Developing: '#378ADD', Foundation: '#C9613A' };
-var STAGE_LABEL = { PP: 'Product Pusher', TA: 'Transaction Achiever', PS: 'Problem Solver',
-                    EA: 'Expert Advisor', TrA: 'Trusted Advisor' };
+var BAND_ORDER = ['Outstanding', 'Proficient', 'Developing', 'Foundation'];
+var BAND_MEANING = {
+  Outstanding: 'Independent expert; mentor-ready',
+  Proficient: 'Coaching-ready; elevates team capability',
+  Developing: 'Growing; requires structured training',
+  Foundation: 'Early stage; intensive coaching needed'
+};
+var STAGE = { PP: 'Product Pusher', TA: 'Transaction Achiever', PS: 'Problem Solver',
+              EA: 'Expert Advisor', TrA: 'Trusted Advisor' };
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
-/* Dates are cut from the YYYY-MM-DD string rather than parsed: new Date('2026-10-06')
-   is the 5th west of Greenwich, and a report dated a day early is worse than one with
-   no dates at all. */
 var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* Dates are cut from the YYYY-MM-DD string, not parsed: new Date('2026-10-06') is the
+   5th west of Greenwich, and a report dated a day early is worse than an undated one. */
 function dateRange(a, b) {
-  function p(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); 
+  function p(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
     return m ? { y: m[1], m: +m[2], d: +m[3] } : null; }
   var x = p(a), y = p(b) || x;
   if (!x) return '';
@@ -107,10 +190,47 @@ function dateRange(a, b) {
   if (x.y === y.y) return x.d + ' ' + MON[x.m - 1] + ' – ' + y.d + ' ' + MON[y.m - 1] + ' ' + x.y;
   return x.d + ' ' + MON[x.m - 1] + ' ' + x.y + ' – ' + y.d + ' ' + MON[y.m - 1] + ' ' + y.y;
 }
+function mean(a) { return a.length ? a.reduce(function (t, v) { return t + v; }, 0) / a.length : null; }
+function rnd(v) { return v == null ? null : Math.round(v); }
+
+/* computeSkillGaps — ported from report.html unchanged, so the heatmap a client sees
+   here is the same one IGI has been sending them. Each of the ten skills reads as
+   strong, developing or gap from the associate's style, selling stage and 4Cs score. */
+function computeSkillGaps(c2sStyle, rspStageKey, fcsPct) {
+  var analytical = c2sStyle === 'Analytical', amiable = c2sStyle === 'Amiable';
+  var expressive = c2sStyle === 'Expressive', driver = c2sStyle === 'Driver';
+  var rspNum = ({ PP: 1, TA: 2, PS: 3, EA: 4, TrA: 5 })[rspStageKey] || 1;
+  var k = Number(fcsPct) || 0;
+  var s = function (a, b) { return a || b || 'developing'; };
+  var strong = function (c) { return c ? 'strong' : null; };
+  var gap = function (c) { return c ? 'gap' : null; };
+  return [
+    s(strong(rspNum >= 3 && (amiable || expressive)), gap(rspNum <= 2 && (analytical || driver))),
+    s(strong((amiable || expressive) && rspNum >= 3), gap((analytical || driver) && rspNum <= 2)),
+    s(strong(k >= 75), gap(k < 55)),
+    s(strong(rspNum >= 4 && (driver || analytical)), gap(rspNum <= 2 && (amiable || expressive))),
+    s(strong((expressive || amiable) && rspNum >= 3), gap(analytical && rspNum <= 2)),
+    s(strong((driver || analytical) && rspNum >= 3), gap(amiable && rspNum <= 2)),
+    s(strong(rspNum >= 4), gap(rspNum <= 2)),
+    s(strong((amiable || expressive) && rspNum >= 3), gap(driver && rspNum <= 2)),
+    s(strong(rspNum >= 3 && k >= 65), gap(rspNum <= 2 || k < 55)),
+    s(strong(k >= 75 && (analytical || driver)), gap(k < 55))
+  ];
+}
+
+function mast(title, forWhom, meta) {
+  return '<div class="mast">'
+    + '<img src="assets/igi-school-of-gemology-white-logo.svg" alt="IGI School of Gemology" '
+    + 'onerror="this.onerror=null;this.src=\'assets/igi-school-of-gemology-white-logo.png\'">'
+    + '<h1>' + esc(title) + '</h1>'
+    + (forWhom ? '<div class="for">' + esc(forWhom) + '</div>' : '')
+    + (meta ? '<div class="meta">' + esc(meta) + '</div>' : '')
+    + '</div>';
+}
 function fail(title, body) {
-  document.getElementById('root').innerHTML =
-    '<div class="card" style="max-width:520px;margin:60px auto;text-align:center">' +
-    '<h2>' + esc(title) + '</h2><p class="sub" style="margin-top:8px">' + esc(body) + '</p></div>';
+  document.getElementById('app').innerHTML = mast('Team Readiness Report', '', '')
+    + '<div class="wrap"><div class="card accent" style="text-align:center">'
+    + '<h2>' + esc(title) + '</h2><p class="sub" style="margin-top:8px">' + esc(body) + '</p></div></div>';
 }
 
 if (!TOKEN) {
@@ -125,147 +245,351 @@ if (!TOKEN) {
       if (!d || d.status !== 'ok') {
         fail('This link is no longer active',
              'Access runs for a limited period and can be withdrawn at any time. '
-           + 'Please contact IGI if you still need these results.');
+           + 'Please contact your IGI Education team if you still need these results.');
         return;
       }
       render(d);
     })
-    .catch(function () {
-      fail('Could not load the report', 'Please try again in a moment.');
-    });
+    .catch(function () { fail('Could not load the report', 'Please try again in a moment.'); });
 }
 
 function render(d) {
   var batches = d.batches || [];
   var all = [];
-  batches.forEach(function (b) { (b.participants || []).forEach(function (p) { all.push(p); }); });
-  var assessed = all.filter(function (p) { return p.readinessTotal != null; });
-
-  /* Counted from the stored expiry instant, not from its calendar date: rounding the
-     date up to end-of-day told a one-day link it had two days left. */
+  batches.forEach(function (b) {
+    (b.participants || []).forEach(function (p) { p._batch = b; all.push(p); });
+  });
+  var done = all.filter(function (p) { return p.readinessTotal != null; });
   var expMs = d.accessExpiresAt ? Date.parse(d.accessExpiresAt) : NaN;
   var daysLeft = isNaN(expMs) ? null : Math.max(0, Math.ceil((expMs - Date.now()) / 86400000));
+  var today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  var h = '<div class="hdr">'
-    + '<div><h1>Team Readiness Report</h1><div class="who">' + esc(d.client) + '</div></div>'
-    + '<div class="org"><b>IGI</b>International Gemological Institute<br>School of Gemology, India</div>'
-    + '</div>';
+  var span = batches.length === 1
+    ? dateRange(batches[0].trainingStart, batches[0].trainingEnd)
+    : batches.length + ' programmes';
+  var h = mast('Team Readiness Report', d.client, (span ? span + '  ·  ' : '') + 'Issued ' + today);
+  h += '<div class="wrap">';
 
   if (!batches.length) {
-    h += '<div class="card"><h2>Nothing to show yet</h2><p class="sub">No training batches are '
-       + 'recorded against your account yet. They appear here once a programme is set up.</p></div>';
-    document.getElementById('root').innerHTML = h;
+    h += '<div class="card accent"><h2>Nothing to show yet</h2><p class="sub">No training '
+       + 'programmes are recorded against your account yet. They appear here as soon as one is set up.</p>'
+       + '</div></div>';
+    document.getElementById('app').innerHTML = h;
     return;
   }
 
-  /* Headline numbers across every batch this manager can see. Averages are taken over
-     the associates who actually sat the assessment, so a half-assessed batch does not
-     read as a collapse in performance. */
-  var avgR = assessed.length
-    ? Math.round(assessed.reduce(function (t, p) { return t + p.readinessTotal; }, 0) / assessed.length) : null;
-  var avgF = assessed.length
-    ? Math.round(assessed.reduce(function (t, p) { return t + (Number(p.fcsPct) || 0); }, 0) / assessed.length) : null;
+  var avgRI = rnd(mean(done.map(function (p) { return p.readinessTotal; })));
+  var avgFcs = rnd(mean(done.map(function (p) { return Number(p.fcsPct) || 0; })));
   var bands = {};
-  assessed.forEach(function (p) { bands[p.readinessBand] = (bands[p.readinessBand] || 0) + 1; });
+  done.forEach(function (p) { bands[p.readinessBand] = (bands[p.readinessBand] || 0) + 1; });
+  var topBand = BAND_ORDER.filter(function (b) { return bands[b]; })
+    .sort(function (x, y) { return bands[y] - bands[x]; })[0] || null;
+  var atRisk = done.filter(function (p) { return (Number(p.fcsPct) || 0) < 55; }).length;
 
-  h += '<div class="card">'
-    + '<h2>At a glance</h2>'
-    + '<p class="sub">Across ' + batches.length + ' programme' + (batches.length === 1 ? '' : 's') + '.</p>'
-    + '<div class="kv">'
-    +   '<div><span>Associates</span><b>' + all.length + '</b></div>'
-    +   '<div><span>Assessed</span><b>' + assessed.length + '</b></div>'
-    +   '<div><span>Avg readiness</span><b>' + (avgR == null ? '—' : avgR + '<small style="font-size:12px;color:var(--muted)">/100</small>') + '</b></div>'
-    +   '<div><span>Avg diamond knowledge</span><b>' + (avgF == null ? '—' : avgF + '%') + '</b></div>'
-    + '</div>';
+  /* ── 1. Executive summary ─────────────────────────────────────────────────
+     Written as a sentence a manager can act on, not a wall of figures: where the
+     team sits, what is holding it back, and what that implies for training. */
+  h += '<div class="card accent">'
+    + '<div class="eyebrow">Executive summary</div>'
+    + '<h2>' + (avgRI == null ? 'Awaiting assessment'
+        : 'Your team averages ' + avgRI + ' out of 100 on retail readiness') + '</h2>';
 
-  if (assessed.length) {
-    h += '<div style="margin-top:6px">';
-    ['Outstanding', 'Proficient', 'Developing', 'Foundation'].forEach(function (b) {
-      var n = bands[b] || 0, pct = Math.round(n * 100 / assessed.length);
-      h += '<div style="margin-bottom:7px">'
-        + '<div style="display:flex;justify-content:space-between;font-size:12.5px">'
-        + '<span>' + b + '</span><span><b>' + n + '</b> <small style="color:var(--muted)">' + pct + '%</small></span></div>'
-        + '<div class="bar"><i style="width:' + pct + '%;background:' + BAND_COLOUR[b] + '"></i></div></div>';
+  if (done.length) {
+    var gapsAll = done.map(function (p) {
+      return computeSkillGaps(p.c2sPrimary, p.rspStage, p.fcsPct);
+    });
+    var gapCount = SKILLS.map(function (_, i) {
+      return gapsAll.filter(function (g) { return g[i] === 'gap'; }).length;
+    });
+    var ranked = SKILLS.map(function (s, i) { return { skill: s, n: gapCount[i], i: i }; })
+      .filter(function (x) { return x.n > 0; })
+      .sort(function (a, b) { return b.n - a.n; });
+
+    h += '<p class="lead">'
+      + esc(done.length) + ' of ' + all.length + ' associate' + (all.length === 1 ? '' : 's')
+      + ' completed the assessment. The largest group sits in <b>' + esc(topBand || '—')
+      + '</b> — ' + esc((BAND_MEANING[topBand] || '').toLowerCase()) + '. '
+      + (avgFcs != null
+          ? 'Average diamond knowledge is <b>' + avgFcs + '%</b>'
+            + (atRisk ? ', with <b>' + atRisk + '</b> associate' + (atRisk === 1 ? '' : 's')
+                + ' below the 55% level at which product knowledge starts to cost you on the floor.' : '.')
+          : '')
+      + (ranked.length
+          ? ' The single widest gap across the team is <b>' + esc(ranked[0].skill.toLowerCase())
+            + '</b>, showing in ' + ranked[0].n + ' of ' + done.length + ' associates.'
+          : '')
+      + '</p>';
+  } else {
+    h += '<p class="lead">Your associates are on the roster but have not yet completed the '
+       + 'readiness assessment. This report fills in as they do.</p>';
+  }
+
+  h += '<div class="stats">'
+    + stat('Associates', all.length, '')
+    + stat('Assessed', done.length, done.length < all.length ? (all.length - done.length) + ' still to sit it' : 'all complete')
+    + stat('Avg readiness', avgRI == null ? '—' : avgRI + '<small>/100</small>', '')
+    + stat('Avg 4Cs knowledge', avgFcs == null ? '—' : avgFcs + '%', '')
+    + stat('Knowledge risk', atRisk, 'below 55%')
+    + '</div></div>';
+
+  /* ── 2. Readiness distribution ── */
+  if (done.length) {
+    h += '<div class="card"><h2>Readiness distribution</h2>'
+      + '<p class="sub">Where each associate sits today, before training is targeted.</p>'
+      + '<div style="margin-top:14px">';
+    BAND_ORDER.forEach(function (b) {
+      var n = bands[b] || 0, pct = Math.round(n * 100 / done.length);
+      h += '<div class="bandrow"><div class="t"><span><b>' + b + '</b> '
+        + '<span style="color:var(--muted);font-size:12px">— ' + esc(BAND_MEANING[b]) + '</span></span>'
+        + '<span><b>' + n + '</b> <span style="color:var(--muted);font-size:12px">' + pct + '%</span></span></div>'
+        + '<div class="track"><i style="width:' + pct + '%;background:' + BAND_COLOUR[b] + '"></i></div></div>';
     });
     h += '</div>'
-      + '<div class="note"><b>How to read this.</b> Readiness is out of 100: diamond knowledge 40%, '
-      + 'how consultatively the associate sells 35%, and how well they adapt to different customers 25%. '
-      + 'It is a training map, not a performance rating.</div>';
+      + '<div class="note"><b>How the score is built.</b> Diamond knowledge counts for 40%, '
+      + 'how consultatively the associate sells for 35%, and how well they adapt to different '
+      + 'customer types for 25%. It is a map for training, not a performance rating.</div>'
+      + '</div>';
   }
-  h += '</div>';
 
+  /* ── 3. Skills gap heatmap ── */
+  if (done.length) {
+    h += '<div class="card"><h2>Skills gap heatmap</h2>'
+      + '<p class="sub">Ten selling skills, read from each associate’s style, selling stage '
+      + 'and product knowledge.</p><div class="hmwrap"><table class="hm"><thead><tr><th class="who"></th>';
+    SKILL_SHORT.forEach(function (s) { h += '<th>' + esc(s) + '</th>'; });
+    h += '</tr></thead><tbody>';
+    done.forEach(function (p) {
+      var g = computeSkillGaps(p.c2sPrimary, p.rspStage, p.fcsPct);
+      h += '<tr><td class="who" title="' + esc(p.name) + '">' + esc(p.name) + '</td>';
+      g.forEach(function (v) {
+        var cls = v === 'strong' ? 'sw-strong' : v === 'gap' ? 'sw-gap' : 'sw-dev';
+        var mark = v === 'strong' ? 'S' : v === 'gap' ? 'G' : 'D';
+        h += '<td class="' + cls + '" title="' + esc(v) + '">' + mark + '</td>';
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>'
+      + '<div class="legend">'
+      + '<span><i class="sw-strong"></i> S — Strong</span>'
+      + '<span><i class="sw-dev"></i> D — Developing</span>'
+      + '<span><i class="sw-gap"></i> G — Gap, needs coaching</span>'
+      + '</div></div>';
+  }
+
+  /* ── 4. Training priorities ── */
+  if (done.length) {
+    var gapsAll2 = done.map(function (p) { return computeSkillGaps(p.c2sPrimary, p.rspStage, p.fcsPct); });
+    var ranked2 = SKILLS.map(function (s, i) {
+      return { skill: s, n: gapsAll2.filter(function (g) { return g[i] === 'gap'; }).length };
+    }).filter(function (x) { return x.n > 0; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 5);
+
+    h += '<div class="card"><h2>Where to focus training</h2>'
+      + '<p class="sub">The skills showing as a gap for the most associates, highest first.</p>';
+    if (ranked2.length) {
+      h += '<ul class="gaplist" style="margin-top:12px">';
+      ranked2.forEach(function (x) {
+        var pct = Math.round(x.n * 100 / done.length);
+        h += '<li><span>' + esc(x.skill) + '</span>'
+          + '<span class="cnt" style="color:' + (pct >= 50 ? 'var(--gap-fill)' : 'var(--dev-fill)') + '">'
+          + x.n + ' of ' + done.length + ' <span style="color:var(--muted);font-weight:400">(' + pct + '%)</span></span></li>';
+      });
+      h += '</ul>';
+    } else {
+      h += '<p class="lead">No skill shows as a gap for this team — development from here is '
+         + 'about depth rather than remediation.</p>';
+    }
+    h += '</div>';
+  }
+
+  /* ── 5. Performance by outlet ──
+     Grouped by branch, which is the client's own outlet name and came from their roster.
+     The associates' cities are IGI's record of them, not something an employer needs. */
+  if (done.length) {
+    var byBranch = {};
+    done.forEach(function (p) {
+      var k = (p.branch || '').trim() || 'Not recorded';
+      (byBranch[k] = byBranch[k] || []).push(p);
+    });
+    var branchKeys = Object.keys(byBranch);
+    if (branchKeys.length > 1) {
+      branchKeys.sort(function (a, b) {
+        return mean(byBranch[b].map(function (p) { return p.readinessTotal; }))
+             - mean(byBranch[a].map(function (p) { return p.readinessTotal; }));
+      });
+      h += '<div class="card"><h2>Performance by outlet</h2>'
+        + '<p class="sub">Strongest first. Useful for deciding where a trainer’s day is best spent.</p>'
+        + '<table class="roster" style="margin-top:12px;display:table"><thead><tr>'
+        + '<th>Branch</th><th class="tc">Associates</th><th class="tc">Avg readiness</th>'
+        + '<th class="tc">Avg 4Cs</th></tr></thead><tbody>';
+      branchKeys.forEach(function (k) {
+        var g = byBranch[k];
+        var r = rnd(mean(g.map(function (p) { return p.readinessTotal; })));
+        var f = rnd(mean(g.map(function (p) { return Number(p.fcsPct) || 0; })));
+        h += '<tr><td><b>' + esc(k) + '</b></td><td class="tc">' + g.length + '</td>'
+          + '<td class="tc"><b>' + r + '</b></td><td class="tc">' + f + '%</td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+  }
+
+  /* ── 6. Before and after, when a post test has been taken ──
+     Normalised gain, not raw change: an associate at 80% can only gain 20 points, so
+     raw improvement makes the already-strong look like they learned nothing. */
+  var paired = done.filter(function (p) { return p.postFcsPct != null; });
+  if (paired.length) {
+    var pre = rnd(mean(paired.map(function (p) { return Number(p.fcsPct) || 0; })));
+    var post = rnd(mean(paired.map(function (p) { return Number(p.postFcsPct) || 0; })));
+    var ng = rnd(mean(paired.map(function (p) {
+      var a = Number(p.fcsPct) || 0, b = Number(p.postFcsPct) || 0;
+      return a >= 100 ? 100 : ((b - a) / (100 - a)) * 100;
+    })));
+    h += '<div class="card accent"><h2>Before and after training</h2>'
+      + '<p class="sub">' + paired.length + ' associate' + (paired.length === 1 ? '' : 's')
+      + ' sat both the pre- and post-training knowledge test.</p>'
+      + '<div class="stats">'
+      + stat('Avg before', pre + '%', '')
+      + stat('Avg after', post + '%', '')
+      + stat('Change', (post - pre >= 0 ? '+' : '') + (post - pre) + ' pts', '')
+      + stat('Normalised gain', ng + '%', 'of the available headroom')
+      + '</div>'
+      + '<div class="note"><b>Why normalised gain.</b> An associate already at 80% can only gain '
+      + '20 points, so raw improvement makes your strongest people look like they learned least. '
+      + 'Normalised gain measures how much of the remaining headroom was actually closed.</div>'
+      + '</div>';
+  }
+
+  /* ── 7. The roster, per programme ── */
   batches.forEach(function (b) {
     var ps = b.participants || [];
     var ass = ps.filter(function (p) { return p.readinessTotal != null; });
     var days = Number(b.trainingDays) || 1;
     var marked = ps.filter(function (p) { return p.daysAttended != null; });
     var avgAtt = marked.length
-      ? Math.round(marked.reduce(function (t, p) { return t + Number(p.daysAttended); }, 0) / (marked.length * days) * 100)
-      : null;
+      ? Math.round(mean(marked.map(function (p) { return Number(p.daysAttended); })) / days * 100) : null;
 
     h += '<div class="card">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">'
-      +   '<div><h2>' + esc(b.programmeType === 'RTT' ? 'Retail Technical Training' : 'Corporate Training Programme') + '</h2>'
-      +   '<p class="sub">' + esc(b.batchCode || '') + (b.centre ? ' &middot; ' + esc(b.centre) : '')
-      +     (dateRange(b.trainingStart, b.trainingEnd) ? ' &middot; ' + esc(dateRange(b.trainingStart, b.trainingEnd)) : '')
-      +   '</p></div>'
-      + '</div>'
-      + '<div class="kv">'
-      +   '<div><span>Associates</span><b>' + ps.length + '</b></div>'
-      +   '<div><span>Programme length</span><b>' + days + ' day' + (days === 1 ? '' : 's') + '</b></div>'
-      +   '<div><span>Avg attendance</span><b>' + (avgAtt == null ? 'Not marked' : avgAtt + '%') + '</b></div>'
-      +   '<div><span>Assessed</span><b>' + ass.length + ' of ' + ps.length + '</b></div>'
+      + '<div class="eyebrow">' + esc(b.batchCode || 'Programme') + '</div>'
+      + '<h2>' + esc(b.programmeType === 'RTT' ? 'Retail Technical Training' : 'Corporate Training Programme') + '</h2>'
+      + '<p class="sub">' + esc(b.centre || '')
+      + (dateRange(b.trainingStart, b.trainingEnd) ? '  ·  ' + esc(dateRange(b.trainingStart, b.trainingEnd)) : '')
+      + '</p>'
+      + '<div class="stats">'
+      + stat('Associates', ps.length, '')
+      + stat('Programme length', days + ' day' + (days === 1 ? '' : 's'), '')
+      + stat('Avg attendance', avgAtt == null ? 'Not marked' : avgAtt + '%', '')
+      + stat('Assessed', ass.length + ' of ' + ps.length, '')
       + '</div>';
 
-    if (!ps.length) {
-      h += '<p class="sub">No associates on this roster yet.</p></div>';
-      return;
-    }
+    if (!ps.length) { h += '<p class="sub">No associates on this roster yet.</p></div>'; return; }
 
-    h += '<div class="scroll"><table><thead><tr>'
-      + '<th>#</th><th>ID</th><th>Name</th><th>Branch</th><th class="tc">Attendance</th>'
-      + '<th class="tc">Readiness</th><th>Band</th><th class="tc">Diamond knowledge</th>'
-      + '<th>Selling stage</th><th>Communication style</th>'
-      + '</tr></thead><tbody>';
-
+    h += '<table class="roster"><thead><tr>'
+      + '<th>#</th><th>ID</th><th>Name</th><th>Branch</th><th class="tc">Attend.</th>'
+      + '<th class="tc">Readiness</th><th>Band</th><th class="tc">4Cs</th>'
+      + '<th>Selling stage</th><th>Style</th></tr></thead><tbody>';
     ps.forEach(function (p, i) {
-      var att = p.daysAttended == null
-        ? '<span style="color:var(--muted)">—</span>'
-        : (function () {
-            var pc = Math.round(Number(p.daysAttended) / days * 100);
-            var c = pc >= 75 ? '#166534' : pc > 0 ? '#92400e' : '#991b1b';
-            return '<span style="color:' + c + ';font-weight:700">' + p.daysAttended + ' / ' + days + '</span>';
-          })();
       var col = BAND_COLOUR[p.readinessBand] || 'var(--muted)';
-      h += '<tr>'
-        + '<td class="tc">' + (i + 1) + '</td>'
-        + '<td style="font-family:DM Mono,monospace;font-size:11px">' + esc(p.participantId || '—') + '</td>'
+      h += '<tr><td class="tc">' + (i + 1) + '</td>'
+        + '<td style="font-family:DM Mono,monospace;font-size:10.5px">' + esc(p.participantId || '—') + '</td>'
         + '<td><b>' + esc(p.name) + '</b></td>'
         + '<td>' + esc(p.branch || '—') + '</td>'
-        + '<td class="tc">' + att + '</td>'
-        + '<td class="tc">' + (p.readinessTotal == null ? '<span style="color:var(--muted)">Not assessed</span>'
+        + '<td class="tc">' + attCell(p, days) + '</td>'
+        + '<td class="tc">' + (p.readinessTotal == null
+            ? '<span style="color:var(--muted)">—</span>'
             : '<b style="color:' + col + ';font-size:15px">' + p.readinessTotal + '</b>') + '</td>'
         + '<td>' + (p.readinessBand
-            ? '<span class="pill" style="background:' + col + '18;color:' + col + '">' + esc(p.readinessBand) + '</span>'
+            ? '<span class="pill" style="background:' + col + '1a;color:' + col + '">' + esc(p.readinessBand) + '</span>'
             : '—') + '</td>'
         + '<td class="tc">' + (p.fcsPct == null ? '—' : Math.round(p.fcsPct) + '%') + '</td>'
-        + '<td style="font-size:12.5px">' + esc(STAGE_LABEL[p.rspStage] || '—') + '</td>'
-        + '<td style="font-size:12.5px">' + esc(p.c2sLabel || '—') + '</td>'
-        + '</tr>';
+        + '<td style="font-size:12.5px">' + esc(STAGE[p.rspStage] || '—') + '</td>'
+        + '<td style="font-size:12.5px">' + esc(p.c2sLabel || '—') + '</td></tr>';
     });
-    h += '</tbody></table></div></div>';
+    h += '</tbody></table>';
+
+    /* Phone: the same roster as cards, because a ten-column table on a 375px screen
+       is a horizontal scroll nobody performs. */
+    h += '<div class="cards">';
+    ps.forEach(function (p) {
+      var col = BAND_COLOUR[p.readinessBand] || 'var(--muted)';
+      h += '<div class="pcard"><div class="top">'
+        + '<div><div class="nm">' + esc(p.name) + '</div>'
+        + '<div class="br">' + esc(p.branch || '—')
+        + (p.participantId ? '  ·  ' + esc(p.participantId) : '') + '</div></div>'
+        + '<div><div class="ri" style="color:' + col + '">'
+        + (p.readinessTotal == null ? '—' : p.readinessTotal) + '</div>'
+        + (p.readinessBand ? '<div style="font-size:10.5px;font-weight:700;text-align:right;color:' + col + '">'
+            + esc(p.readinessBand) + '</div>' : '') + '</div></div>'
+        + '<div class="grid">'
+        + '<div class="g"><div class="l">Attendance</div><div class="v">' + attCell(p, days) + '</div></div>'
+        + '<div class="g"><div class="l">4Cs knowledge</div><div class="v">'
+        + (p.fcsPct == null ? '—' : Math.round(p.fcsPct) + '%') + '</div></div>'
+        + '<div class="g"><div class="l">Selling stage</div><div class="v">' + esc(STAGE[p.rspStage] || '—') + '</div></div>'
+        + '<div class="g"><div class="l">Style</div><div class="v">' + esc(p.c2sLabel || '—') + '</div></div>'
+        + '</div></div>';
+    });
+    h += '</div></div>';
   });
 
-  h += '<div class="card noprint" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">'
-    + '<div class="sub">'
-    +   (daysLeft != null
-         ? 'This link stays active for ' + daysLeft + ' more day' + (daysLeft === 1 ? '' : 's') + '.'
-         : '')
-    +   ' Figures update as IGI records attendance and assessments.</div>'
-    + '<button class="btn" onclick="window.print()">Save as PDF</button>'
-    + '</div>';
+  /* ── 8. Individual profiles ── */
+  if (done.length) {
+    h += '<div class="card"><h2>Individual profiles</h2>'
+      + '<p class="sub">What each associate’s combination of selling stage and style means on the floor.</p>';
+    done.forEach(function (p) {
+      var fit = (C.RSP_ROLE_FIT || {})[p.rspStage] || '';
+      var prof = (C.PROFILES_20 || {})[p.comboProfile] || null;
+      var col = BAND_COLOUR[p.readinessBand] || 'var(--muted)';
+      h += '<div style="padding:15px 0;border-bottom:1px solid #F0ECE4">'
+        + '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">'
+        + '<div><b style="font-size:15px">' + esc(p.name) + '</b>'
+        + '<span style="color:var(--muted);font-size:12.5px">  ' + esc(p.branch || '') + '</span></div>'
+        + '<div style="font-size:12.5px"><span class="pill" style="background:' + col + '1a;color:' + col + '">'
+        + esc(p.readinessBand || '') + ' · ' + p.readinessTotal + '</span></div></div>'
+        + '<div style="font-size:12.5px;color:var(--muted);margin-top:3px">'
+        + esc(STAGE[p.rspStage] || '') + '  ·  ' + esc(p.c2sLabel || '')
+        + '  ·  4Cs ' + (p.fcsPct == null ? '—' : Math.round(p.fcsPct) + '%') + '</div>'
+        + (prof && prof.title ? '<div style="font-size:13.5px;margin-top:7px"><b>' + esc(prof.title) + '</b></div>' : '')
+        + (fit ? '<div style="font-size:13px;color:var(--muted);margin-top:4px">' + esc(fit) + '</div>' : '')
+        + '</div>';
+    });
+    h += '</div>';
+  }
 
-  document.getElementById('root').innerHTML = h;
+  /* ── 9. Reference ── */
+  h += '<div class="card"><h2>How to read this report</h2><dl class="glos">'
+    + '<dt>Readiness Index</dt><dd>A score out of 100 combining diamond knowledge (40%), '
+    + 'consultative selling (35%) and adaptability across customer types (25%).</dd>'
+    + '<dt>Selling stage</dt><dd>Where an associate sits on the ladder from Product Pusher, '
+    + 'through Transaction Achiever, Problem Solver and Expert Advisor, to Trusted Advisor.</dd>'
+    + '<dt>Communication style</dt><dd>Analytical, Amiable, Expressive or Driver — how they '
+    + 'naturally engage. A blended style means they flex between two, which is an asset.</dd>'
+    + '<dt>4Cs knowledge</dt><dd>Score on a 25-question diamond grading test covering carat, '
+    + 'colour, clarity and cut.</dd>'
+    + '<dt>Gap, Developing, Strong</dt><dd>How each of the ten selling skills reads for that '
+    + 'associate. A gap is where coaching returns the most.</dd>'
+    + '</dl></div>';
+
+  h += '<div class="card noprint" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">'
+    + '<div class="sub">' + (daysLeft != null
+        ? 'This link stays active for ' + daysLeft + ' more day' + (daysLeft === 1 ? '' : 's') + '. ' : '')
+    + 'Figures update as IGI records attendance and assessments.</div>'
+    + '<button class="btn" onclick="window.print()">Save as PDF</button></div>';
+
+  h += '<div class="foot">Prepared by IGI School of Gemology — India<br>'
+    + 'Confidential — prepared for ' + esc(d.client) + '</div>';
+
+  h += '</div>';
+  document.getElementById('app').innerHTML = h;
+}
+
+function stat(label, value, note) {
+  return '<div class="stat"><div class="l">' + esc(label) + '</div>'
+    + '<div class="v">' + value + '</div>'
+    + (note ? '<div class="n">' + esc(note) + '</div>' : '') + '</div>';
+}
+function attCell(p, days) {
+  if (p.daysAttended == null) return '<span style="color:var(--muted)">—</span>';
+  var pc = Math.round(Number(p.daysAttended) / days * 100);
+  var c = pc >= 75 ? 'var(--str-fill)' : pc > 0 ? 'var(--dev-fill)' : 'var(--gap-fill)';
+  return '<span style="color:' + c + ';font-weight:700">' + p.daysAttended + '/' + days + '</span>';
 }
 </script>
 </body>
