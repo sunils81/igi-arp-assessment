@@ -45,10 +45,13 @@ color:var(--muted);margin-bottom:11px}
 .sub{font-size:13px;color:var(--muted);margin-top:4px}
 .lead{font-size:15.5px;line-height:1.7;margin-top:12px}
 
+/* The hairline grid is drawn by each cell's own ring, not by the container's colour
+   showing through the gaps. With an odd number of stats the last row is short, and a
+   coloured container would leave a grey void sitting next to the final figure. */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;
-background:var(--border);border:1px solid var(--border);border-radius:var(--rm);
+background:var(--white);border:1px solid var(--border);border-radius:var(--rm);
 overflow:hidden;margin:16px 0}
-.stat{background:var(--white);padding:14px 13px}
+.stat{background:var(--white);padding:14px 13px;box-shadow:0 0 0 1px var(--border)}
 .stat .l{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .stat .v{font-family:'Playfair Display',serif;font-size:27px;font-weight:600;line-height:1.15;margin-top:3px}
 .stat .v small{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;color:var(--muted)}
