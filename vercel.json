@@ -5,6 +5,10 @@
       "destination": "/assess.html"
     },
     {
+      "source": "/client",
+      "destination": "/client.html"
+    },
+    {
       "source": "/instructor",
       "destination": "/instructor.html"
     },
