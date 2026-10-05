@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>IGI Associate Readiness Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Display copy only. Every scoring rule lives in Supabase: this page cannot work out
+     whether an answer is right, which is the point of the rebuild. -->
+<script src="assets/arp-profiles.js?v=1"></script>
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FDFCF9;
+--off:#F4F1EB;--muted:#8A8070;--border:rgba(201,168,76,0.2);--teal:#1D9E75;--coral:#C9613A;
+--purple:#534AB7;--blue:#378ADD;--radius:12px;--shadow:0 4px 24px rgba(13,27,46,0.10)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--off);color:var(--navy);
+line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 64px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand .mark{font-family:'Playfair Display',serif;font-weight:700;font-size:20px;letter-spacing:.02em}
+.brand .mark span{color:var(--gold)}
+.brand .ctx{font-size:11.5px;color:var(--muted);text-align:right;line-height:1.5}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 24px;margin-bottom:16px}
+h1{font-family:'Playfair Display',serif;font-size:26px;font-weight:600;line-height:1.25;margin-bottom:8px}
+h2{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;margin-bottom:10px}
+.sub{font-size:13.5px;color:var(--muted);margin-bottom:18px}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+color:var(--muted);margin-bottom:5px}
+input,select{width:100%;padding:11px 13px;border:1px solid #DDD6C7;border-radius:9px;
+font-family:inherit;font-size:14.5px;background:var(--white);color:var(--navy)}
+input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-pale)}
+.field{margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:540px){.grid2{grid-template-columns:1fr}}
+.btn{display:inline-block;background:var(--gold);color:var(--navy);border:none;border-radius:9px;
+padding:13px 26px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--gold-light)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid #DDD6C7;color:var(--navy)}
+.err{color:#B00020;font-size:13px;margin-top:10px;min-height:18px}
+.timer{position:sticky;top:0;z-index:20;background:var(--navy);color:var(--white);
+border-radius:10px;padding:9px 14px;display:flex;justify-content:space-between;
+align-items:center;font-size:12.5px;margin-bottom:14px}
+.timer .t{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--gold-light)}
+.timer.low .t{color:#FF8A7A}
+.track{height:4px;background:#E6DFCF;border-radius:4px;overflow:hidden;margin-bottom:18px}
+.track>i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.qnum{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.qtext{font-size:17.5px;font-weight:500;line-height:1.45;margin-bottom:18px}
+.opt{display:block;width:100%;text-align:left;background:var(--white);border:1.5px solid #E2DAC9;
+border-radius:10px;padding:14px 16px;margin-bottom:9px;font-family:inherit;font-size:14.5px;
+line-height:1.45;cursor:pointer;color:var(--navy)}
+.opt:hover{border-color:var(--gold);background:var(--gold-pale)}
+.opt.on{border-color:var(--gold);background:var(--gold-pale);box-shadow:0 0 0 2px var(--gold-pale)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+.hero{text-align:center;padding:30px 20px}
+.hero .score{font-family:'Playfair Display',serif;font-size:62px;font-weight:700;line-height:1}
+.hero .max{font-size:19px;color:var(--muted)}
+.hero .band{font-size:16px;font-weight:600;margin-top:4px}
+.bar{height:9px;background:#E6DFCF;border-radius:9px;overflow:hidden;margin:16px 0 6px}
+.bar>i{display:block;height:100%;border-radius:9px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.kv>div{background:var(--off);border-radius:9px;padding:11px 13px}
+.kv span{display:block;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.kv b{font-size:15.5px;font-weight:600}
+.tag{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.tag:last-child{border-bottom:none}
+.note{background:var(--gold-pale);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;
+padding:13px 15px;font-size:14px;margin:14px 0}
+ul.clean{list-style:none}
+ul.clean li{position:relative;padding-left:18px;font-size:14px;margin-bottom:7px}
+ul.clean li::before{content:'';position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.hide{display:none!important}
+.spin{text-align:center;padding:50px 20px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="mark">IGI <span>&#9830;</span> Readiness Profile</div>
+    <div class="ctx" id="ctx"></div>
+  </div>
+  <div id="screens"><div class="spin" id="boot">Loading your assessment&hellip;</div></div>
+</div>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   IGI Associate Readiness Profile — participant portal.
+
+   What changed from the original index.html, and why:
+     - The question bank and every scoring rule now live in Supabase. This page asks
+       for a paper, shows it, and posts back which option was chosen. It cannot mark
+       an answer, so View Source no longer hands anyone the answer key.
+     - Answers are posted as OPTION IDS, never as positions. The 4Cs options are
+       shuffled per paper, so a positional answer would be scored against the wrong
+       option — the same class of bug that mis-scored the diploma bank.
+     - Two ways in: tied to an RTT batch (name matched to the roster we already hold)
+       or standalone (the participant types their own employer).
+   ═══════════════════════════════════════════════════════════════════════════ */
+var SB = 'https://atbexvtrcopaagcdbpqi.supabase.co/rest/v1';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0YmV4dnRyY29wYWFnY2RicHFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNDI0MDgsImV4cCI6MjA5NjkxODQwOH0.4hl6Hs2ZnDW6vSMiRTOkp9sR-93v5dpTjC0uNuticBM';
+
+var FCS_SECS = 15 * 60, BEHAV_SECS = 25 * 60;   // same budgets as the original
+var PARAMS = new URLSearchParams(location.search);
+var CODE = (PARAMS.get('code') || PARAMS.get('a') || '').trim().toUpperCase();
+var KIND = (PARAMS.get('kind') || 'pre').toLowerCase() === 'post' ? 'post' : 'pre';
+
+var paper = null, roster = [], sections = { FCS: [], C2S: [], RSP: [] };
+var answers = {};          // questionId -> optionId
+var order = [], at = 0;    // the flattened running order
+var fcsLeft = FCS_SECS, behavLeft = BEHAV_SECS, ticker = null;
+var submitting = false;
+
+function rpc(fn, body) {
+  return fetch(SB + '/rpc/' + fn, {
+    method: 'POST',
+    headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  }).then(function (r) {
+    return r.text().then(function (t) {
+      if (!r.ok) throw new Error('Could not reach the assessment service (' + r.status + ').');
+      try { return JSON.parse(t); } catch (e) { throw new Error('Unexpected reply from the service.'); }
+    });
+  });
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function show(html) { document.getElementById('screens').innerHTML = html; window.scrollTo(0, 0); }
+function mmss(s) {
+  var m = Math.floor(Math.max(0, s) / 60), r = Math.max(0, s) % 60;
+  return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+}
+
+/* ── boot ────────────────────────────────────────────────────────────────── */
+function boot() {
+  if (!CODE) {
+    show('<div class="card"><h1>This link is incomplete</h1><p class="sub">The assessment link is '
+       + 'missing its code. Ask your trainer to resend it.</p></div>');
+    return;
+  }
+  /* A finished attempt is remembered per assessment, so a refresh does not look like a
+     second go. The database refuses a repeat anyway — this only saves the walk back. */
+  if (localStorage.getItem('arp_done_' + CODE + '_' + KIND)) {
+    try { return renderResult(JSON.parse(localStorage.getItem('arp_res_' + CODE + '_' + KIND))); }
+    catch (e) { /* fall through and let them start again */ }
+  }
+  Promise.all([rpc('arp_get_paper', { p_code: CODE }), rpc('arp_get_roster', { p_code: CODE })])
+    .then(function (res) {
+      paper = res[0];
+      if (!paper || paper.status !== 'ok') {
+        show('<div class="card"><h1>This assessment is not open</h1><p class="sub">The link may have '
+           + 'expired, or the session has been closed. Please check with your trainer.</p></div>');
+        return;
+      }
+      roster = (res[1] && res[1].status === 'ok' && res[1].names) ? res[1].names : [];
+      paper.questions.forEach(function (q) { if (sections[q.section]) sections[q.section].push(q); });
+      sections.FCS.sort(bySeq); sections.C2S.sort(bySeq); sections.RSP.sort(bySeq);
+      if (KIND === 'post' && !paper.assessment.postTestOpen) {
+        show('<div class="card"><h1>The post-training test is not open yet</h1><p class="sub">Your '
+           + 'trainer opens it once the programme is complete.</p></div>');
+        return;
+      }
+      var a = paper.assessment;
+      document.getElementById('ctx').innerHTML =
+        esc(a.client) + (a.centre ? '<br>' + esc(a.centre) : '') +
+        (a.trainer ? '<br>Trainer: ' + esc(a.trainer) : '');
+      renderIntro();
+    })
+    .catch(function (e) {
+      show('<div class="card"><h1>Could not load the assessment</h1><p class="sub">' + esc(e.message)
+         + '</p><button class="btn" onclick="location.reload()">Try again</button></div>');
+    });
+}
+function bySeq(a, b) { return a.seq - b.seq; }
+
+/* ── intro ───────────────────────────────────────────────────────────────── */
+function renderIntro() {
+  var dt = { natural: 'Natural Diamonds', lgd: 'Lab Grown Diamonds', both: 'Natural & Lab Grown' };
+  show('<div class="card">'
+    + '<h1>' + (KIND === 'post' ? 'Post-training assessment' : 'Associate Readiness Profile') + '</h1>'
+    + '<p class="sub">This is not a pass-or-fail test. It maps how you sell, how you communicate, '
+    + 'and where your product knowledge stands, so your training can be aimed at what will '
+    + 'actually move your performance.</p>'
+    + '<div class="kv">'
+    +   '<div><span>Knowledge</span><b>' + sections.FCS.length + ' questions</b></div>'
+    +   '<div><span>Communication</span><b>' + sections.C2S.length + ' questions</b></div>'
+    +   '<div><span>Selling approach</span><b>' + sections.RSP.length + ' questions</b></div>'
+    +   '<div><span>Focus</span><b>' + esc(dt[paper.assessment.diamondType] || '') + '</b></div>'
+    + '</div>'
+    + '<ul class="clean">'
+    +   '<li>Two timed parts: ' + (FCS_SECS / 60) + ' minutes on knowledge, then '
+    +     (BEHAV_SECS / 60) + ' minutes on the behavioural questions.</li>'
+    +   '<li>On the behavioural questions there is no right answer. Pick what you would '
+    +     'really do, not what sounds best.</li>'
+    +   '<li>You can go back within a part. Once a part is submitted it is closed.</li>'
+    + '</ul>'
+    + '<div class="nav"><span></span><button class="btn" onclick="renderRegister()">Begin &rarr;</button></div>'
+    + '</div>');
+}
+
+/* ── registration ────────────────────────────────────────────────────────── */
+function renderRegister() {
+  var a = paper.assessment;
+  var nameField = roster.length
+    ? '<label for="f-name">Your name *</label>'
+      + '<input id="f-name" list="roster" autocomplete="off" placeholder="Start typing and pick your name">'
+      + '<datalist id="roster">' + roster.map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'
+      + '<div style="font-size:11.5px;color:var(--muted);margin-top:5px">Pick your name from your '
+      + 'company’s list so your result is filed against the right person.</div>'
+    : '<label for="f-name">Your name *</label><input id="f-name" autocomplete="name">';
+
+  show('<div class="card">'
+    + '<h2>Before you start</h2>'
+    + '<p class="sub">Your mobile number is how your pre- and post-training results are matched. '
+    + 'It is not used for anything else.</p>'
+    + '<div class="field">' + nameField + '</div>'
+    + '<div class="grid2">'
+    +   '<div class="field"><label for="f-mobile">Mobile number *</label>'
+    +     '<input id="f-mobile" inputmode="numeric" autocomplete="tel" placeholder="10 digits"></div>'
+    +   '<div class="field"><label for="f-branch">Store / branch</label><input id="f-branch"></div>'
+    + '</div>'
+    + (a.batchLinked ? '' :
+        '<div class="field"><label for="f-employer">Who do you work for? *</label>'
+      + '<input id="f-employer" placeholder="Company name"></div>')
+    + '<div class="grid2">'
+    +   '<div class="field"><label for="f-desig">Designation</label><input id="f-desig"></div>'
+    +   '<div class="field"><label for="f-exp">Years in jewellery retail</label>'
+    +     '<select id="f-exp"><option value="">Select</option><option>Less than 1</option>'
+    +     '<option>1 to 3</option><option>3 to 5</option><option>5 to 10</option>'
+    +     '<option>More than 10</option></select></div>'
+    + '</div>'
+    + '<div class="grid2">'
+    +   '<div class="field"><label for="f-city">City</label><input id="f-city"></div>'
+    + (a.codeRequired
+        ? '<div class="field"><label for="f-code">Session code *</label>'
+        + '<input id="f-code" autocomplete="off" placeholder="From your trainer" '
+        + 'style="text-transform:uppercase"></div>'
+        : '')
+    + '</div>'
+    + '<div class="err" id="reg-err"></div>'
+    + '<div class="nav"><button class="btn btn-ghost" onclick="renderIntro()">&larr; Back</button>'
+    + '<button class="btn" onclick="startQuiz()">Start the assessment &rarr;</button></div>'
+    + '</div>');
+  if (roster.length) document.getElementById('f-name').focus();
+}
+
+var reg = {};
+function startQuiz() {
+  var g = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var err = document.getElementById('reg-err');
+  var mob = g('f-mobile').replace(/[^0-9]/g, '');
+  if (!g('f-name')) { err.textContent = 'Please enter your name.'; return; }
+  if (mob.length < 10) { err.textContent = 'Please enter a valid mobile number.'; return; }
+  if (!paper.assessment.batchLinked && !g('f-employer')) {
+    err.textContent = 'Please tell us who you work for.'; return;
+  }
+  if (paper.assessment.codeRequired && !g('f-code')) {
+    err.textContent = 'Please enter the session code your trainer gave you.'; return;
+  }
+  reg = { name: g('f-name'), mobile: mob, branch: g('f-branch'),
+          employer: paper.assessment.batchLinked ? '' : g('f-employer'),
+          designation: g('f-desig'), experience: g('f-exp'), city: g('f-city'),
+          sessionCode: g('f-code').toUpperCase() };
+
+  /* Knowledge first, then the behavioural block, matching the original order. Within the
+     4Cs part the server already shuffled the options; the question order is as served. */
+  order = sections.FCS.concat(sections.C2S, sections.RSP);
+  at = 0;
+  startTicker();
+  renderQ();
+}
+
+/* ── timers ──────────────────────────────────────────────────────────────────
+   Two budgets, as the original had: one for the knowledge part and one for the
+   behavioural part. Running a part out of time moves on rather than discarding
+   anything — an unanswered question simply scores as unanswered, which the
+   database already handles. */
+function inFcs() { return at < sections.FCS.length; }
+function startTicker() {
+  if (ticker) clearInterval(ticker);
+  ticker = setInterval(function () {
+    if (submitting) return;
+    if (inFcs()) {
+      fcsLeft--;
+      if (fcsLeft <= 0) { fcsLeft = 0; at = sections.FCS.length; renderQ(); return; }
+    } else {
+      behavLeft--;
+      if (behavLeft <= 0) { behavLeft = 0; clearInterval(ticker); submit(); return; }
+    }
+    paintTimer();
+  }, 1000);
+}
+function paintTimer() {
+  var el = document.getElementById('timer');
+  if (!el) return;
+  var left = inFcs() ? fcsLeft : behavLeft;
+  el.querySelector('.t').textContent = mmss(left);
+  el.classList.toggle('low', left <= 60);
+}
+
+/* ── one question at a time ──────────────────────────────────────────────── */
+function renderQ() {
+  if (at >= order.length) return renderConfirm();
+  var q = order[at];
+  var picked = answers[q.id];
+  var partName = q.section === 'FCS' ? 'Diamond knowledge'
+               : q.section === 'C2S' ? 'Communication style' : 'Selling approach';
+  var partIdx, partTotal;
+  if (q.section === 'FCS') { partIdx = at + 1; partTotal = sections.FCS.length; }
+  else if (q.section === 'C2S') { partIdx = at - sections.FCS.length + 1; partTotal = sections.C2S.length; }
+  else { partIdx = at - sections.FCS.length - sections.C2S.length + 1; partTotal = sections.RSP.length; }
+
+  var canBack = at > 0 && (q.section === 'FCS') === inFcsAt(at - 1);
+
+  show('<div class="timer" id="timer"><span>' + esc(partName) + ' &middot; '
+      + (inFcs() ? 'knowledge' : 'behavioural') + ' time remaining</span>'
+      + '<span class="t">' + mmss(inFcs() ? fcsLeft : behavLeft) + '</span></div>'
+    + '<div class="track"><i style="width:' + Math.round((at / order.length) * 100) + '%"></i></div>'
+    + '<div class="card">'
+    + '<div class="qnum">' + esc(partName) + ' &mdash; question ' + partIdx + ' of ' + partTotal + '</div>'
+    + '<div class="qtext">' + esc(q.prompt) + '</div>'
+    + q.options.map(function (o) {
+        return '<button class="opt' + (picked === o.id ? ' on' : '') + '" '
+             + 'onclick="pick(\'' + q.id + '\',\'' + o.id + '\')">' + esc(o.label) + '</button>';
+      }).join('')
+    + '<div class="nav">'
+    +   (canBack ? '<button class="btn btn-ghost" onclick="go(-1)">&larr; Previous</button>' : '<span></span>')
+    +   '<button class="btn" id="nextBtn" onclick="go(1)"' + (picked ? '' : ' disabled') + '>'
+    +     (at === order.length - 1 ? 'Review &rarr;' : 'Next &rarr;') + '</button>'
+    + '</div>'
+    + (q.section === 'FCS' ? ''
+        : '<div style="font-size:11.5px;color:var(--muted);margin-top:12px;text-align:center">'
+        + 'There is no right answer here. Choose what you would actually do.</div>')
+    + '</div>');
+  paintTimer();
+}
+function inFcsAt(i) { return i < sections.FCS.length; }
+
+function pick(qid, oid) {
+  answers[qid] = oid;
+  var q = order[at];
+  if (q.id === qid) {
+    Array.prototype.forEach.call(document.querySelectorAll('.opt'), function (b) { b.classList.remove('on'); });
+    var opts = q.options.map(function (o) { return o.id; });
+    var btns = document.querySelectorAll('.opt');
+    var idx = opts.indexOf(oid);
+    if (btns[idx]) btns[idx].classList.add('on');
+    var nb = document.getElementById('nextBtn');
+    if (nb) nb.disabled = false;
+  }
+}
+function go(d) {
+  var next = at + d;
+  if (next < 0) return;
+  /* Moving out of the knowledge part is one-way: its timer stops and its questions
+     close, same as the original's section gate. */
+  if (d > 0 && inFcsAt(at) && !inFcsAt(next)) {
+    if (!confirm('That finishes the knowledge questions. You cannot return to them. Continue?')) return;
+  }
+  at = next;
+  renderQ();
+}
+
+/* ── review and submit ───────────────────────────────────────────────────── */
+function renderConfirm() {
+  var unanswered = order.filter(function (q) { return !answers[q.id]; });
+  show('<div class="timer" id="timer"><span>Behavioural time remaining</span>'
+      + '<span class="t">' + mmss(behavLeft) + '</span></div>'
+    + '<div class="card"><h2>Ready to submit</h2>'
+    + '<p class="sub">Your profile is worked out once you submit. You get one attempt.</p>'
+    + '<div class="kv">'
+    +   '<div><span>Answered</span><b>' + (order.length - unanswered.length) + ' of ' + order.length + '</b></div>'
+    +   '<div><span>Left blank</span><b>' + unanswered.length + '</b></div>'
+    + '</div>'
+    + (unanswered.length
+        ? '<div class="note">' + unanswered.length + ' question'
+          + (unanswered.length === 1 ? '' : 's') + ' left blank. A blank answer is not counted '
+          + 'as wrong, but it does lower what the profile can tell you.</div>'
+        : '')
+    + '<div class="err" id="sub-err"></div>'
+    + '<div class="nav"><button class="btn btn-ghost" onclick="at=order.length-1;renderQ()">&larr; Back</button>'
+    + '<button class="btn" id="subBtn" onclick="submit()">Submit and see my profile</button></div>'
+    + '</div>');
+  paintTimer();
+}
+
+function submit() {
+  if (submitting) return;
+  submitting = true;
+  var btn = document.getElementById('subBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Working out your profile…'; }
+  if (ticker) clearInterval(ticker);
+
+  /* Answers go up as option ids. Nothing positional crosses the wire, so the server's
+     shuffle of the 4Cs options cannot put an answer against the wrong option. */
+  var payload = order.map(function (q) {
+    return { questionId: q.id, optionId: answers[q.id] || '' };
+  });
+  var used = (FCS_SECS - fcsLeft) + (BEHAV_SECS - behavLeft);
+
+  rpc('arp_submit_response', {
+    p_code: CODE, p_kind: KIND, p_name: reg.name, p_mobile: reg.mobile,
+    p_session_code: reg.sessionCode || null, p_employer: reg.employer || null,
+    p_branch: reg.branch || null, p_designation: reg.designation || null,
+    p_experience: reg.experience || null, p_city: reg.city || null,
+    p_country: paper.assessment.country || 'India',
+    p_time_taken: used, p_answers: payload
+  }).then(function (res) {
+    if (!res || res.status !== 'ok') {
+      submitting = false;
+      var msg = {
+        already_attempted: 'This mobile number has already completed this assessment. Speak to your trainer if that is not right.',
+        wrong_session_code: 'That session code is not correct. Check it with your trainer.',
+        post_test_closed: 'The post-training test is not open.',
+        name_and_mobile_required: 'Please go back and check your name and mobile number.',
+        assessment_not_found: 'This assessment is no longer open.'
+      }[res && res.reason] || 'Could not submit. Please try again.';
+      var e = document.getElementById('sub-err');
+      if (e) e.textContent = msg; else alert(msg);
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit and see my profile'; }
+      return;
+    }
+    try {
+      localStorage.setItem('arp_done_' + CODE + '_' + KIND, '1');
+      localStorage.setItem('arp_res_' + CODE + '_' + KIND, JSON.stringify(res));
+    } catch (e) { /* private browsing — the result still shows, it just will not survive a refresh */ }
+    renderResult(res);
+  }).catch(function (e) {
+    submitting = false;
+    var el = document.getElementById('sub-err');
+    if (el) el.textContent = e.message;
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit and see my profile'; }
+  });
+}
+
+/* ── result ──────────────────────────────────────────────────────────────────
+   Every number here came back from the database. The page looks nothing up and
+   decides nothing; ARP_COPY supplies only the narrative that goes with a profile
+   key the server chose. */
+function renderResult(r) {
+  var C = window.ARP_COPY || {};
+  var bandColor = { Outstanding: '#C9A84C', Proficient: '#1D9E75', Developing: '#378ADD', Foundation: '#C9613A' };
+  var col = bandColor[r.readinessBand] || '#8A8070';
+  var prof = (C.PROFILES_20 || {})[r.comboProfile] || null;
+  var stage = (C.RSP_STAGES || []).filter(function (s) { return s.key === r.rspStage; })[0] || {};
+  var tags = r.fcsTagScores || {};
+  var tagRows = Object.keys(tags).sort().map(function (t) {
+    var s = tags[t], pct = s.total ? Math.round((s.correct / s.total) * 100) : 0;
+    var c = pct >= 75 ? '#1D9E75' : pct >= 50 ? '#C9A84C' : '#C9613A';
+    return '<div class="tag"><span style="text-transform:capitalize">' + esc(t) + '</span>'
+         + '<span><b style="color:' + c + '">' + s.correct + '/' + s.total + '</b> '
+         + '<small style="color:var(--muted)">&middot; ' + pct + '%</small></span></div>';
+  }).join('');
+
+  var html = '<div class="card hero">'
+    + '<div style="font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">'
+    +   'IGI Retail Sales Excellence Index</div>'
+    + '<div><span class="score" style="color:' + col + '">' + r.readinessTotal + '</span>'
+    +   '<span class="max">/100</span></div>'
+    + '<div class="band" style="color:' + col + '">' + esc(r.readinessBand) + '</div>'
+    + '<div class="bar"><i style="width:' + r.readinessTotal + '%;background:' + col + '"></i></div>'
+    + '<div style="font-size:12px;color:var(--muted)">' + esc(reg.name || '') + '</div>'
+    + '</div>'
+
+    + '<div class="card"><h2>What makes up the score</h2>'
+    + '<p class="sub">Knowledge counts for 40%, how you consult for 35%, how adaptable you are for 25%.</p>'
+    + '<div class="kv">'
+    +   '<div><span>Diamond knowledge</span><b style="color:var(--purple)">' + r.riKnowledge + '/100</b></div>'
+    +   '<div><span>Consultative selling</span><b style="color:' + (stage.color || 'var(--navy)') + '">' + r.riConsult + '/100</b></div>'
+    +   '<div><span>Adaptability</span><b style="color:var(--blue)">' + r.riAdapt + '/100</b></div>'
+    + '</div></div>'
+
+    + '<div class="card"><h2>How you sell</h2>'
+    + '<div class="kv">'
+    +   '<div><span>Selling stage</span><b style="color:' + (stage.color || 'var(--navy)') + '">'
+    +     esc(stage.label || r.rspStage) + '</b></div>'
+    +   '<div><span>Ladder score</span><b>' + r.rspAvg + ' / 3.00</b></div>'
+    +   '<div><span>Communication style</span><b>' + esc(r.c2sLabel) + '</b></div>'
+    +   '<div><span>Style pattern</span><b>' + esc(r.c2sClassification) + '</b></div>'
+    + '</div>'
+    + (r.c2sClassification === 'Blended' && C.C2S_BLEND
+        ? (function () {
+            var k = [r.c2sPrimary, r.c2sSecondary].sort().join('-');
+            return C.C2S_BLEND[k] ? '<div class="note">' + esc(C.C2S_BLEND[k]) + '</div>' : '';
+          })()
+        : '')
+    + '</div>'
+
+    + '<div class="card"><h2>Diamond knowledge</h2>'
+    + '<div class="kv">'
+    +   '<div><span>Score</span><b>' + r.fcsCorrect + ' of ' + (r.fcsTotal || 25) + '</b></div>'
+    +   '<div><span>Percentage</span><b>' + r.fcsPct + '%</b></div>'
+    +   '<div><span>Grade</span><b>' + esc(r.fcsGrade) + '</b></div>'
+    + '</div>'
+    + (tagRows ? '<div style="margin-top:12px">' + tagRows + '</div>' : '')
+    + '</div>';
+
+  if (prof) {
+    html += '<div class="card"><h2>' + esc(prof.title || r.comboProfile) + '</h2>'
+      + (prof.body ? '<p style="font-size:14.5px;margin-bottom:12px">' + esc(prof.body) + '</p>' : '')
+      + (prof.strengths ? '<h2 style="font-size:15px;margin-top:14px">What you do well</h2><p style="font-size:14px">' + esc(prof.strengths) + '</p>' : '')
+      + (prof.watchouts ? '<h2 style="font-size:15px;margin-top:14px">Watch for</h2><p style="font-size:14px">' + esc(prof.watchouts) + '</p>' : '')
+      + (prof.next_stage ? '<div class="note"><b>To move up a stage:</b> ' + esc(prof.next_stage) + '</div>' : '')
+      + '</div>';
+    if (prof.focus1 || prof.focus2) {
+      html += '<div class="card"><h2>Where to put your effort</h2>'
+        + (prof.focus1 ? '<div style="margin-bottom:12px"><b style="font-size:14.5px">' + esc(prof.focus1) + '</b>'
+            + (prof.f1sub ? '<div style="font-size:13.5px;color:var(--muted)">' + esc(prof.f1sub) + '</div>' : '') + '</div>' : '')
+        + (prof.focus2 ? '<div><b style="font-size:14.5px">' + esc(prof.focus2) + '</b>'
+            + (prof.f2sub ? '<div style="font-size:13.5px;color:var(--muted)">' + esc(prof.f2sub) + '</div>' : '') + '</div>' : '')
+        + '</div>';
+    }
+  }
+
+  html += '<div class="card">'
+    + '<p class="sub" style="margin-bottom:10px">Your trainer has this profile. '
+    + (KIND === 'pre' ? 'After the programme you will take a short knowledge test again, so the change can be measured.' : 'This is your post-training result.')
+    + '</p>'
+    + '<button class="btn btn-ghost" onclick="window.print()">Save as PDF</button>'
+    + '</div>';
+
+  show(html);
+}
+
+boot();
+</script>
+</body>
+</html>
