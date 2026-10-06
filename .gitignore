@@ -2,3 +2,9 @@ node_modules/
 .DS_Store
 .env
 
+# Pre-Supabase ARP pages, kept locally for reference only.
+# Never deploy these: the old index.html shipped the answer key to the browser.
+legacy/
+*.bak
+*.bak2
+temp_script.js
