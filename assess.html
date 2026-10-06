@@ -340,7 +340,12 @@ function renderRegister() {
     +     '<input id="f-mobile" inputmode="numeric" autocomplete="tel" placeholder="10 digits"></div>'
     +   '<div class="field"><label for="f-branch">Store / branch</label><input id="f-branch"></div>'
     + '</div>'
-    + (a.batchLinked ? '' :
+    /* No "who do you work for?" — the assessment already names the client, and it is on
+       the masthead above this form. Every one of the 659 historic responses had an
+       employer identical to its assessment's client name, so the question only ever
+       asked people to retype something we already knew. It survives for the one case
+       that could still need it: an assessment opened without a client name at all. */
+    + (a.client ? '' :
         '<div class="field"><label for="f-employer">Who do you work for? *</label>'
       + '<input id="f-employer" placeholder="Company name"></div>')
     + '<div class="grid2">'
@@ -372,14 +377,16 @@ function startQuiz() {
   var mob = g('f-mobile').replace(/[^0-9]/g, '');
   if (!g('f-name')) { err.textContent = 'Please enter your name.'; return; }
   if (mob.length < 10) { err.textContent = 'Please enter a valid mobile number.'; return; }
-  if (!paper.assessment.batchLinked && !g('f-employer')) {
+  if (!paper.assessment.client && !g('f-employer')) {
     err.textContent = 'Please tell us who you work for.'; return;
   }
   if (paper.assessment.codeRequired && !g('f-code')) {
     err.textContent = 'Please enter the session code your trainer gave you.'; return;
   }
   reg = { name: g('f-name'), mobile: mob, branch: g('f-branch'),
-          employer: paper.assessment.batchLinked ? '' : g('f-employer'),
+          // Filed against the client the assessment was opened for, which is what every
+          // historic row held anyway. Only a clientless assessment falls back to asking.
+          employer: paper.assessment.client || g('f-employer'),
           designation: g('f-desig'), experience: g('f-exp'), city: g('f-city'),
           sessionCode: g('f-code').toUpperCase() };
 
