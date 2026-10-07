@@ -19,6 +19,7 @@
 <!-- Display copy only. Every scoring rule lives in Supabase: this page cannot work out
      whether an answer is right, which is the point of the rebuild. -->
 <script src="assets/arp-profiles.js?v=3"></script>
+<script src="assets/india-geo.js?v=1"></script>
 <style>
 :root{--gold:#C9A84C;--gold-light:#E8C97A;--gold-pale:#F9F3E3;--navy:#0D1B2E;--white:#FDFCF9;
 --off:#F4F1EB;--muted:#8A8070;--border:rgba(201,168,76,0.2);--teal:#1D9E75;--coral:#C9613A;
@@ -355,19 +356,65 @@ function renderRegister() {
     +     '<option>1 to 3</option><option>3 to 5</option><option>5 to 10</option>'
     +     '<option>More than 10</option></select></div>'
     + '</div>'
+    /* State and city are pickers, not free text, and they arrive already set to the
+       centre running the assessment. The free-text box produced four spellings of
+       Bengaluru and six of Delhi across 247 entries, and one person typed the word
+       "Select" into it. "Other" is always available so a small town is never a dead end. */
     + '<div class="grid2">'
-    +   '<div class="field"><label for="f-city">City</label><input id="f-city"></div>'
-    + (a.codeRequired
-        ? '<div class="field"><label for="f-code">Session code *</label>'
-        + '<input id="f-code" autocomplete="off" placeholder="From your trainer" '
-        + 'style="text-transform:uppercase"></div>'
-        : '')
+    +   '<div class="field"><label for="f-state">State</label>'
+    +     '<select id="f-state" onchange="onStatePick()"><option value="">Select</option>'
+    +     (window.IGIGeo ? IGIGeo.states.map(function (s) {
+             return '<option>' + esc(s) + '</option>'; }).join('') : '')
+    +   '</select></div>'
+    +   '<div class="field"><label for="f-city">City</label>'
+    +     '<select id="f-city" onchange="onCityPick()"><option value="">Select a state first</option></select>'
+    +     '<input id="f-city-other" placeholder="Type your town" '
+    +       'style="display:none;margin-top:8px"></div>'
     + '</div>'
+    + (a.codeRequired
+        ? '<div class="grid2"><div class="field"><label for="f-code">Session code *</label>'
+        + '<input id="f-code" autocomplete="off" placeholder="From your trainer" '
+        + 'style="text-transform:uppercase"></div></div>'
+        : '')
     + '<div class="err" id="reg-err"></div>'
     + '<div class="nav"><button class="btn btn-ghost" onclick="renderIntro()">&larr; Back</button>'
     + '<button class="btn" onclick="startQuiz()">Start the assessment &rarr;</button></div>'
     + '</div>');
+
+  prefillPlace(a);
   if (roster.length) document.getElementById('f-name').focus();
+}
+
+/* The assessment knows which centre is running it, so the pair starts on that centre's
+   state and city rather than empty. Most people are local to it and change nothing. */
+function prefillPlace(a) {
+  if (!window.IGIGeo) return;
+  var guess = IGIGeo.forCentre(a && a.centre);
+  if (!guess) return;
+  var st = document.getElementById('f-state');
+  if (!st) return;
+  st.value = guess.state;
+  onStatePick();
+  var ct = document.getElementById('f-city');
+  if (ct) ct.value = guess.city;
+}
+
+function onStatePick() {
+  var st = document.getElementById('f-state'), ct = document.getElementById('f-city');
+  if (!st || !ct || !window.IGIGeo) return;
+  var cities = st.value ? IGIGeo.citiesOf(st.value) : [];
+  ct.innerHTML = (st.value ? '<option value="">Select</option>' : '<option value="">Select a state first</option>')
+    + cities.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('')
+    + (st.value ? '<option value="__other">Other — not listed</option>' : '');
+  onCityPick();
+}
+
+function onCityPick() {
+  var ct = document.getElementById('f-city'), other = document.getElementById('f-city-other');
+  if (!ct || !other) return;
+  var isOther = ct.value === '__other';
+  other.style.display = isOther ? 'block' : 'none';
+  if (isOther) other.focus(); else other.value = '';
 }
 
 var reg = {};
@@ -387,7 +434,13 @@ function startQuiz() {
           // Filed against the client the assessment was opened for, which is what every
           // historic row held anyway. Only a clientless assessment falls back to asking.
           employer: paper.assessment.client || g('f-employer'),
-          designation: g('f-desig'), experience: g('f-exp'), city: g('f-city'),
+          designation: g('f-desig'), experience: g('f-exp'),
+          // "Bengaluru (Bangalore)" is a label for the person reading it; the row stores
+          // "Bengaluru". An unlisted town is stored exactly as typed.
+          state: g('f-state'),
+          city: (g('f-city') === '__other')
+            ? g('f-city-other')
+            : (window.IGIGeo ? IGIGeo.store(g('f-city')) : g('f-city')),
           sessionCode: g('f-code').toUpperCase() };
 
   /* Knowledge first, then the behavioural block, matching the original order. Within the
@@ -597,6 +650,7 @@ function submit() {
     p_session_code: reg.sessionCode || null, p_employer: reg.employer || null,
     p_branch: reg.branch || null, p_designation: reg.designation || null,
     p_experience: reg.experience || null, p_city: reg.city || null,
+    p_state: reg.state || null,
     p_country: paper.assessment.country || 'India',
     p_time_taken: used, p_answers: payload
   }).then(function (res) {
